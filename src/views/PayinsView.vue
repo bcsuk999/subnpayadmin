@@ -21,16 +21,22 @@
       <p v-if="!loading && payins.length===0 && !error" class="empty">No payins. Try different filters.</p>
       <div v-if="payins.length" class="table-wrap">
         <table class="table">
-          <thead><tr><th>Payin ID</th><th>User</th><th>Amount</th><th>Network</th><th>Address</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Payin ID</th><th>User</th><th>Amount</th><th>Network</th><th>Address</th><th>Trn ID</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
           <tbody>
             <tr v-for="p in payins" :key="p.payinId || p._id">
               <td class="mono">{{ p.payinId || p._id }}</td><td>{{ p.userid }}</td><td>{{ p.amount }}</td><td><span class="badge">{{ p.network }}</span></td>
-              <td class="mono break">{{ p.address }}</td><td><span :class="['badge', statusClass(p.status)]">{{ p.status }}</span></td><td class="muted">{{ fmt(p.createdAt) }}</td>
+              <td class="mono break">{{ p.address }}</td><td class="mono">{{ p.trnId || '—' }}</td><td><span :class="['badge', statusClass(p.status)]">{{ p.status }}</span></td><td class="muted">{{ fmt(p.createdAt) }}</td>
               <td>
                 <div class="row-actions">
                   <button class="btn btn-ghost btn-sm" type="button" @click="onView(p)">View</button>
                   <button class="btn btn-ghost btn-sm" type="button" @click="onCopy(p.payinId || p._id, 'Payin ID')">Copy ID</button>
-                  <button v-if="p.trnId || p.referenceId" class="btn btn-ghost btn-sm" type="button" @click="onCopy(p.trnId || p.referenceId, 'Trn ID')">Copy Trn</button>
+                  <button v-if="p.trnId" class="btn btn-ghost btn-sm" type="button" @click="onCopy(p.trnId, 'Trn ID')">Copy Trn</button>
+                  <template v-if="p.trnId">
+                    <button v-if="p.status==='pending'" class="btn btn-ghost btn-sm success" type="button" :disabled="acting===p.payinId" @click="onApprove(p)">{{ acting===p.payinId ? 'Approving…' : 'Approve' }}</button>
+                    <button v-if="p.status==='pending'" class="btn btn-ghost btn-sm danger" type="button" :disabled="acting===p.payinId" @click="onReject(p)">{{ acting===p.payinId ? 'Rejecting…' : 'Reject' }}</button>
+                    <button v-if="p.status==='success'" class="btn btn-ghost btn-sm" type="button" :disabled="acting===p.payinId" @click="onReverse(p)">{{ acting===p.payinId ? 'Reversing…' : 'Reverse' }}</button>
+                  </template>
+                  <span v-else-if="p.status==='pending'" class="muted">no txn</span>
                 </div>
               </td>
             </tr>
@@ -48,7 +54,7 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
-import { getAdminPayins } from '../api/client.js'
+import { getAdminPayins, approveTransaction, rejectTransaction, reverseTransaction } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
 
 const toast = useToast()
@@ -59,6 +65,7 @@ const page = ref(1)
 const totalPages = ref(1)
 const loading = ref(false)
 const error = ref('')
+const acting = ref('')
 
 function statusClass(s){ return s==='success' ? 'badge--success' : s==='pending' ? 'badge--warning' : 'badge--danger' }
 function fmt(d){ try{ return new Date(d).toLocaleString() } catch{ return d } }
@@ -66,8 +73,27 @@ async function onCopy(text, label){
   try{ await navigator.clipboard.writeText(String(text)); toast.success(`${label} copied`) } catch{ toast.error('Copy failed') }
 }
 function onView(p){
-  const trn = p.trnId || p.referenceId || '—'
+  const trn = p.trnId || '—'
   toast.info(`Payin ${p.payinId||p._id} • ${p.amount} ${p.network} • ${p.status} • Trn: ${trn}`)
+}
+async function onApprove(p){
+  if (!p.trnId) return toast.error('No linked transaction (trnId) for this payin')
+  const txHash = prompt('Optional txHash (leave empty to skip):') || undefined
+  acting.value = p.payinId
+  try{ const data = await approveTransaction(p.trnId, txHash ? { txHash } : {}); toast.success(data.msg || 'Payin approved'); p.status='success'; await fetchPayins(page.value) } catch(e){ toast.error(e.message) } finally{ acting.value='' }
+}
+async function onReject(p){
+  if (!p.trnId) return toast.error('No linked transaction for this payin')
+  const remark = prompt('Reject remark (optional):') || undefined
+  acting.value = p.payinId
+  try{ const data = await rejectTransaction(p.trnId, remark ? { remark } : {}); toast.success(data.msg || 'Payin rejected'); p.status='failed'; await fetchPayins(page.value) } catch(e){ toast.error(e.message) } finally{ acting.value='' }
+}
+async function onReverse(p){
+  if (!p.trnId) return toast.error('No linked transaction')
+  if (!confirm(`Reverse payin ${p.payinId} (${p.amount})? Creates debit reversal.`)) return
+  const remark = prompt('Reverse remark (optional):') || undefined
+  acting.value = p.payinId
+  try{ const data = await reverseTransaction(p.trnId, remark ? { remark } : {}); toast.success(data.msg || 'Payin reversed'); await fetchPayins(page.value) } catch(e){ toast.error(e.message) } finally{ acting.value='' }
 }
 async function fetchPayins(p=1){
   loading.value=true; error.value=''; page.value=p
@@ -87,9 +113,9 @@ onMounted(()=>fetchPayins(1))
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px} .card-sub{color:var(--color-text-secondary);font-size:var(--text-body-l)}
 .filters .filter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:end} .filters .field{flex:1;min-width:112px;gap:4px} .filters .field-label{font-size:11px} .filters .input{padding:6px 10px;font-size:12px} .filters .btn{padding:6px 10px;font-size:12px} .filter-actions{display:flex;gap:6px}
 .error{color:var(--color-danger);font-size:var(--text-h4);margin-bottom:8px} .empty{color:var(--color-text-secondary);font-size:var(--text-h4)}
-.table-wrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;border:1px solid var(--color-border);border-radius:var(--radius-md);scrollbar-width:thin;scrollbar-color:var(--color-border) transparent} .table-wrap::-webkit-scrollbar{height:8px} .table-wrap::-webkit-scrollbar-thumb{background:var(--color-border);border-radius:4px} .table-wrap::-webkit-scrollbar-track{background:transparent} .table{width:100%;border-collapse:collapse;font-size:var(--text-h4);min-width:960px}
+.table-wrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;border:1px solid var(--color-border);border-radius:var(--radius-md);scrollbar-width:thin;scrollbar-color:var(--color-border) transparent} .table-wrap::-webkit-scrollbar{height:8px} .table-wrap::-webkit-scrollbar-thumb{background:var(--color-border);border-radius:4px} .table-wrap::-webkit-scrollbar-track{background:transparent} .table{width:100%;border-collapse:collapse;font-size:var(--text-h4);min-width:1080px}
 .table th,.table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--color-border);vertical-align:top} .table th{background:var(--color-surface-raised);font-weight:600}
 .mono{font-family:ui-monospace,monospace;font-size:12px} .break{word-break:break-all} .muted{color:var(--color-text-secondary);font-size:11px}
 .badge{display:inline-flex;padding:3px 8px;border-radius:var(--radius-round);font-size:11px;font-weight:600} .badge--success{border:1px solid var(--color-success);color:var(--color-success);background:var(--color-surface-raised)} .badge--warning{border:1px solid var(--color-warning);color:var(--color-warning);background:var(--color-surface-raised)} .badge--danger{border:1px solid var(--color-danger);color:var(--color-danger);background:#fef2f2} html[data-theme='dark'] .badge--danger{background:rgba(248,113,113,.12)}
-.row-actions{display:flex;gap:4px;flex-wrap:nowrap;white-space:nowrap} .pagination{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px} .btn-sm{padding:6px 10px;font-size:var(--text-body-l);white-space:nowrap}
+.row-actions{display:flex;gap:4px;flex-wrap:nowrap;white-space:nowrap} .success{color:var(--color-success)} .danger{color:var(--color-danger)} .pagination{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px} .btn-sm{padding:6px 10px;font-size:var(--text-body-l);white-space:nowrap}
 </style>
