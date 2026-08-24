@@ -1,4 +1,4 @@
-import { getToken } from '../auth'
+import { clearSession, getToken } from '../auth'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://subnpaybackend.onrender.com'
 
@@ -28,6 +28,12 @@ export async function request(path, options = {}) {
 
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
+    if (res.status === 401) {
+      clearSession()
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
+    }
     throw new ApiError(data.error || `Request failed (${res.status})`, res.status)
   }
   return data
