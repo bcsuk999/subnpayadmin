@@ -4,6 +4,9 @@ import LoginView from '../views/LoginView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import UsersView from '../views/UsersView.vue'
 import BanksView from '../views/BanksView.vue'
+import DepositAddressesView from '../views/DepositAddressesView.vue'
+import PayinsView from '../views/PayinsView.vue'
+import TransactionsView from '../views/TransactionsView.vue'
 import DepositsView from '../views/DepositsView.vue'
 import WithdrawalsView from '../views/WithdrawalsView.vue'
 import AdminLayout from '../layouts/AdminLayout.vue'
@@ -20,6 +23,9 @@ const router = createRouter({
         { path: '', name: 'home', component: DashboardView },
         { path: 'users', name: 'users', component: UsersView },
         { path: 'banks', name: 'banks', component: BanksView },
+        { path: 'deposit-addresses', name: 'deposit-addresses', component: DepositAddressesView },
+        { path: 'payins', name: 'payins', component: PayinsView },
+        { path: 'transactions', name: 'transactions', component: TransactionsView },
         { path: 'deposits', name: 'deposits', component: DepositsView },
         { path: 'withdrawals', name: 'withdrawals', component: WithdrawalsView },
       ],

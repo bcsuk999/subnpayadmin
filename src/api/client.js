@@ -70,3 +70,65 @@ export function updateAdminBankStatus(bankId, status) {
     body: JSON.stringify({ status }),
   })
 }
+
+// —— Deposit Addresses (admin) ——
+export function getDepositAddresses(params = {}) {
+  const qs = new URLSearchParams()
+  if (params.network) qs.set('network', params.network)
+  if (params.isActive !== undefined && params.isActive !== '') qs.set('isActive', String(params.isActive))
+  if (params.page) qs.set('page', String(params.page))
+  if (params.limit) qs.set('limit', String(params.limit))
+  const suffix = qs.toString() ? `?${qs.toString()}` : ''
+  return request(`/admin/deposit-addresses${suffix}`, { method: 'GET' })
+}
+export function createDepositAddress(data) {
+  return request('/admin/deposit-addresses', { method: 'POST', body: JSON.stringify(data) })
+}
+export function updateDepositAddress(id, data) {
+  return request(`/admin/deposit-addresses/${id}`, { method: 'PATCH', body: JSON.stringify(data) })
+}
+export function toggleDepositAddress(id, isActive) {
+  return request(`/admin/deposit-addresses/${id}/toggle`, { method: 'PATCH', body: JSON.stringify({ isActive }) })
+}
+export function deleteDepositAddress(id) {
+  return request(`/admin/deposit-addresses/${id}`, { method: 'DELETE' })
+}
+
+// —— Payins / Transactions (admin) ——
+export function getAdminPayins(params = {}) {
+  const qs = new URLSearchParams()
+  if (params.userid) qs.set('userid', String(params.userid))
+  if (params.status) qs.set('status', params.status)
+  if (params.network) qs.set('network', params.network)
+  if (params.payinId) qs.set('payinId', params.payinId)
+  if (params.trnId) qs.set('trnId', params.trnId)
+  if (params.page) qs.set('page', String(params.page))
+  if (params.limit) qs.set('limit', String(params.limit))
+  const suffix = qs.toString() ? `?${qs.toString()}` : ''
+  return request(`/admin/payins${suffix}`, { method: 'GET' })
+}
+export function getAdminTransactions(params = {}) {
+  const qs = new URLSearchParams()
+  if (params.userid) qs.set('userid', String(params.userid))
+  if (params.trnId) qs.set('trnId', params.trnId)
+  if (params.status) qs.set('status', params.status)
+  if (params.type) qs.set('type', params.type)
+  if (params.note) qs.set('note', params.note)
+  if (params.network) qs.set('network', params.network)
+  if (params.page) qs.set('page', String(params.page))
+  if (params.limit) qs.set('limit', String(params.limit))
+  const suffix = qs.toString() ? `?${qs.toString()}` : ''
+  return request(`/admin/transactions${suffix}`, { method: 'GET' })
+}
+export function getAdminTransaction(trnId) {
+  return request(`/admin/transactions/${trnId}`, { method: 'GET' })
+}
+export function approveTransaction(trnId, data = {}) {
+  return request(`/admin/transactions/${trnId}/approve`, { method: 'POST', body: JSON.stringify(data) })
+}
+export function rejectTransaction(trnId, data = {}) {
+  return request(`/admin/transactions/${trnId}/reject`, { method: 'POST', body: JSON.stringify(data) })
+}
+export function reverseTransaction(trnId, data = {}) {
+  return request(`/admin/transactions/${trnId}/reverse`, { method: 'POST', body: JSON.stringify(data) })
+}
