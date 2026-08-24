@@ -163,11 +163,15 @@ onMounted(() => fetchBanks(1))
 .page-head h1 { font-size: var(--text-h1); }
 .page-head p { color: var(--color-text-secondary); font-size: var(--text-h4); margin-top:4px; }
 .card { background: var(--color-bg); border:1px solid var(--color-border); border-radius: var(--radius-md); padding:16px; box-shadow: var(--shadow-subtle); }
+.card.filters { padding:11px; }
 .card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
 .card-sub { color: var(--color-text-secondary); font-size: var(--text-body-l); }
-.filters .filter-row { display:flex; flex-wrap:wrap; gap:12px; align-items:end; }
-.filters .field { flex:1; min-width:160px; }
-.filter-actions { display:flex; gap:8px; align-items:center; }
+.filters .filter-row { display:flex; flex-wrap:wrap; gap:8px; align-items:end; }
+.filters .field { flex:1; min-width:112px; gap:4px; }
+.filters .field-label { font-size:11px; }
+.filters .input { padding:6px 10px; font-size:12px; }
+.filters .btn { padding:6px 10px; font-size:12px; }
+.filter-actions { display:flex; gap:6px; align-items:center; }
 .error { color: var(--color-danger); font-size: var(--text-h4); margin-bottom:8px; }
 .empty { color: var(--color-text-secondary); font-size: var(--text-h4); line-height:1.5; }
 .table-wrap { overflow:auto; border:1px solid var(--color-border); border-radius: var(--radius-md); }
@@ -184,5 +188,5 @@ html[data-theme='dark'] .badge--danger { background: rgba(248,113,113,0.12); }
 .btn-sm { padding:6px 10px; font-size: var(--text-body-l); }
 .pagination { display:flex; align-items:center; justify-content:center; gap:12px; margin-top:12px; }
 code { background: var(--color-surface-raised); padding:2px 6px; border-radius:4px; font-size:12px; }
-@media (max-width: 880px) { .filters .field { min-width:120px; } }
+@media (max-width: 880px) { .filters .field { min-width:84px; } }
 </style>
