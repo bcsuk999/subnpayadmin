@@ -55,8 +55,10 @@ import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { adminLogin } from '../api/client'
 import { setSession } from '../auth'
+import { useToast } from '../composables/useToast.js'
 
 const router = useRouter()
+const toast = useToast()
 
 const form = reactive({
   mobile: '',
@@ -70,7 +72,9 @@ async function onSubmit() {
 
   const mobile = form.mobile.trim()
   if (!mobile || !form.password) {
-    errorMessage.value = 'Please enter your mobile number and password.'
+    const msg = 'Please enter your mobile number and password.'
+    errorMessage.value = msg
+    toast.error(msg)
     return
   }
 
@@ -78,9 +82,13 @@ async function onSubmit() {
   try {
     const data = await adminLogin(mobile, form.password)
     setSession(data.token, data.user)
+    toast.success(data.message || 'Login successful')
     router.replace({ name: 'home' })
   } catch (err) {
-    errorMessage.value = err.message
+    const msg = err.message || 'Login failed'
+    errorMessage.value = msg
+    toast.error(msg)
+  } finally {
     loading.value = false
   }
 }
