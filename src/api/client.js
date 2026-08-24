@@ -34,7 +34,7 @@ export async function request(path, options = {}) {
         window.location.href = '/login'
       }
     }
-    throw new ApiError(data.error || `Request failed (${res.status})`, res.status)
+    throw new ApiError(data.error || data.msg || `Request failed (${res.status})`, res.status)
   }
   return data
 }
@@ -48,6 +48,24 @@ export function adminLogin(mobile, password) {
 
 export function updateUserStatus(userid, status) {
   return request(`/admin/users/${userid}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  })
+}
+
+export function getAdminBanks(params = {}) {
+  const qs = new URLSearchParams()
+  if (params.userid) qs.set('userid', String(params.userid))
+  if (params.status) qs.set('status', params.status)
+  if (params.bankName) qs.set('bankName', params.bankName)
+  if (params.page) qs.set('page', String(params.page))
+  if (params.limit) qs.set('limit', String(params.limit))
+  const suffix = qs.toString() ? `?${qs.toString()}` : ''
+  return request(`/admin/banks${suffix}`, { method: 'GET' })
+}
+
+export function updateAdminBankStatus(bankId, status) {
+  return request(`/admin/banks/${bankId}/status`, {
     method: 'PATCH',
     body: JSON.stringify({ status }),
   })

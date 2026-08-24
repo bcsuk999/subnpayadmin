@@ -3,6 +3,7 @@ import { isAuthenticated } from '../auth'
 import LoginView from '../views/LoginView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import UsersView from '../views/UsersView.vue'
+import BanksView from '../views/BanksView.vue'
 import DepositsView from '../views/DepositsView.vue'
 import WithdrawalsView from '../views/WithdrawalsView.vue'
 import AdminLayout from '../layouts/AdminLayout.vue'
@@ -18,6 +19,7 @@ const router = createRouter({
       children: [
         { path: '', name: 'home', component: DashboardView },
         { path: 'users', name: 'users', component: UsersView },
+        { path: 'banks', name: 'banks', component: BanksView },
         { path: 'deposits', name: 'deposits', component: DepositsView },
         { path: 'withdrawals', name: 'withdrawals', component: WithdrawalsView },
       ],

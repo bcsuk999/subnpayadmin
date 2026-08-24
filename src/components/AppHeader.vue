@@ -41,6 +41,7 @@ const toast = useToast()
 const titleMap = {
   home: 'Dashboard',
   users: 'Users',
+  banks: 'Banks',
   deposits: 'Deposits',
   withdrawals: 'Withdrawals',
   login: 'Login',
