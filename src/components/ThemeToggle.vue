@@ -63,22 +63,19 @@ onUnmounted(() => {
 
 <style scoped>
 .theme-toggle {
-  position: fixed;
-  top: var(--space-20);
-  right: var(--space-20);
-  z-index: 100;
   display: grid;
   place-items: center;
   width: 32px;
   height: 32px;
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
   color: var(--color-text-secondary);
   cursor: pointer;
   transition:
     background-color var(--duration-instant) ease,
-    color var(--duration-instant) ease;
+    color var(--duration-instant) ease,
+    border-color var(--duration-instant) ease;
 }
 
 .theme-toggle:hover {

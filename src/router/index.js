@@ -1,13 +1,27 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { isAuthenticated } from '../auth'
 import LoginView from '../views/LoginView.vue'
-import HomePlaceholderView from '../views/HomePlaceholderView.vue'
+import DashboardView from '../views/DashboardView.vue'
+import UsersView from '../views/UsersView.vue'
+import DepositsView from '../views/DepositsView.vue'
+import WithdrawalsView from '../views/WithdrawalsView.vue'
+import AdminLayout from '../layouts/AdminLayout.vue'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', name: 'home', component: HomePlaceholderView, meta: { requiresAuth: true } },
     { path: '/login', name: 'login', component: LoginView },
+    {
+      path: '/',
+      component: AdminLayout,
+      meta: { requiresAuth: true },
+      children: [
+        { path: '', name: 'home', component: DashboardView },
+        { path: 'users', name: 'users', component: UsersView },
+        { path: 'deposits', name: 'deposits', component: DepositsView },
+        { path: 'withdrawals', name: 'withdrawals', component: WithdrawalsView },
+      ],
+    },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 })
