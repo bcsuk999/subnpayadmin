@@ -1,11 +1,17 @@
 <template>
   <section class="page">
     <div class="page-head">
-      <h1>Deposit Addresses</h1>
-      <p>Manage USDT deposit addresses per network (TRC20 / BEP20)</p>
+      <div>
+        <h1>Deposit Addresses</h1>
+        <p>Manage USDT deposit addresses per network (TRC20 / BEP20)</p>
+      </div>
+      <button class="btn btn-ghost btn-sm filter-toggle" type="button" @click="showFilters = !showFilters">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6h18M3 12h10M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="15" cy="12" r="2" stroke="currentColor" stroke-width="1.4"/></svg>
+        {{ showFilters ? 'Hide filters' : 'Show filters' }}
+      </button>
     </div>
 
-    <div class="card filters">
+    <div v-show="showFilters" class="card filters">
       <div class="filter-row">
         <div class="field">
           <label class="field-label" for="da-network">Network</label>
@@ -48,9 +54,9 @@
               <td><span :class="['badge', a.isActive ? 'badge--success' : 'badge--danger']">{{ a.isActive ? 'active' : 'inactive' }}</span></td>
               <td>
                 <div class="row-actions">
-                  <button class="btn btn-ghost btn-sm" type="button" :disabled="toggling === a._id" @click="toggle(a)">{{ a.isActive ? 'Deactivate' : 'Activate' }}</button>
-                  <button class="btn btn-ghost btn-sm" type="button" @click="openEdit(a)">Edit</button>
-                  <button class="btn btn-ghost btn-sm danger" type="button" :disabled="deleting === a._id" @click="remove(a)">Delete</button>
+                  <button :class="['btn btn-sm action-btn', a.isActive ? 'action-btn--danger' : 'action-btn--success']" type="button" :disabled="toggling === a._id" @click="toggle(a)">{{ a.isActive ? 'Deactivate' : 'Activate' }}</button>
+                  <button class="btn btn-sm action-btn" type="button" @click="openEdit(a)">Edit</button>
+                  <button class="btn btn-sm action-btn action-btn--danger" type="button" :disabled="deleting === a._id" @click="remove(a)">Delete</button>
                 </div>
               </td>
             </tr>
@@ -93,6 +99,7 @@ import { useToast } from '../composables/useToast.js'
 
 const toast = useToast()
 const filters = reactive({ network: '', isActive: '' })
+const showFilters = ref(true)
 const addresses = ref([])
 const total = ref(0)
 const page = ref(1)
@@ -147,7 +154,7 @@ onMounted(() => fetchAddresses(1))
 </script>
 
 <style scoped>
-.page{display:flex;flex-direction:column;gap:16px} .page-head h1{font-size:var(--text-h1)} .page-head p{color:var(--color-text-secondary);font-size:var(--text-h4);margin-top:4px}
+.page{display:flex;flex-direction:column;gap:16px} .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px} .page-head h1{font-size:var(--text-h1)} .page-head p{color:var(--color-text-secondary);font-size:var(--text-h4);margin-top:4px} .filter-toggle{white-space:nowrap;flex-shrink:0;margin-top:2px}
 .card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px;box-shadow:var(--shadow-subtle)}
 .card.filters{padding:11px}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px} .card-sub{color:var(--color-text-secondary);font-size:var(--text-body-l)}
@@ -158,7 +165,7 @@ onMounted(() => fetchAddresses(1))
 .mono{font-family:ui-monospace,monospace;font-size:12px} .break{word-break:break-all} .muted{color:var(--color-text-secondary);font-size:11px}
 .badge{display:inline-flex;padding:3px 8px;border-radius:var(--radius-round);font-size:11px;font-weight:600} .badge--success{background:var(--color-surface-raised);color:var(--color-success);border:1px solid var(--color-success)} .badge--danger{background:#fef2f2;color:var(--color-danger);border:1px solid var(--color-danger)}
 html[data-theme='dark'] .badge--danger{background:rgba(248,113,113,.12)}
-.row-actions{display:flex;gap:4px;flex-wrap:wrap} .btn-sm{padding:6px 10px;font-size:var(--text-body-l)} .danger{color:var(--color-danger)}
+.row-actions{display:flex;gap:4px;flex-wrap:wrap} .btn-sm{padding:6px 10px;font-size:var(--text-body-l)} .action-btn{background:var(--color-surface-raised);border:1px solid var(--color-border);color:var(--color-text)} .action-btn:hover:not(:disabled){background:var(--color-bg);border-color:var(--color-secondary);color:var(--color-primary)} .action-btn--success{background:var(--color-success);border-color:var(--color-success);color:#fff} .action-btn--danger{background:var(--color-danger);border-color:var(--color-danger);color:#fff} .danger{color:var(--color-danger)}
 .pagination{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px}
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);display:grid;place-items:center;z-index:50;padding:16px} .modal{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;min-width:360px;max-width:480px;width:100%;display:flex;flex-direction:column;gap:12px}
 .modal h3{font-size:var(--text-h2)} .modal form{display:flex;flex-direction:column;gap:12px} .checkbox label{display:flex;gap:8px;align-items:center;font-size:var(--text-h4)} .modal-actions{display:flex;justify-content:flex-end;gap:8px}

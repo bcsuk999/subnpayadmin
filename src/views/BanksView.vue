@@ -1,11 +1,17 @@
 <template>
   <section class="page">
     <div class="page-head">
-      <h1>Banks</h1>
-      <p>View and manage user bank accounts</p>
+      <div>
+        <h1>Banks</h1>
+        <p>View and manage user bank accounts</p>
+      </div>
+      <button class="btn btn-ghost btn-sm filter-toggle" type="button" @click="showFilters = !showFilters">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6h18M3 12h10M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="15" cy="12" r="2" stroke="currentColor" stroke-width="1.4"/></svg>
+        {{ showFilters ? 'Hide filters' : 'Show filters' }}
+      </button>
     </div>
 
-    <div class="card filters">
+    <div v-show="showFilters" class="card filters">
       <div class="filter-row">
         <div class="field">
           <label class="field-label" for="f-userid">User ID</label>
@@ -65,7 +71,7 @@
               <td><span :class="['badge', b.status === 'enable' ? 'badge--success' : 'badge--danger']">{{ b.status }}</span></td>
               <td>
                 <button
-                  class="btn btn-ghost btn-sm"
+                  :class="['btn btn-sm action-btn', b.status === 'enable' ? 'action-btn--danger' : 'action-btn--success']"
                   type="button"
                   :disabled="updatingId === b._id"
                   @click="toggleStatus(b)"
@@ -95,6 +101,7 @@ import { useToast } from '../composables/useToast.js'
 const toast = useToast()
 
 const filters = reactive({ userid: '', bankName: '', status: '' })
+const showFilters = ref(true)
 const banks = ref([])
 const total = ref(0)
 const page = ref(1)
@@ -160,8 +167,10 @@ onMounted(() => fetchBanks(1))
 
 <style scoped>
 .page { display:flex; flex-direction:column; gap:16px; }
+.page-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
 .page-head h1 { font-size: var(--text-h1); }
 .page-head p { color: var(--color-text-secondary); font-size: var(--text-h4); margin-top:4px; }
+.filter-toggle { white-space:nowrap; flex-shrink:0; margin-top:2px; }
 .card { background: var(--color-bg); border:1px solid var(--color-border); border-radius: var(--radius-md); padding:16px; box-shadow: var(--shadow-subtle); }
 .card.filters { padding:11px; }
 .card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
@@ -186,6 +195,12 @@ onMounted(() => fetchBanks(1))
 .badge--danger { background: #fef2f2; color: var(--color-danger); border:1px solid var(--color-danger); }
 html[data-theme='dark'] .badge--danger { background: rgba(248,113,113,0.12); }
 .btn-sm { padding:6px 10px; font-size: var(--text-body-l); }
+.action-btn { background: var(--color-surface-raised); border:1px solid var(--color-border); color: var(--color-text); }
+.action-btn:hover:not(:disabled) { background: var(--color-bg); border-color: var(--color-secondary); color: var(--color-primary); }
+.action-btn--success { background: var(--color-success); border-color: var(--color-success); color: #fff; }
+.action-btn--success:hover:not(:disabled) { filter: brightness(1.05); }
+.action-btn--danger { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+.action-btn--danger:hover:not(:disabled) { filter: brightness(1.05); }
 .pagination { display:flex; align-items:center; justify-content:center; gap:12px; margin-top:12px; }
 code { background: var(--color-surface-raised); padding:2px 6px; border-radius:4px; font-size:12px; }
 @media (max-width: 880px) { .filters .field { min-width:84px; } }
