@@ -32,10 +32,12 @@ const { toasts, dismiss } = useToast()
 .toast-viewport {
   position: fixed;
   top: 16px;
-  right: 16px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 9999;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 10px;
   pointer-events: none;
   max-width: 420px;
@@ -56,6 +58,7 @@ const { toasts, dismiss } = useToast()
   font-size: var(--text-h4);
   line-height: 1.4;
   min-width: 260px;
+  width: 100%;
 }
 
 .toast-icon {
@@ -135,11 +138,11 @@ html[data-theme='dark'] .toast {
 }
 .toast-enter-from {
   opacity: 0;
-  transform: translateX(16px) scale(0.98);
+  transform: translateY(-8px) scale(0.98);
 }
 .toast-leave-to {
   opacity: 0;
-  transform: translateX(12px);
+  transform: translateY(-8px);
 }
 .toast-leave-active {
   position: absolute;
@@ -148,9 +151,10 @@ html[data-theme='dark'] .toast {
 @media (max-width: 640px) {
   .toast-viewport {
     top: 12px;
-    left: 12px;
-    right: 12px;
-    width: auto;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: calc(100% - 24px);
     max-width: none;
   }
   .toast {
