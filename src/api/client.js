@@ -93,6 +93,37 @@ export function toggleDepositAddress(id, isActive) {
 export function deleteDepositAddress(id) {
   return request(`/admin/deposit-addresses/${id}`, { method: 'DELETE' })
 }
+export function seedDepositAddresses() {
+  return request('/admin/deposit-addresses/seed', { method: 'POST' })
+}
+
+// —— Exchange Rates (admin) ——
+export function getExchangeRates(params = {}) {
+  const qs = new URLSearchParams()
+  if (params.currency) qs.set('currency', params.currency)
+  if (params.network) qs.set('network', params.network)
+  if (params.isActive !== undefined && params.isActive !== '') qs.set('isActive', String(params.isActive))
+  if (params.page) qs.set('page', String(params.page))
+  if (params.limit) qs.set('limit', String(params.limit))
+  const suffix = qs.toString() ? `?${qs.toString()}` : ''
+  return request(`/admin/exchange-rates${suffix}`, { method: 'GET' })
+}
+export function getCurrentExchangeRate(params = {}) {
+  const qs = new URLSearchParams()
+  if (params.currency) qs.set('currency', params.currency)
+  if (params.network) qs.set('network', params.network)
+  const suffix = qs.toString() ? `?${qs.toString()}` : ''
+  return request(`/admin/exchange-rates/current${suffix}`, { method: 'GET' })
+}
+export function upsertExchangeRate(data) {
+  return request('/admin/exchange-rates', { method: 'POST', body: JSON.stringify(data) })
+}
+export function updateExchangeRate(id, data) {
+  return request(`/admin/exchange-rates/${id}`, { method: 'PATCH', body: JSON.stringify(data) })
+}
+export function deleteExchangeRate(id) {
+  return request(`/admin/exchange-rates/${id}`, { method: 'DELETE' })
+}
 
 // —— Payins / Transactions (admin) ——
 export function getAdminPayins(params = {}) {
