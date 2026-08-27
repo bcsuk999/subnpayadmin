@@ -40,11 +40,7 @@
               <td><span :class="['badge', statusClass(u.status)]">{{ u.status }}</span></td>
               <td class="muted remark">{{ u.remark || '—' }}</td>
               <td>
-                <div class="row-actions">
-                  <button v-if="u.status !== 'active'" class="btn btn-sm action-btn action-btn--success" type="button" :disabled="acting===u.uid" @click="onSetStatus(u, 'active')">Activate</button>
-                  <button v-if="u.status !== 'ban'" class="btn btn-sm action-btn action-btn--danger" type="button" :disabled="acting===u.uid" @click="onSetStatus(u, 'ban')">Ban</button>
-                  <button v-if="u.status !== 'suspend'" class="btn btn-sm action-btn action-btn--warning" type="button" :disabled="acting===u.uid" @click="onSetStatus(u, 'suspend')">Suspend</button>
-                </div>
+                <button class="btn btn-sm action-btn" type="button" :disabled="dialog.open && dialog.uid===u.uid && dialog.saving" @click="openDialog(u)">Change Status</button>
               </td>
             </tr>
           </tbody>
@@ -54,6 +50,33 @@
         <button class="btn btn-ghost btn-sm" type="button" :disabled="page<=1 || loading" @click="fetchUsers(page-1)">Prev</button>
         <span class="muted">Page {{ page }} of {{ totalPages }}</span>
         <button class="btn btn-ghost btn-sm" type="button" :disabled="page>=totalPages || loading" @click="fetchUsers(page+1)">Next</button>
+      </div>
+    </div>
+
+    <div v-if="dialog.open" class="modal-overlay" @click.self="closeDialog">
+      <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-head">
+          <h3>Change Status — UID {{ dialog.uid }}</h3>
+          <button class="btn btn-ghost btn-sm" type="button" aria-label="Close" @click="closeDialog">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="field">
+            <label class="field-label">New Status</label>
+            <select v-model="dialog.status" class="input">
+              <option value="active">active</option>
+              <option value="ban">ban</option>
+              <option value="suspend">suspend</option>
+            </select>
+          </div>
+          <div class="field" style="margin-top:10px">
+            <label class="field-label">Reason (required)</label>
+            <textarea v-model="dialog.remark" class="input" rows="3" placeholder="Reason for status change, e.g. 'Violated terms of service'"></textarea>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" type="button" @click="closeDialog">Cancel</button>
+          <button class="btn btn-primary" type="button" :disabled="dialog.saving" @click="confirmDialog">{{ dialog.saving ? 'Saving…' : 'Confirm' }}</button>
+        </div>
       </div>
     </div>
   </section>
@@ -73,22 +96,23 @@ const page = ref(1)
 const totalPages = ref(1)
 const loading = ref(false)
 const error = ref('')
-const acting = ref('')
+const dialog = reactive({ open:false, uid:'', status:'active', remark:'', saving:false })
 
 function statusClass(s){ return s === 'active' ? 'badge--success' : s === 'ban' ? 'badge--danger' : s === 'suspend' ? 'badge--warning' : 'badge--warning' }
 function formatNum(n){ try { return Number(n || 0).toLocaleString() } catch { return n } }
 function fmt(d){ try{ return new Date(d).toLocaleDateString() } catch{ return d || '—' } }
-async function onSetStatus(u, status){
-  const remark = prompt(`Reason for setting user ${u.uid} to "${status}"?`)
-  if (remark === null) return
-  if (!remark.trim()) return toast.error('A remark is required for status change')
-  acting.value = u.uid
+function openDialog(u){ dialog.open=true; dialog.uid=u.uid; dialog.status='active'; dialog.remark=''; dialog.saving=false }
+function closeDialog(){ dialog.open=false }
+async function confirmDialog(){
+  if (!dialog.remark.trim()) return toast.error('A reason is required')
+  dialog.saving=true
   try {
-    const data = await updateUserStatus(u.uid, status, remark.trim())
-    toast.success(data.message || `User ${u.uid} → ${status}`)
-    u.status = status
-    u.remark = remark.trim()
-  } catch (e) { toast.error(e.message || 'Failed to update user status') } finally { acting.value = '' }
+    const data = await updateUserStatus(dialog.uid, dialog.status, dialog.remark.trim())
+    toast.success(data.message || `User ${dialog.uid} → ${dialog.status}`)
+    const u = users.value.find(x => x.uid === dialog.uid)
+    if (u) { u.status = dialog.status; u.remark = dialog.remark.trim() }
+    closeDialog()
+  } catch (e) { toast.error(e.message || 'Failed to update user status') } finally { dialog.saving=false }
 }
 async function fetchUsers(p=1){
   loading.value=true; error.value=''; page.value=p
@@ -122,5 +146,6 @@ onMounted(()=>fetchUsers(1))
 .table th,.table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--color-border);vertical-align:top} .table th{background:var(--color-surface-raised);font-weight:600} .table tbody tr:nth-child(odd){background:var(--color-row-alt)} .table tbody tr:hover{background:var(--color-surface-raised)}
 .mono{font-family:ui-monospace,monospace;font-size:12px} .muted{color:var(--color-text-secondary);font-size:11px} .remark{max-width:200px;word-break:break-word}
 .badge{display:inline-flex;padding:3px 8px;border-radius:var(--radius-round);font-size:11px;font-weight:600} .badge--success{border:1px solid var(--color-success);color:var(--color-success);background:var(--color-surface-raised)} .badge--warning{border:1px solid var(--color-warning);color:var(--color-warning);background:var(--color-surface-raised)} .badge--danger{border:1px solid var(--color-danger);color:var(--color-danger);background:#fef2f2} html[data-theme='dark'] .badge--danger{background:rgba(248,113,113,.12)}
-.row-actions{display:flex;gap:4px;flex-wrap:nowrap;white-space:nowrap} .action-btn{background:var(--color-surface-raised);border:1px solid var(--color-border);color:var(--color-text)} .action-btn:hover:not(:disabled){background:var(--color-bg);border-color:var(--color-secondary);color:var(--color-primary)} .action-btn--success{background:var(--color-success);border-color:var(--color-success);color:#fff} .action-btn--danger{background:var(--color-danger);border-color:var(--color-danger);color:#fff} .action-btn--warning{background:var(--color-warning);border-color:var(--color-warning);color:#fff} .pagination{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px} .btn-sm{padding:6px 10px;font-size:var(--text-body-l);white-space:nowrap}
+.row-actions{display:flex;gap:4px;flex-wrap:nowrap;white-space:nowrap} .action-btn{background:var(--color-surface-raised);border:1px solid var(--color-border);color:var(--color-text)} .action-btn:hover:not(:disabled){background:var(--color-bg);border-color:var(--color-secondary);color:var(--color-primary)} .pagination{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px} .btn-sm{padding:6px 10px;font-size:var(--text-body-l);white-space:nowrap}
+.modal-overlay{position:fixed;inset:0;background:rgba(15,18,24,.5);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px} .modal{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:var(--shadow-dropdown);width:100%;max-width:420px} .modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--color-border)} .modal-head h3{font-size:var(--text-h3)} .modal-body{padding:16px} .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 16px;border-top:1px solid var(--color-border)} .modal .field-label{font-size:11px} .modal textarea{resize:vertical;font-family:inherit}
 </style>
