@@ -53,6 +53,19 @@ export function updateUserStatus(userid, status) {
   })
 }
 
+export function getAdminUsers(params = {}) {
+  const qs = new URLSearchParams()
+  if (params.uid) qs.set('uid', String(params.uid))
+  if (params.mobile) qs.set('mobile', String(params.mobile))
+  if (params.sortBalance) qs.set('sortBalance', params.sortBalance)
+  if (params.from) qs.set('from', params.from)
+  if (params.to) qs.set('to', params.to)
+  if (params.page) qs.set('page', String(params.page))
+  if (params.limit) qs.set('limit', String(params.limit))
+  const suffix = qs.toString() ? `?${qs.toString()}` : ''
+  return request(`/admin/users${suffix}`, { method: 'GET' })
+}
+
 export function getAdminBanks(params = {}) {
   const qs = new URLSearchParams()
   if (params.userid) qs.set('userid', String(params.userid))
