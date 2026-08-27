@@ -29,18 +29,21 @@
       <p v-if="!loading && users.length===0 && !error" class="empty">No users found. Try different filters.</p>
       <div v-if="users.length" class="table-wrap">
         <table class="table">
-          <thead><tr><th>UID</th><th>Mobile</th><th>Balance</th><th>Total Deposit</th><th>Status</th><th>Actions</th></tr></thead>
+          <thead><tr><th>UID</th><th>Mobile</th><th>Register Date</th><th>Balance</th><th>Total Deposit</th><th>Status</th><th>Remark</th><th>Actions</th></tr></thead>
           <tbody>
             <tr v-for="u in users" :key="u.uid">
               <td class="mono">{{ u.uid }}</td>
               <td class="mono">{{ u.mobile }}</td>
+              <td class="muted">{{ fmt(u.registerDate) }}</td>
               <td class="mono">{{ formatNum(u.balance) }}</td>
               <td class="mono">{{ formatNum(u.totalDeposit) }}</td>
               <td><span :class="['badge', statusClass(u.status)]">{{ u.status }}</span></td>
+              <td class="muted remark">{{ u.remark || '—' }}</td>
               <td>
                 <div class="row-actions">
-                  <button v-if="u.status !== 'active'" class="btn btn-sm action-btn action-btn--success" type="button" :disabled="acting===u.uid" @click="onSetStatus(u, 'active')">{{ acting===u.uid ? '…' : 'Activate' }}</button>
-                  <button v-if="u.status !== 'blocked'" class="btn btn-sm action-btn action-btn--danger" type="button" :disabled="acting===u.uid" @click="onSetStatus(u, 'blocked')">{{ acting===u.uid ? '…' : 'Block' }}</button>
+                  <button v-if="u.status !== 'active'" class="btn btn-sm action-btn action-btn--success" type="button" :disabled="acting===u.uid" @click="onSetStatus(u, 'active')">Activate</button>
+                  <button v-if="u.status !== 'ban'" class="btn btn-sm action-btn action-btn--danger" type="button" :disabled="acting===u.uid" @click="onSetStatus(u, 'ban')">Ban</button>
+                  <button v-if="u.status !== 'suspend'" class="btn btn-sm action-btn action-btn--warning" type="button" :disabled="acting===u.uid" @click="onSetStatus(u, 'suspend')">Suspend</button>
                 </div>
               </td>
             </tr>
@@ -72,15 +75,19 @@ const loading = ref(false)
 const error = ref('')
 const acting = ref('')
 
-function statusClass(s){ return s === 'active' ? 'badge--success' : s === 'blocked' ? 'badge--danger' : 'badge--warning' }
+function statusClass(s){ return s === 'active' ? 'badge--success' : s === 'ban' ? 'badge--danger' : s === 'suspend' ? 'badge--warning' : 'badge--warning' }
 function formatNum(n){ try { return Number(n || 0).toLocaleString() } catch { return n } }
+function fmt(d){ try{ return new Date(d).toLocaleDateString() } catch{ return d || '—' } }
 async function onSetStatus(u, status){
-  if (!confirm(`Set user ${u.uid} to "${status}"?`)) return
+  const remark = prompt(`Reason for setting user ${u.uid} to "${status}"?`)
+  if (remark === null) return
+  if (!remark.trim()) return toast.error('A remark is required for status change')
   acting.value = u.uid
   try {
-    const data = await updateUserStatus(u.uid, status)
+    const data = await updateUserStatus(u.uid, status, remark.trim())
     toast.success(data.message || `User ${u.uid} → ${status}`)
     u.status = status
+    u.remark = remark.trim()
   } catch (e) { toast.error(e.message || 'Failed to update user status') } finally { acting.value = '' }
 }
 async function fetchUsers(p=1){
@@ -111,9 +118,9 @@ onMounted(()=>fetchUsers(1))
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px} .card-sub{color:var(--color-text-secondary);font-size:var(--text-body-l)}
 .filters .filter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:end} .filters .field{flex:1;min-width:130px;gap:4px} .filters .field-label{font-size:11px} .filters .input{padding:6px 10px;font-size:12px} .filters .btn{padding:6px 10px;font-size:12px} .filter-actions{display:flex;gap:6px}
 .error{color:var(--color-danger);font-size:var(--text-h4);margin-bottom:8px} .empty{color:var(--color-text-secondary);font-size:var(--text-h4)}
-.table-wrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;border:1px solid var(--color-border);border-radius:var(--radius-md);scrollbar-width:thin;scrollbar-color:var(--color-border) transparent} .table-wrap::-webkit-scrollbar{height:8px} .table-wrap::-webkit-scrollbar-thumb{background:var(--color-border);border-radius:4px} .table-wrap::-webkit-scrollbar-track{background:transparent} .table{width:100%;border-collapse:collapse;font-size:var(--text-h4);min-width:760px}
+.table-wrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;border:1px solid var(--color-border);border-radius:var(--radius-md);scrollbar-width:thin;scrollbar-color:var(--color-border) transparent} .table-wrap::-webkit-scrollbar{height:8px} .table-wrap::-webkit-scrollbar-thumb{background:var(--color-border);border-radius:4px} .table-wrap::-webkit-scrollbar-track{background:transparent} .table{width:100%;border-collapse:collapse;font-size:var(--text-h4);min-width:980px}
 .table th,.table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--color-border);vertical-align:top} .table th{background:var(--color-surface-raised);font-weight:600}
-.mono{font-family:ui-monospace,monospace;font-size:12px} .muted{color:var(--color-text-secondary);font-size:11px}
+.mono{font-family:ui-monospace,monospace;font-size:12px} .muted{color:var(--color-text-secondary);font-size:11px} .remark{max-width:200px;word-break:break-word}
 .badge{display:inline-flex;padding:3px 8px;border-radius:var(--radius-round);font-size:11px;font-weight:600} .badge--success{border:1px solid var(--color-success);color:var(--color-success);background:var(--color-surface-raised)} .badge--warning{border:1px solid var(--color-warning);color:var(--color-warning);background:var(--color-surface-raised)} .badge--danger{border:1px solid var(--color-danger);color:var(--color-danger);background:#fef2f2} html[data-theme='dark'] .badge--danger{background:rgba(248,113,113,.12)}
-.row-actions{display:flex;gap:4px;flex-wrap:nowrap;white-space:nowrap} .action-btn{background:var(--color-surface-raised);border:1px solid var(--color-border);color:var(--color-text)} .action-btn:hover:not(:disabled){background:var(--color-bg);border-color:var(--color-secondary);color:var(--color-primary)} .action-btn--success{background:var(--color-success);border-color:var(--color-success);color:#fff} .action-btn--danger{background:var(--color-danger);border-color:var(--color-danger);color:#fff} .pagination{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px} .btn-sm{padding:6px 10px;font-size:var(--text-body-l);white-space:nowrap}
+.row-actions{display:flex;gap:4px;flex-wrap:nowrap;white-space:nowrap} .action-btn{background:var(--color-surface-raised);border:1px solid var(--color-border);color:var(--color-text)} .action-btn:hover:not(:disabled){background:var(--color-bg);border-color:var(--color-secondary);color:var(--color-primary)} .action-btn--success{background:var(--color-success);border-color:var(--color-success);color:#fff} .action-btn--danger{background:var(--color-danger);border-color:var(--color-danger);color:#fff} .action-btn--warning{background:var(--color-warning);border-color:var(--color-warning);color:#fff} .pagination{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px} .btn-sm{padding:6px 10px;font-size:var(--text-body-l);white-space:nowrap}
 </style>

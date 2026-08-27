@@ -46,10 +46,10 @@ export function adminLogin(mobile, password) {
   })
 }
 
-export function updateUserStatus(userid, status) {
+export function updateUserStatus(userid, status, remark) {
   return request(`/admin/users/${userid}/status`, {
     method: 'PATCH',
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ status, remark }),
   })
 }
 
