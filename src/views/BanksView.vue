@@ -170,7 +170,6 @@ onMounted(() => fetchBanks(1))
 .page-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
 .page-head h1 { font-size: var(--text-h1); }
 .page-head p { color: var(--color-text-secondary); font-size: var(--text-h4); margin-top:4px; }
-.filter-toggle { white-space:nowrap; flex-shrink:0; margin-top:2px; }
 .card { background: var(--color-bg); border:1px solid var(--color-border); border-radius: var(--radius-md); padding:16px; box-shadow: var(--shadow-subtle); }
 .card.filters { padding:11px; }
 .card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
@@ -194,13 +193,7 @@ onMounted(() => fetchBanks(1))
 .badge--success { background: var(--color-surface-raised); color: var(--color-success); border:1px solid var(--color-success); }
 .badge--danger { background: #fef2f2; color: var(--color-danger); border:1px solid var(--color-danger); }
 html[data-theme='dark'] .badge--danger { background: rgba(248,113,113,0.12); }
-.btn-sm { padding:6px 10px; font-size: var(--text-body-l); }
-.action-btn { background: var(--color-surface-raised); border:1px solid var(--color-border); color: var(--color-text); }
-.action-btn:hover:not(:disabled) { background: var(--color-bg); border-color: var(--color-secondary); color: var(--color-primary); }
-.action-btn--success { background: var(--color-success); border-color: var(--color-success); color: #fff; }
-.action-btn--success:hover:not(:disabled) { filter: brightness(1.05); }
-.action-btn--danger { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
-.action-btn--danger:hover:not(:disabled) { filter: brightness(1.05); }
+.row-actions { display:flex; gap:4px; flex-wrap:nowrap; white-space:nowrap; }
 .pagination { display:flex; align-items:center; justify-content:center; gap:12px; margin-top:12px; }
 code { background: var(--color-surface-raised); padding:2px 6px; border-radius:4px; font-size:12px; }
 @media (max-width: 880px) { .filters .field { min-width:84px; } }
