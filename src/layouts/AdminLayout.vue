@@ -35,13 +35,13 @@ const mobileOpen = ref(false)
 }
 .admin-content {
   flex: 1;
-  padding: 20px;
+  padding: 24px;
   background: var(--color-bg);
 }
 .sidebar-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.32);
+  background: rgba(0, 0, 0, 0.4);
   z-index: 35;
 }
 @media (max-width: 880px) {

@@ -187,6 +187,38 @@ a {
   animation: spin 700ms linear infinite;
 }
 
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-h4);
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+.table th {
+  background: var(--color-surface-muted);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-l);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.table tbody tr:nth-child(odd) {
+  background: var(--color-row-alt);
+}
+
+.table tbody tr:hover {
+  background: var(--color-surface-raised);
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);

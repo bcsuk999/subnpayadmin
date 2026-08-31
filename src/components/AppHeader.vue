@@ -9,17 +9,22 @@
       </button>
       <div class="header-title">
         <h2 class="header-heading">{{ pageTitle }}</h2>
-        <p v-if="userLabel" class="header-sub">{{ userLabel }}</p>
       </div>
     </div>
 
     <div class="header-right">
       <ThemeToggle />
       <div class="header-divider" aria-hidden="true"></div>
-      <button class="btn btn-ghost header-logout" type="button" @click="onLogout">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 17l4-5-4-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 12H9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M9 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        <span>Logout</span>
-      </button>
+      <div class="header-user">
+        <div class="header-user-info">
+          <span class="header-user-role">Admin</span>
+          <span v-if="userLabel" class="header-user-name">{{ userLabel }}</span>
+        </div>
+        <button class="btn btn-ghost header-logout" type="button" @click="onLogout">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 17l4-5-4-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 12H9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M9 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <span>Logout</span>
+        </button>
+      </div>
     </div>
   </header>
 </template>
@@ -42,6 +47,7 @@ const titleMap = {
   home: 'Dashboard',
   users: 'Users',
   banks: 'Banks',
+  'payin-config': 'Payin Config',
   'deposit-addresses': 'Addresses',
   payins: 'Payins',
   transactions: 'Transactions',
@@ -53,7 +59,7 @@ const titleMap = {
 const pageTitle = computed(() => titleMap[route.name] || 'Dashboard')
 const userLabel = computed(() => {
   const u = getStoredUser()
-  return u?.mobile ? `Admin • ${u.mobile}` : ''
+  return u?.mobile ? u.mobile : ''
 })
 
 function onLogout() {
@@ -69,9 +75,9 @@ function onLogout() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-bg);
+  padding: 0 20px;
+  border-bottom: 1px solid var(--color-header-border);
+  background: var(--color-header-bg);
   position: sticky;
   top: 0;
   z-index: 30;
@@ -92,15 +98,6 @@ function onLogout() {
   line-height: 1.2;
   white-space: nowrap;
 }
-.header-sub {
-  font-size: var(--text-body-l);
-  color: var(--color-text-secondary);
-  line-height: 1;
-  margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 .header-right {
   display: flex;
   align-items: center;
@@ -111,7 +108,30 @@ function onLogout() {
   width: 1px;
   height: 22px;
   background: var(--color-border);
-  margin: 0 2px;
+  margin: 0 4px;
+}
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.header-user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+}
+.header-user-role {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.header-user-name {
+  font-size: var(--text-body-l);
+  color: var(--color-text-secondary);
+  font-family: ui-monospace, monospace;
 }
 .header-logout {
   gap: 6px;

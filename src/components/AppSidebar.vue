@@ -44,7 +44,7 @@ const navItems = [
   { label: 'Banks', to: '/banks', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="2.5" y="6.5" width="19" height="11" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 9.5h19" stroke="currentColor" stroke-width="1.4"/><circle cx="7" cy="14" r="1.4" fill="currentColor"/><path d="M11 13.5h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>' },
   { label: 'Payin Config', to: '/payin-config', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2.5l7 4v7l-7 4-7-4v-7l7-4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 12.5v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="12" cy="8.5" r="1.6" stroke="currentColor" stroke-width="1.3"/></svg>' },
   { label: 'Payins', to: '/payins', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 10h18" stroke="currentColor" stroke-width="1.2"/><circle cx="15.5" cy="12.5" r="1.2" fill="currentColor"/><path d="M7 15h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>' },
-  { label: 'Transactions', to: '/transactions', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="8" cy="6" r="1.8" fill="var(--color-bg)" stroke="currentColor" stroke-width="1.2"/><circle cx="15" cy="12" r="1.8" fill="var(--color-bg)" stroke="currentColor" stroke-width="1.2"/><circle cx="9" cy="18" r="1.8" fill="var(--color-bg)" stroke="currentColor" stroke-width="1.2"/></svg>' },
+  { label: 'Transactions', to: '/transactions', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="8" cy="6" r="1.8" fill="var(--color-sidebar-bg)" stroke="currentColor" stroke-width="1.2"/><circle cx="15" cy="12" r="1.8" fill="var(--color-sidebar-bg)" stroke="currentColor" stroke-width="1.2"/><circle cx="9" cy="18" r="1.8" fill="var(--color-sidebar-bg)" stroke="currentColor" stroke-width="1.2"/></svg>' },
   { label: 'Deposits', to: '/deposits', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M12 5l-5 5M12 5l5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17.5V19a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 19v-1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>' },
   { label: 'Withdrawals', to: '/withdrawals', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 19V5M12 19l5-5M12 19l-5-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 6.5V5A1.5 1.5 0 0 1 5.5 3.5h13A1.5 1.5 0 0 1 20 5v1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>' },
 ]
@@ -54,8 +54,8 @@ const navItems = [
 .sidebar {
   width: 240px;
   min-width: 240px;
-  background: var(--color-bg);
-  border-right: 1px solid var(--color-border);
+  background: var(--color-sidebar-bg);
+  border-right: 1px solid var(--color-sidebar-border);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -75,7 +75,7 @@ const navItems = [
   align-items: center;
   justify-content: space-between;
   padding: 0 14px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-sidebar-border);
   gap: 8px;
 }
 .sidebar-brand {
@@ -89,13 +89,14 @@ const navItems = [
   font-size: 16px;
   font-weight: 700;
   white-space: nowrap;
+  color: var(--color-sidebar-brand);
 }
 .sidebar.collapsed .sidebar-logo {
   font-size: 14px;
 }
 .sidebar-badge {
-  background: var(--color-surface-raised);
-  color: var(--color-primary);
+  background: rgba(96, 165, 250, 0.2);
+  color: #60a5fa;
   font-family: var(--font-heading);
   font-size: 11px;
   font-weight: 600;
@@ -109,7 +110,7 @@ const navItems = [
 .sidebar-collapse-btn {
   background: transparent;
   border: none;
-  color: var(--color-text-secondary);
+  color: var(--color-sidebar-text);
   cursor: pointer;
   padding: 6px;
   border-radius: var(--radius-sm);
@@ -117,23 +118,23 @@ const navItems = [
   place-items: center;
 }
 .sidebar-collapse-btn:hover {
-  background: var(--color-surface-raised);
-  color: var(--color-text);
+  background: var(--color-sidebar-hover);
+  color: var(--color-sidebar-text-active);
 }
 .sidebar-nav {
   flex: 1;
   padding: 12px 8px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 .nav-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 10px;
+  padding: 10px 12px;
   border-radius: var(--radius-md);
-  color: var(--color-text-secondary);
+  color: var(--color-sidebar-text);
   font-size: var(--text-h4);
   font-weight: 500;
   text-decoration: none;
@@ -141,12 +142,12 @@ const navItems = [
   white-space: nowrap;
 }
 .nav-item:hover {
-  background: var(--color-surface-raised);
-  color: var(--color-text);
+  background: var(--color-sidebar-hover);
+  color: var(--color-sidebar-text-active);
 }
 .nav-item--active {
-  background: var(--color-surface-raised);
-  color: var(--color-primary);
+  background: var(--color-sidebar-active);
+  color: var(--color-sidebar-text-active);
 }
 .nav-icon {
   display: inline-flex;
@@ -157,16 +158,18 @@ const navItems = [
   text-overflow: ellipsis;
 }
 .sidebar-foot {
-  padding: 12px 14px;
-  border-top: 1px solid var(--color-border);
+  padding: 14px;
+  border-top: 1px solid var(--color-sidebar-border);
 }
 .sidebar-foot-title {
   font-size: var(--text-body-l);
   font-weight: 600;
+  color: var(--color-sidebar-text);
 }
 .sidebar-foot-sub {
   font-size: var(--text-body-l);
-  color: var(--color-text-secondary);
+  color: var(--color-sidebar-text);
+  opacity: 0.6;
   margin-top: 2px;
 }
 .sidebar.collapsed .sidebar-foot {
