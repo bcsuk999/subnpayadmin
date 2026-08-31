@@ -53,6 +53,7 @@ const titleMap = {
   transactions: 'Transactions',
   deposits: 'Deposits',
   withdrawals: 'Withdrawals',
+  payouts: 'Payouts',
   login: 'Login',
 }
 

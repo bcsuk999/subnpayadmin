@@ -9,6 +9,7 @@ import PayinsView from '../views/PayinsView.vue'
 import TransactionsView from '../views/TransactionsView.vue'
 import DepositsView from '../views/DepositsView.vue'
 import WithdrawalsView from '../views/WithdrawalsView.vue'
+import PayoutsView from '../views/PayoutsView.vue'
 import AdminLayout from '../layouts/AdminLayout.vue'
 
 const router = createRouter({
@@ -29,6 +30,7 @@ const router = createRouter({
         { path: 'transactions', name: 'transactions', component: TransactionsView },
         { path: 'deposits', name: 'deposits', component: DepositsView },
         { path: 'withdrawals', name: 'withdrawals', component: WithdrawalsView },
+        { path: 'payouts', name: 'payouts', component: PayoutsView },
       ],
     },
     { path: '/:pathMatch(.*)*', redirect: '/' },

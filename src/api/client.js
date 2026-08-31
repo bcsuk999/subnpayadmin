@@ -176,3 +176,31 @@ export function rejectTransaction(trnId, data = {}) {
 export function reverseTransaction(trnId, data = {}) {
   return request(`/admin/transactions/${trnId}/reverse`, { method: 'POST', body: JSON.stringify(data) })
 }
+
+// —— Payouts (admin) ——
+export function getPayoutUsers(params = {}) {
+  const qs = new URLSearchParams()
+  if (params.page) qs.set('page', String(params.page))
+  if (params.limit) qs.set('limit', String(params.limit))
+  const suffix = qs.toString() ? `?${qs.toString()}` : ''
+  return request(`/admin/payout-users${suffix}`, { method: 'GET' })
+}
+export function createPayout(data) {
+  return request('/admin/payout', { method: 'POST', body: JSON.stringify(data) })
+}
+export function getAdminPayouts(params = {}) {
+  const qs = new URLSearchParams()
+  if (params.userid) qs.set('userid', String(params.userid))
+  if (params.status) qs.set('status', params.status)
+  if (params.payoutId) qs.set('payoutId', params.payoutId)
+  if (params.page) qs.set('page', String(params.page))
+  if (params.limit) qs.set('limit', String(params.limit))
+  const suffix = qs.toString() ? `?${qs.toString()}` : ''
+  return request(`/admin/payouts${suffix}`, { method: 'GET' })
+}
+export function approvePayout(payoutId, data = {}) {
+  return request(`/admin/payouts/${payoutId}/approve`, { method: 'POST', body: JSON.stringify(data) })
+}
+export function rejectPayout(payoutId, data = {}) {
+  return request(`/admin/payouts/${payoutId}/reject`, { method: 'POST', body: JSON.stringify(data) })
+}

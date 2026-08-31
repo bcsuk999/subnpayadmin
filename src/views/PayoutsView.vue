@@ -1,0 +1,288 @@
+<template>
+  <section class="page">
+    <div class="page-head">
+      <div>
+        <h1>Payouts</h1><p>Manage payout orders and user payouts</p>
+      </div>
+    </div>
+
+    <!-- Payout Users Card -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3>Payout Users</h3>
+          <span class="card-sub">Users with payout enabled</span>
+        </div>
+        <button class="btn btn-ghost btn-sm" type="button" :disabled="usersLoading" @click="fetchPayoutUsers">Refresh</button>
+      </div>
+      <p v-if="usersError" class="error" role="alert">{{ usersError }}</p>
+      <p v-if="!usersLoading && payoutUsers.length===0 && !usersError" class="empty">No payout users found.</p>
+      <div v-if="payoutUsers.length" class="table-wrap">
+        <table class="table">
+          <thead><tr><th>UID</th><th>Mobile</th><th>Balance</th><th>Payout Enabled</th><th>Banks</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr v-for="u in payoutUsers" :key="u.uid">
+              <td class="mono">{{ u.uid }}</td>
+              <td class="mono">{{ u.mobile }}</td>
+              <td class="mono">{{ formatNum(u.balance) }}</td>
+              <td><span :class="['badge', u.payoutEnabled ? 'badge--success' : 'badge--danger']">{{ u.payoutEnabled ? 'Yes' : 'No' }}</span></td>
+              <td>
+                <div v-for="b in (u.banks || [])" :key="b.accountNumber" class="bank-info">
+                  <span class="badge">{{ b.bankName }}</span>
+                  <span class="muted">{{ b.holderName }} • {{ b.accountNumber }}</span>
+                </div>
+                <span v-if="!u.banks || u.banks.length===0" class="muted">No banks</span>
+              </td>
+              <td>
+                <button v-if="u.payoutEnabled && u.banks && u.banks.length" class="btn btn-sm action-btn action-btn--success" type="button" @click="openCreatePayout(u)">Create Payout</button>
+                <span v-else class="muted">—</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Payouts List -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3>All Payouts ({{ payoutTotal }})</h3>
+          <span class="card-sub">Page {{ payoutPage }} / {{ payoutTotalPages || 1 }}</span>
+        </div>
+        <button class="btn btn-ghost btn-sm filter-toggle" type="button" @click="showPayoutFilters = !showPayoutFilters">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6h18M3 12h10M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="15" cy="12" r="2" stroke="currentColor" stroke-width="1.4"/></svg>
+          {{ showPayoutFilters ? 'Hide filters' : 'Show filters' }}
+        </button>
+      </div>
+
+      <div v-show="showPayoutFilters" class="card filters" style="margin-bottom:12px">
+        <div class="filter-row">
+          <div class="field"><label class="field-label">User ID</label><input v-model="payoutFilters.userid" class="input" placeholder="3056579" @keyup.enter="fetchPayouts(1)" /></div>
+          <div class="field"><label class="field-label">Status</label><select v-model="payoutFilters.status" class="input"><option value="">All</option><option value="pending">pending</option><option value="success">success</option><option value="failed">failed</option></select></div>
+          <div class="field"><label class="field-label">Payout ID</label><input v-model="payoutFilters.payoutId" class="input" placeholder="PAYOUT..." @keyup.enter="fetchPayouts(1)" /></div>
+          <div class="filter-actions"><button class="btn btn-primary" type="button" :disabled="payoutsLoading" @click="fetchPayouts(1)">{{ payoutsLoading ? 'Loading…' : 'Search' }}</button><button class="btn btn-ghost" type="button" @click="resetPayoutFilters">Reset</button></div>
+        </div>
+      </div>
+
+      <p v-if="payoutsError" class="error" role="alert">{{ payoutsError }}</p>
+      <p v-if="!payoutsLoading && payouts.length===0 && !payoutsError" class="empty">No payouts found.</p>
+      <div v-if="payouts.length" class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Payout ID</th><th>User</th><th>Amount</th><th>Bank</th><th>Account</th><th>IFSC</th><th>Trn ID</th><th>Status</th><th>Remark</th><th>Created</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr v-for="p in payouts" :key="p.payoutId">
+              <td class="mono">{{ p.payoutId }}</td>
+              <td>{{ p.userid }}</td>
+              <td class="mono">{{ formatNum(p.amount) }}</td>
+              <td><span class="badge">{{ p.bankName }}</span></td>
+              <td class="mono">{{ p.accountNumber }}</td>
+              <td class="mono">{{ p.ifsc }}</td>
+              <td class="mono">{{ p.trnId || '—' }}</td>
+              <td><span :class="['badge', payoutStatusClass(p.status)]">{{ p.status }}</span></td>
+              <td class="muted remark">{{ p.remark || '—' }}</td>
+              <td class="muted">{{ fmt(p.createdAt) }}</td>
+              <td>
+                <div class="row-actions">
+                  <button v-if="p.status==='pending'" class="btn btn-sm action-btn action-btn--success" type="button" :disabled="acting===p.payoutId" @click="onApprove(p)">Approve</button>
+                  <button v-if="p.status==='pending'" class="btn btn-sm action-btn action-btn--danger" type="button" :disabled="acting===p.payoutId" @click="onReject(p)">Reject</button>
+                  <span v-if="p.status!=='pending'" class="muted">—</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div v-if="payoutTotalPages > 1" class="pagination">
+        <button class="btn btn-ghost btn-sm" type="button" :disabled="payoutPage<=1 || payoutsLoading" @click="fetchPayouts(payoutPage-1)">Prev</button>
+        <span class="muted">Page {{ payoutPage }} of {{ payoutTotalPages }}</span>
+        <button class="btn btn-ghost btn-sm" type="button" :disabled="payoutPage>=payoutTotalPages || payoutsLoading" @click="fetchPayouts(payoutPage+1)">Next</button>
+      </div>
+    </div>
+
+    <!-- Create Payout Dialog -->
+    <div v-if="showCreateModal" class="modal-overlay" @click.self="closeCreateModal">
+      <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-head">
+          <h3>Create Payout — {{ createForm.user?.mobile }}</h3>
+          <button class="btn btn-ghost btn-sm" type="button" aria-label="Close" @click="closeCreateModal">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="field">
+            <label class="field-label">User</label>
+            <div class="mono">{{ createForm.user?.uid }} — {{ createForm.user?.mobile }}</div>
+          </div>
+          <div class="field">
+            <label class="field-label">Balance</label>
+            <div class="mono">{{ formatNum(createForm.user?.balance) }}</div>
+          </div>
+          <div class="field">
+            <label class="field-label">Bank Account</label>
+            <select v-model="createForm.accountNumber" class="input">
+              <option v-for="b in (createForm.user?.banks || [])" :key="b.accountNumber" :value="b.accountNumber">{{ b.bankName }} — {{ b.holderName }} — {{ b.accountNumber }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label">Amount per order (₹)</label>
+            <input v-model.number="createForm.amount" class="input" type="number" min="1" placeholder="100" />
+          </div>
+          <div class="field">
+            <label class="field-label">Number of orders</label>
+            <input v-model.number="createForm.numberOfOrders" class="input" type="number" min="1" max="50" placeholder="3" />
+          </div>
+          <div v-if="createForm.total > 0" class="total-row">
+            <span>Total deduction:</span>
+            <span class="mono">₹ {{ formatNum(createForm.total) }}</span>
+          </div>
+          <p v-if="createForm.error" class="error">{{ createForm.error }}</p>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" type="button" @click="closeCreateModal">Cancel</button>
+          <button class="btn btn-primary" type="button" :disabled="createForm.saving" @click="submitCreatePayout">{{ createForm.saving ? 'Creating…' : 'Create Payout' }}</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</template>
+
+<script setup>
+import { onMounted, reactive, ref, computed } from 'vue'
+import { getPayoutUsers, createPayout, getAdminPayouts, approvePayout, rejectPayout } from '../api/client.js'
+import { useToast } from '../composables/useToast.js'
+
+const toast = useToast()
+
+// — Payout Users —
+const payoutUsers = ref([])
+const usersLoading = ref(false)
+const usersError = ref('')
+
+// — Payouts —
+const payouts = ref([])
+const payoutTotal = ref(0)
+const payoutPage = ref(1)
+const payoutTotalPages = ref(1)
+const payoutsLoading = ref(false)
+const payoutsError = ref('')
+const showPayoutFilters = ref(true)
+const payoutFilters = reactive({ userid: '', status: '', payoutId: '' })
+const acting = ref('')
+
+// — Create Payout Modal —
+const showCreateModal = ref(false)
+const createForm = reactive({ user: null, accountNumber: '', amount: '', numberOfOrders: '', saving: false, error: '' })
+const createTotal = computed(() => (Number(createForm.amount) || 0) * (Number(createForm.numberOfOrders) || 0))
+// patch createForm.total to be computed-like
+Object.defineProperty(createForm, 'total', { get() { return createTotal.value } })
+
+function formatNum(n) { try { return Number(n || 0).toLocaleString() } catch { return n } }
+function fmt(d) { try { return new Date(d).toLocaleString() } catch { return d || '—' } }
+function payoutStatusClass(s) { return s === 'success' ? 'badge--success' : s === 'pending' ? 'badge--warning' : 'badge--danger' }
+
+async function fetchPayoutUsers() {
+  usersLoading.value = true; usersError.value = ''
+  try {
+    const data = await getPayoutUsers({ limit: 100 })
+    payoutUsers.value = data.users || []
+  } catch (e) { usersError.value = e.message; toast.error(e.message) } finally { usersLoading.value = false }
+}
+
+async function fetchPayouts(p = 1) {
+  payoutsLoading.value = true; payoutsError.value = ''; payoutPage.value = p
+  try {
+    const data = await getAdminPayouts({
+      userid: payoutFilters.userid.trim() || undefined,
+      status: payoutFilters.status || undefined,
+      payoutId: payoutFilters.payoutId.trim() || undefined,
+      page: payoutPage.value,
+      limit: 20,
+    })
+    payouts.value = data.payouts || []
+    payoutTotal.value = data.count || 0
+    payoutTotalPages.value = data.totalPages || 1
+  } catch (e) { payoutsError.value = e.message; toast.error(e.message) } finally { payoutsLoading.value = false }
+}
+
+function resetPayoutFilters() { payoutFilters.userid = ''; payoutFilters.status = ''; payoutFilters.payoutId = ''; fetchPayouts(1) }
+
+function openCreatePayout(user) {
+  createForm.user = user
+  createForm.accountNumber = user.banks?.[0]?.accountNumber || ''
+  createForm.amount = ''
+  createForm.numberOfOrders = ''
+  createForm.saving = false
+  createForm.error = ''
+  showCreateModal.value = true
+}
+function closeCreateModal() { showCreateModal.value = false; createForm.user = null }
+
+async function submitCreatePayout() {
+  createForm.error = ''
+  const amount = Number(createForm.amount)
+  const numberOfOrders = Number(createForm.numberOfOrders)
+  if (!amount || amount <= 0) { createForm.error = 'Enter a valid amount'; return }
+  if (!numberOfOrders || numberOfOrders <= 0) { createForm.error = 'Enter valid number of orders'; return }
+  if (!createForm.accountNumber) { createForm.error = 'Select a bank account'; return }
+  if (createForm.total > (createForm.user?.balance || 0)) {
+    createForm.error = `Insufficient balance. Required: ${createForm.total}, Available: ${createForm.user?.balance}`
+    return
+  }
+  createForm.saving = true
+  try {
+    const data = await createPayout({
+      userid: createForm.user.uid,
+      amount,
+      numberOfOrders,
+      accountNumber: createForm.accountNumber,
+    })
+    toast.success(data.msg || `${numberOfOrders} payout orders created`)
+    closeCreateModal()
+    fetchPayoutUsers()
+    fetchPayouts(1)
+  } catch (e) { createForm.error = e.message; toast.error(e.message) } finally { createForm.saving = false }
+}
+
+async function onApprove(p) {
+  const remark = prompt('Approve remark (required):')
+  if (remark === null) return
+  if (!remark.trim()) return toast.error('A remark is required')
+  acting.value = p.payoutId
+  try {
+    const data = await approvePayout(p.payoutId, { remark: remark.trim() })
+    toast.success(data.msg || 'Payout approved')
+    p.status = 'success'
+    p.remark = remark.trim()
+  } catch (e) { toast.error(e.message) } finally { acting.value = '' }
+}
+
+async function onReject(p) {
+  const remark = prompt('Reject remark (required):')
+  if (remark === null) return
+  if (!remark.trim()) return toast.error('A remark is required')
+  acting.value = p.payoutId
+  try {
+    const data = await rejectPayout(p.payoutId, { remark: remark.trim() })
+    toast.success(data.msg || 'Payout rejected')
+    p.status = 'failed'
+    p.remark = remark.trim()
+  } catch (e) { toast.error(e.message) } finally { acting.value = '' }
+}
+
+onMounted(() => { fetchPayoutUsers(); fetchPayouts(1) })
+</script>
+
+<style scoped>
+.page{display:flex;flex-direction:column;gap:16px} .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px} .page-head h1{font-size:var(--text-h1)} .page-head p{color:var(--color-text-secondary);font-size:var(--text-h4);margin-top:4px}
+.card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px;box-shadow:var(--shadow-subtle)}
+.card.filters{padding:11px}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px} .card-sub{color:var(--color-text-secondary);font-size:var(--text-body-l)}
+.filters .filter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:end} .filters .field{flex:1;min-width:130px;gap:4px} .filters .field-label{font-size:11px} .filters .input{padding:6px 10px;font-size:12px} .filters .btn{padding:6px 10px;font-size:12px} .filter-actions{display:flex;gap:6px}
+.error{color:var(--color-danger);font-size:var(--text-h4);margin-bottom:8px} .empty{color:var(--color-text-secondary);font-size:var(--text-h4)}
+.table-wrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;border:1px solid var(--color-border);border-radius:var(--radius-md);scrollbar-width:thin;scrollbar-color:var(--color-border) transparent} .table-wrap::-webkit-scrollbar{height:8px} .table-wrap::-webkit-scrollbar-thumb{background:var(--color-border);border-radius:4px} .table-wrap::-webkit-scrollbar-track{background:transparent} .table{width:100%;border-collapse:collapse;font-size:var(--text-h4);min-width:1050px}
+.table th,.table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--color-border);vertical-align:top} .table th{background:var(--color-surface-raised);font-weight:600} .table tbody tr:nth-child(odd){background:var(--color-row-alt)} .table tbody tr:hover{background:var(--color-surface-raised)}
+.mono{font-family:ui-monospace,monospace;font-size:12px} .muted{color:var(--color-text-secondary);font-size:11px} .remark{max-width:160px;word-break:break-word}
+.badge{display:inline-flex;padding:3px 8px;border-radius:var(--radius-round);font-size:11px;font-weight:600} .badge--success{border:1px solid var(--color-success);color:var(--color-success);background:var(--color-surface-raised)} .badge--warning{border:1px solid var(--color-warning);color:var(--color-warning);background:var(--color-surface-raised)} .badge--danger{border:1px solid var(--color-danger);color:var(--color-danger);background:#fef2f2} html[data-theme='dark'] .badge--danger{background:rgba(248,113,113,.12)}
+.bank-info{display:flex;align-items:center;gap:6px;margin-bottom:2px}
+.row-actions{display:flex;gap:4px;flex-wrap:nowrap;white-space:nowrap} .pagination{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px}
+.modal-overlay{position:fixed;inset:0;background:rgba(15,18,24,.5);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px} .modal{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:var(--shadow-dropdown);width:100%;max-width:460px} .modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--color-border)} .modal-head h3{font-size:var(--text-h3)} .modal-body{padding:16px;display:flex;flex-direction:column;gap:12px} .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 16px;border-top:1px solid var(--color-border)} .modal .field-label{font-size:11px} .total-row{display:flex;justify-content:space-between;padding:8px 12px;background:var(--color-surface-raised);border-radius:var(--radius-sm);font-size:var(--text-h4);font-weight:600}
+</style>
