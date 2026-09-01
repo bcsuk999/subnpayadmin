@@ -4,14 +4,15 @@
       <div>
         <h1>Payouts</h1><p>Manage payout orders and user payouts</p>
       </div>
-      <button class="btn btn-ghost btn-sm filter-toggle" type="button" @click="showPayoutFilters = !showPayoutFilters">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6h18M3 12h10M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="15" cy="12" r="2" stroke="currentColor" stroke-width="1.4"/></svg>
-        {{ showPayoutFilters ? 'Hide filters' : 'Show filters' }}
-      </button>
     </div>
 
-    <!-- Payout Users Card -->
-    <div class="card">
+    <div class="tabs">
+      <button :class="['tab', { 'tab--active': activeTab === 'users' }]" type="button" @click="activeTab = 'users'">Payout Users</button>
+      <button :class="['tab', { 'tab--active': activeTab === 'payouts' }]" type="button" @click="activeTab = 'payouts'">All Payouts</button>
+    </div>
+
+    <!-- Payout Users Tab -->
+    <div v-show="activeTab === 'users'" class="card">
       <div class="card-head">
         <div>
           <h3>Payout Users ({{ payoutUsers.length }})</h3>
@@ -47,51 +48,51 @@
       </div>
     </div>
 
-    <!-- Payouts Filters -->
-    <div v-show="showPayoutFilters" class="card filters">
-      <div class="filter-row">
-        <div class="field"><label class="field-label">User ID</label><input v-model="payoutFilters.userid" class="input" placeholder="3056579" @keyup.enter="fetchPayouts(1)" /></div>
-        <div class="field"><label class="field-label">Status</label><select v-model="payoutFilters.status" class="input"><option value="">All</option><option value="pending">pending</option><option value="success">success</option><option value="failed">failed</option></select></div>
-        <div class="field"><label class="field-label">Payout ID</label><input v-model="payoutFilters.payoutId" class="input" placeholder="PAYOUT..." @keyup.enter="fetchPayouts(1)" /></div>
-        <div class="filter-actions"><button class="btn btn-primary" type="button" :disabled="payoutsLoading" @click="fetchPayouts(1)">{{ payoutsLoading ? 'Loading…' : 'Search' }}</button><button class="btn btn-ghost" type="button" @click="resetPayoutFilters">Reset</button></div>
+    <!-- All Payouts Tab -->
+    <div v-show="activeTab === 'payouts'">
+      <div class="card filters">
+        <div class="filter-row">
+          <div class="field"><label class="field-label">User ID</label><input v-model="payoutFilters.userid" class="input" placeholder="3056579" @keyup.enter="fetchPayouts(1)" /></div>
+          <div class="field"><label class="field-label">Status</label><select v-model="payoutFilters.status" class="input"><option value="">All</option><option value="pending">pending</option><option value="success">success</option><option value="failed">failed</option></select></div>
+          <div class="field"><label class="field-label">Payout ID</label><input v-model="payoutFilters.payoutId" class="input" placeholder="PAYOUT..." @keyup.enter="fetchPayouts(1)" /></div>
+          <div class="filter-actions"><button class="btn btn-primary" type="button" :disabled="payoutsLoading" @click="fetchPayouts(1)">{{ payoutsLoading ? 'Loading…' : 'Search' }}</button><button class="btn btn-ghost" type="button" @click="resetPayoutFilters">Reset</button></div>
+        </div>
       </div>
-    </div>
-
-    <!-- Payouts List -->
-    <div class="card">
-      <div class="card-head"><h3>All Payouts ({{ payoutTotal }})</h3><span class="card-sub">Page {{ payoutPage }} / {{ payoutTotalPages || 1 }}</span></div>
-      <p v-if="payoutsError" class="error" role="alert">{{ payoutsError }}</p>
-      <p v-if="!payoutsLoading && payouts.length===0 && !payoutsError" class="empty">No payouts found.</p>
-      <div v-if="payouts.length" class="table-wrap">
-        <table class="table">
-          <thead><tr><th>Payout ID</th><th>User</th><th>Amount</th><th>Bank</th><th>Account</th><th>IFSC</th><th>Trn ID</th><th>Status</th><th>Remark</th><th>Created</th><th>Actions</th></tr></thead>
-          <tbody>
-            <tr v-for="p in payouts" :key="p.payoutId">
-              <td class="mono">{{ p.payoutId }}</td>
-              <td>{{ p.userid }}</td>
-              <td class="mono">{{ formatNum(p.amount) }}</td>
-              <td><span class="badge">{{ p.bankName }}</span></td>
-              <td class="mono">{{ p.accountNumber }}</td>
-              <td class="mono">{{ p.ifsc }}</td>
-              <td class="mono">{{ p.trnId || '—' }}</td>
-              <td><span :class="['badge', payoutStatusClass(p.status)]">{{ p.status }}</span></td>
-              <td class="muted remark">{{ p.remark || '—' }}</td>
-              <td class="muted">{{ fmt(p.createdAt) }}</td>
-              <td>
-                <div class="row-actions">
-                  <button v-if="p.status==='pending'" class="btn btn-sm action-btn action-btn--success" type="button" :disabled="acting===p.payoutId" @click="openApproveDialog(p)">Approve</button>
-                  <button v-if="p.status==='pending'" class="btn btn-sm action-btn action-btn--danger" type="button" :disabled="acting===p.payoutId" @click="openRejectDialog(p)">Reject</button>
-                  <span v-if="p.status!=='pending'" class="muted">—</span>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div v-if="payoutTotalPages > 1" class="pagination">
-        <button class="btn btn-ghost btn-sm" type="button" :disabled="payoutPage<=1 || payoutsLoading" @click="fetchPayouts(payoutPage-1)">Prev</button>
-        <span class="muted">Page {{ payoutPage }} of {{ payoutTotalPages }}</span>
-        <button class="btn btn-ghost btn-sm" type="button" :disabled="payoutPage>=payoutTotalPages || payoutsLoading" @click="fetchPayouts(payoutPage+1)">Next</button>
+      <div class="card" style="margin-top:12px">
+        <div class="card-head"><h3>All Payouts ({{ payoutTotal }})</h3><span class="card-sub">Page {{ payoutPage }} / {{ payoutTotalPages || 1 }}</span></div>
+        <p v-if="payoutsError" class="error" role="alert">{{ payoutsError }}</p>
+        <p v-if="!payoutsLoading && payouts.length===0 && !payoutsError" class="empty">No payouts found.</p>
+        <div v-if="payouts.length" class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Payout ID</th><th>User</th><th>Amount</th><th>Bank</th><th>Account</th><th>IFSC</th><th>Trn ID</th><th>Status</th><th>Remark</th><th>Created</th><th>Actions</th></tr></thead>
+            <tbody>
+              <tr v-for="p in payouts" :key="p.payoutId">
+                <td class="mono">{{ p.payoutId }}</td>
+                <td>{{ p.userid }}</td>
+                <td class="mono">{{ formatNum(p.amount) }}</td>
+                <td><span class="badge">{{ p.bankName }}</span></td>
+                <td class="mono">{{ p.accountNumber }}</td>
+                <td class="mono">{{ p.ifsc }}</td>
+                <td class="mono">{{ p.trnId || '—' }}</td>
+                <td><span :class="['badge', payoutStatusClass(p.status)]">{{ p.status }}</span></td>
+                <td class="muted remark">{{ p.remark || '—' }}</td>
+                <td class="muted">{{ fmt(p.createdAt) }}</td>
+                <td>
+                  <div class="row-actions">
+                    <button v-if="p.status==='pending'" class="btn btn-sm action-btn action-btn--success" type="button" :disabled="acting===p.payoutId" @click="openApproveDialog(p)">Approve</button>
+                    <button v-if="p.status==='pending'" class="btn btn-sm action-btn action-btn--danger" type="button" :disabled="acting===p.payoutId" @click="openRejectDialog(p)">Reject</button>
+                    <span v-if="p.status!=='pending'" class="muted">—</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div v-if="payoutTotalPages > 1" class="pagination">
+          <button class="btn btn-ghost btn-sm" type="button" :disabled="payoutPage<=1 || payoutsLoading" @click="fetchPayouts(payoutPage-1)">Prev</button>
+          <span class="muted">Page {{ payoutPage }} of {{ payoutTotalPages }}</span>
+          <button class="btn btn-ghost btn-sm" type="button" :disabled="payoutPage>=payoutTotalPages || payoutsLoading" @click="fetchPayouts(payoutPage+1)">Next</button>
+        </div>
       </div>
     </div>
 
@@ -187,6 +188,8 @@ import { useToast } from '../composables/useToast.js'
 
 const toast = useToast()
 
+const activeTab = ref('users')
+
 const payoutUsers = ref([])
 const usersLoading = ref(false)
 const usersError = ref('')
@@ -197,7 +200,6 @@ const payoutPage = ref(1)
 const payoutTotalPages = ref(1)
 const payoutsLoading = ref(false)
 const payoutsError = ref('')
-const showPayoutFilters = ref(true)
 const payoutFilters = reactive({ userid: '', status: '', payoutId: '' })
 const acting = ref('')
 
@@ -321,6 +323,10 @@ onMounted(() => { fetchPayoutUsers(); fetchPayouts(1) })
 
 <style scoped>
 .page{display:flex;flex-direction:column;gap:16px} .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px} .page-head h1{font-size:var(--text-h1)} .page-head p{color:var(--color-text-secondary);font-size:var(--text-h4);margin-top:4px}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--color-border);margin-bottom:4px}
+.tab{padding:10px 18px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--color-text-secondary);font-size:var(--text-h4);font-weight:500;cursor:pointer;transition:color .15s ease,border-color .15s ease}
+.tab:hover{color:var(--color-text)}
+.tab--active{color:var(--color-primary);border-bottom-color:var(--color-primary)}
 .card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px;box-shadow:var(--shadow-subtle)}
 .card.filters{padding:11px}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px} .card-sub{color:var(--color-text-secondary);font-size:var(--text-body-l)}
