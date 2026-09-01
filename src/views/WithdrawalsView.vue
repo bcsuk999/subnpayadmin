@@ -2,7 +2,7 @@
   <section class="page">
     <div class="page-head">
       <h1>Withdrawals</h1>
-      <p>Review and manage withdrawal requests</p>
+
     </div>
     <div class="card">
       <div class="card-head">

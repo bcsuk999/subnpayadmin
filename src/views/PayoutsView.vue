@@ -2,7 +2,7 @@
   <section class="page">
     <div class="page-head">
       <div>
-        <h1>Payouts</h1><p>Manage payout orders and user payouts</p>
+        <h1>Payouts</h1>
       </div>
     </div>
 

@@ -2,7 +2,7 @@
   <section class="page">
     <div class="page-head">
       <h1>Dashboard</h1>
-      <p>Overview of platform activity</p>
+
     </div>
 
     <div class="card-grid">

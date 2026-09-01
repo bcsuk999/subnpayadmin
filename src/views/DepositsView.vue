@@ -2,7 +2,7 @@
   <section class="page">
     <div class="page-head">
       <h1>Deposits</h1>
-      <p>Review and manage deposit requests</p>
+
     </div>
     <div class="card">
       <div class="card-head">

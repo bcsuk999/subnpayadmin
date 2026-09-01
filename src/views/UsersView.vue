@@ -2,7 +2,7 @@
   <section class="page">
     <div class="page-head">
       <div>
-        <h1>Users</h1><p>Search and manage registered users</p>
+        <h1>Users</h1>
       </div>
       <button class="btn btn-ghost btn-sm filter-toggle" type="button" @click="showFilters = !showFilters">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6h18M3 12h10M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="15" cy="12" r="2" stroke="currentColor" stroke-width="1.4"/></svg>
