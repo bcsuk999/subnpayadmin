@@ -4,13 +4,17 @@
       <div>
         <h1>Payouts</h1><p>Manage payout orders and user payouts</p>
       </div>
+      <button class="btn btn-ghost btn-sm filter-toggle" type="button" @click="showPayoutFilters = !showPayoutFilters">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6h18M3 12h10M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="15" cy="12" r="2" stroke="currentColor" stroke-width="1.4"/></svg>
+        {{ showPayoutFilters ? 'Hide filters' : 'Show filters' }}
+      </button>
     </div>
 
     <!-- Payout Users Card -->
     <div class="card">
       <div class="card-head">
         <div>
-          <h3>Payout Users</h3>
+          <h3>Payout Users ({{ payoutUsers.length }})</h3>
           <span class="card-sub">Users with payout enabled</span>
         </div>
         <button class="btn btn-ghost btn-sm" type="button" :disabled="usersLoading" @click="fetchPayoutUsers">Refresh</button>
@@ -43,28 +47,19 @@
       </div>
     </div>
 
+    <!-- Payouts Filters -->
+    <div v-show="showPayoutFilters" class="card filters">
+      <div class="filter-row">
+        <div class="field"><label class="field-label">User ID</label><input v-model="payoutFilters.userid" class="input" placeholder="3056579" @keyup.enter="fetchPayouts(1)" /></div>
+        <div class="field"><label class="field-label">Status</label><select v-model="payoutFilters.status" class="input"><option value="">All</option><option value="pending">pending</option><option value="success">success</option><option value="failed">failed</option></select></div>
+        <div class="field"><label class="field-label">Payout ID</label><input v-model="payoutFilters.payoutId" class="input" placeholder="PAYOUT..." @keyup.enter="fetchPayouts(1)" /></div>
+        <div class="filter-actions"><button class="btn btn-primary" type="button" :disabled="payoutsLoading" @click="fetchPayouts(1)">{{ payoutsLoading ? 'Loading…' : 'Search' }}</button><button class="btn btn-ghost" type="button" @click="resetPayoutFilters">Reset</button></div>
+      </div>
+    </div>
+
     <!-- Payouts List -->
     <div class="card">
-      <div class="card-head">
-        <div>
-          <h3>All Payouts ({{ payoutTotal }})</h3>
-          <span class="card-sub">Page {{ payoutPage }} / {{ payoutTotalPages || 1 }}</span>
-        </div>
-        <button class="btn btn-ghost btn-sm filter-toggle" type="button" @click="showPayoutFilters = !showPayoutFilters">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6h18M3 12h10M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="15" cy="12" r="2" stroke="currentColor" stroke-width="1.4"/></svg>
-          {{ showPayoutFilters ? 'Hide filters' : 'Show filters' }}
-        </button>
-      </div>
-
-      <div v-show="showPayoutFilters" class="card filters" style="margin-bottom:12px">
-        <div class="filter-row">
-          <div class="field"><label class="field-label">User ID</label><input v-model="payoutFilters.userid" class="input" placeholder="3056579" @keyup.enter="fetchPayouts(1)" /></div>
-          <div class="field"><label class="field-label">Status</label><select v-model="payoutFilters.status" class="input"><option value="">All</option><option value="pending">pending</option><option value="success">success</option><option value="failed">failed</option></select></div>
-          <div class="field"><label class="field-label">Payout ID</label><input v-model="payoutFilters.payoutId" class="input" placeholder="PAYOUT..." @keyup.enter="fetchPayouts(1)" /></div>
-          <div class="filter-actions"><button class="btn btn-primary" type="button" :disabled="payoutsLoading" @click="fetchPayouts(1)">{{ payoutsLoading ? 'Loading…' : 'Search' }}</button><button class="btn btn-ghost" type="button" @click="resetPayoutFilters">Reset</button></div>
-        </div>
-      </div>
-
+      <div class="card-head"><h3>All Payouts ({{ payoutTotal }})</h3><span class="card-sub">Page {{ payoutPage }} / {{ payoutTotalPages || 1 }}</span></div>
       <p v-if="payoutsError" class="error" role="alert">{{ payoutsError }}</p>
       <p v-if="!payoutsLoading && payouts.length===0 && !payoutsError" class="empty">No payouts found.</p>
       <div v-if="payouts.length" class="table-wrap">
@@ -84,8 +79,8 @@
               <td class="muted">{{ fmt(p.createdAt) }}</td>
               <td>
                 <div class="row-actions">
-                  <button v-if="p.status==='pending'" class="btn btn-sm action-btn action-btn--success" type="button" :disabled="acting===p.payoutId" @click="onApprove(p)">Approve</button>
-                  <button v-if="p.status==='pending'" class="btn btn-sm action-btn action-btn--danger" type="button" :disabled="acting===p.payoutId" @click="onReject(p)">Reject</button>
+                  <button v-if="p.status==='pending'" class="btn btn-sm action-btn action-btn--success" type="button" :disabled="acting===p.payoutId" @click="openApproveDialog(p)">Approve</button>
+                  <button v-if="p.status==='pending'" class="btn btn-sm action-btn action-btn--danger" type="button" :disabled="acting===p.payoutId" @click="openRejectDialog(p)">Reject</button>
                   <span v-if="p.status!=='pending'" class="muted">—</span>
                 </div>
               </td>
@@ -142,6 +137,46 @@
         </div>
       </div>
     </div>
+
+    <!-- Approve Dialog -->
+    <div v-if="approveDialog.open" class="modal-overlay" @click.self="closeApproveDialog">
+      <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-head">
+          <h3>Approve Payout — {{ approveDialog.payoutId }}</h3>
+          <button class="btn btn-ghost btn-sm" type="button" aria-label="Close" @click="closeApproveDialog">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="field">
+            <label class="field-label">Remark (required)</label>
+            <textarea v-model="approveDialog.remark" class="input" rows="3" placeholder="e.g. Payment processed via NEFT"></textarea>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" type="button" @click="closeApproveDialog">Cancel</button>
+          <button class="btn btn-primary" type="button" :disabled="approveDialog.saving" @click="confirmApprove">{{ approveDialog.saving ? 'Approving…' : 'Approve' }}</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reject Dialog -->
+    <div v-if="rejectDialog.open" class="modal-overlay" @click.self="closeRejectDialog">
+      <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-head">
+          <h3>Reject Payout — {{ rejectDialog.payoutId }}</h3>
+          <button class="btn btn-ghost btn-sm" type="button" aria-label="Close" @click="closeRejectDialog">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="field">
+            <label class="field-label">Remark (required)</label>
+            <textarea v-model="rejectDialog.remark" class="input" rows="3" placeholder="e.g. Bank details mismatch"></textarea>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" type="button" @click="closeRejectDialog">Cancel</button>
+          <button class="btn btn-primary" type="button" :disabled="rejectDialog.saving" @click="confirmReject">{{ rejectDialog.saving ? 'Rejecting…' : 'Reject' }}</button>
+        </div>
+      </div>
+    </div>
   </section>
 </template>
 
@@ -152,12 +187,10 @@ import { useToast } from '../composables/useToast.js'
 
 const toast = useToast()
 
-// — Payout Users —
 const payoutUsers = ref([])
 const usersLoading = ref(false)
 const usersError = ref('')
 
-// — Payouts —
 const payouts = ref([])
 const payoutTotal = ref(0)
 const payoutPage = ref(1)
@@ -168,12 +201,13 @@ const showPayoutFilters = ref(true)
 const payoutFilters = reactive({ userid: '', status: '', payoutId: '' })
 const acting = ref('')
 
-// — Create Payout Modal —
 const showCreateModal = ref(false)
 const createForm = reactive({ user: null, accountNumber: '', amount: '', numberOfOrders: '', saving: false, error: '' })
 const createTotal = computed(() => (Number(createForm.amount) || 0) * (Number(createForm.numberOfOrders) || 0))
-// patch createForm.total to be computed-like
 Object.defineProperty(createForm, 'total', { get() { return createTotal.value } })
+
+const approveDialog = reactive({ open: false, payoutId: '', remark: '', saving: false })
+const rejectDialog = reactive({ open: false, payoutId: '', remark: '', saving: false })
 
 function formatNum(n) { try { return Number(n || 0).toLocaleString() } catch { return n } }
 function fmt(d) { try { return new Date(d).toLocaleString() } catch { return d || '—' } }
@@ -242,30 +276,44 @@ async function submitCreatePayout() {
   } catch (e) { createForm.error = e.message; toast.error(e.message) } finally { createForm.saving = false }
 }
 
-async function onApprove(p) {
-  const remark = prompt('Approve remark (required):')
-  if (remark === null) return
-  if (!remark.trim()) return toast.error('A remark is required')
-  acting.value = p.payoutId
+function openApproveDialog(p) {
+  approveDialog.payoutId = p.payoutId
+  approveDialog.remark = ''
+  approveDialog.saving = false
+  approveDialog.open = true
+}
+function closeApproveDialog() { approveDialog.open = false }
+async function confirmApprove() {
+  if (!approveDialog.remark.trim()) return toast.error('A remark is required')
+  acting.value = approveDialog.payoutId
+  approveDialog.saving = true
   try {
-    const data = await approvePayout(p.payoutId, { remark: remark.trim() })
+    const data = await approvePayout(approveDialog.payoutId, { remark: approveDialog.remark.trim() })
     toast.success(data.msg || 'Payout approved')
-    p.status = 'success'
-    p.remark = remark.trim()
-  } catch (e) { toast.error(e.message) } finally { acting.value = '' }
+    const p = payouts.value.find(x => x.payoutId === approveDialog.payoutId)
+    if (p) { p.status = 'success'; p.remark = approveDialog.remark.trim() }
+    closeApproveDialog()
+  } catch (e) { toast.error(e.message) } finally { acting.value = ''; approveDialog.saving = false }
 }
 
-async function onReject(p) {
-  const remark = prompt('Reject remark (required):')
-  if (remark === null) return
-  if (!remark.trim()) return toast.error('A remark is required')
-  acting.value = p.payoutId
+function openRejectDialog(p) {
+  rejectDialog.payoutId = p.payoutId
+  rejectDialog.remark = ''
+  rejectDialog.saving = false
+  rejectDialog.open = true
+}
+function closeRejectDialog() { rejectDialog.open = false }
+async function confirmReject() {
+  if (!rejectDialog.remark.trim()) return toast.error('A remark is required')
+  acting.value = rejectDialog.payoutId
+  rejectDialog.saving = true
   try {
-    const data = await rejectPayout(p.payoutId, { remark: remark.trim() })
+    const data = await rejectPayout(rejectDialog.payoutId, { remark: rejectDialog.remark.trim() })
     toast.success(data.msg || 'Payout rejected')
-    p.status = 'failed'
-    p.remark = remark.trim()
-  } catch (e) { toast.error(e.message) } finally { acting.value = '' }
+    const p = payouts.value.find(x => x.payoutId === rejectDialog.payoutId)
+    if (p) { p.status = 'failed'; p.remark = rejectDialog.remark.trim() }
+    closeRejectDialog()
+  } catch (e) { toast.error(e.message) } finally { acting.value = ''; rejectDialog.saving = false }
 }
 
 onMounted(() => { fetchPayoutUsers(); fetchPayouts(1) })
@@ -284,5 +332,6 @@ onMounted(() => { fetchPayoutUsers(); fetchPayouts(1) })
 .badge{display:inline-flex;padding:3px 8px;border-radius:var(--radius-round);font-size:11px;font-weight:600} .badge--success{border:1px solid var(--color-success);color:var(--color-success);background:var(--color-surface-raised)} .badge--warning{border:1px solid var(--color-warning);color:var(--color-warning);background:var(--color-surface-raised)} .badge--danger{border:1px solid var(--color-danger);color:var(--color-danger);background:#fef2f2} html[data-theme='dark'] .badge--danger{background:rgba(248,113,113,.12)}
 .bank-info{display:flex;align-items:center;gap:6px;margin-bottom:2px}
 .row-actions{display:flex;gap:4px;flex-wrap:nowrap;white-space:nowrap} .pagination{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px}
-.modal-overlay{position:fixed;inset:0;background:rgba(15,18,24,.5);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px} .modal{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:var(--shadow-dropdown);width:100%;max-width:460px} .modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--color-border)} .modal-head h3{font-size:var(--text-h3)} .modal-body{padding:16px;display:flex;flex-direction:column;gap:12px} .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 16px;border-top:1px solid var(--color-border)} .modal .field-label{font-size:11px} .total-row{display:flex;justify-content:space-between;padding:8px 12px;background:var(--color-surface-raised);border-radius:var(--radius-sm);font-size:var(--text-h4);font-weight:600}
+.modal-overlay{position:fixed;inset:0;background:rgba(15,18,24,.5);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px} .modal{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:var(--shadow-dropdown);width:100%;max-width:420px} .modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--color-border)} .modal-head h3{font-size:var(--text-h3)} .modal-body{padding:16px} .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 16px;border-top:1px solid var(--color-border)} .modal .field-label{font-size:11px} .modal textarea{resize:vertical;font-family:inherit}
+.total-row{display:flex;justify-content:space-between;padding:8px 12px;background:var(--color-surface-raised);border-radius:var(--radius-sm);font-size:var(--text-h4);font-weight:600}
 </style>
