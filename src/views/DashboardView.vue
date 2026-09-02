@@ -1,10 +1,5 @@
 <template>
   <section class="page">
-    <div class="page-head">
-      <h1>Dashboard</h1>
-
-    </div>
-
     <div class="card-grid">
       <div class="stat-card">
         <p class="stat-label">Total Users</p>
@@ -66,14 +61,6 @@ async function onUpdateStatusDemo(userid, status) {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-.page-head h1 {
-  font-size: var(--text-h1);
-}
-.page-head p {
-  color: var(--color-text-secondary);
-  font-size: var(--text-h4);
-  margin-top: 4px;
 }
 .card-grid {
   display: grid;
