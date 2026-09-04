@@ -81,7 +81,7 @@ input, select, textarea, button {
   cursor: not-allowed;
 }
 
-.btn--sm { min-height: 44px; padding: 0 12px; font-size: var(--text-body-l); }
+.btn--sm, .btn-sm { min-height: 44px; padding: 0 12px; font-size: var(--text-body-l); }
 .btn--full { width: 100%; }
 
 .btn-primary,
@@ -190,7 +190,7 @@ input, select, textarea, button {
 }
 
 .action-btn {
-  background: var(--color-surface-raised);
+  background: var(--color-bg);
   border: 1px solid var(--color-border);
   color: var(--color-text);
   border-radius: var(--radius-sm);
@@ -549,7 +549,7 @@ input, select, textarea, button {
     height: 44px;
     font-size: 16px;
   }
-  .btn--sm { min-height: 44px; font-size: var(--text-body-l); padding: 0 12px; }
+  .btn--sm, .btn-sm { min-height: 44px; font-size: var(--text-body-l); padding: 0 12px; }
   .table .cell-actions .btn { min-height: 44px; font-size: var(--text-body-l); padding: 0 12px; }
   .page-header h2,
   .section-title {
