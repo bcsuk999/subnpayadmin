@@ -162,8 +162,7 @@ onMounted(() => fetchAddresses(1))
 .table-wrap{overflow:auto;border:1px solid var(--color-border);border-radius:var(--radius-md)} .table{width:100%;border-collapse:collapse;font-size:var(--text-h4);min-width:760px}
 .table th,.table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--color-border);vertical-align:top} .table th{background:var(--color-surface-raised);font-weight:600}
 .mono{font-family:ui-monospace,monospace;font-size:12px} .break{word-break:break-all} .muted{color:var(--color-text-secondary);font-size:11px}
-.badge{display:inline-flex;padding:3px 8px;border-radius:var(--radius-round);font-size:11px;font-weight:600} .badge--success{background:var(--color-surface-raised);color:var(--color-success);border:1px solid var(--color-success)} .badge--danger{background:#fef2f2;color:var(--color-danger);border:1px solid var(--color-danger)}
-html[data-theme='dark'] .badge--danger{background:rgba(248,113,113,.12)}
+.badge{display:inline-flex;padding:4px 9px;font-size:12px;font-weight:600;border-radius:3px;white-space:nowrap} .badge--success{background:var(--color-success);color:#fff} .badge--danger{background:var(--color-danger);color:#fff}
 .row-actions{display:flex;gap:4px;flex-wrap:wrap} .pagination{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px}
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);display:grid;place-items:center;z-index:50;padding:16px} .modal{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;min-width:360px;max-width:480px;width:100%;display:flex;flex-direction:column;gap:12px}
 .modal h3{font-size:var(--text-h2)} .modal form{display:flex;flex-direction:column;gap:12px} .checkbox label{display:flex;gap:8px;align-items:center;font-size:var(--text-h4)} .modal-actions{display:flex;justify-content:flex-end;gap:8px}

@@ -188,10 +188,7 @@ onMounted(() => fetchBanks(1))
 .table td { background: var(--color-bg); }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px; }
 .muted { color: var(--color-text-secondary); font-size:11px; }
-.badge { display:inline-flex; padding:3px 8px; border-radius: var(--radius-round); font-size:11px; font-weight:600; text-transform:capitalize; }
-.badge--success { background: var(--color-surface-raised); color: var(--color-success); border:1px solid var(--color-success); }
-.badge--danger { background: #fef2f2; color: var(--color-danger); border:1px solid var(--color-danger); }
-html[data-theme='dark'] .badge--danger { background: rgba(248,113,113,0.12); }
+.badge{display:inline-flex;padding:4px 9px;font-size:12px;font-weight:600;border-radius:3px;white-space:nowrap} .badge--success{background:var(--color-success);color:#fff} .badge--danger{background:var(--color-danger);color:#fff}
 .row-actions { display:flex; gap:4px; flex-wrap:nowrap; white-space:nowrap; }
 .pagination { display:flex; align-items:center; justify-content:center; gap:12px; margin-top:12px; }
 code { background: var(--color-surface-raised); padding:2px 6px; border-radius:4px; font-size:12px; }

@@ -1,10 +1,15 @@
 <template>
-  <div class="admin-layout">
+  <div class="app-layout">
     <AppSidebar :collapsed="collapsed" :mobile-open="mobileOpen" @close="mobileOpen = false" @toggle-collapse="collapsed = !collapsed" />
-    <div class="admin-main">
+    <div class="main-area">
       <AppHeader :collapsed="collapsed" @toggle-sidebar="collapsed = !collapsed" @toggle-mobile="mobileOpen = !mobileOpen" />
-      <main class="admin-content">
-        <RouterView />
+      <TagsView />
+      <main class="app-content">
+        <div class="route-transition">
+          <div class="content">
+            <RouterView />
+          </div>
+        </div>
       </main>
     </div>
     <div v-if="mobileOpen" class="sidebar-backdrop" aria-hidden="true" @click="mobileOpen = false"></div>
@@ -15,38 +20,62 @@
 import { ref } from 'vue'
 import AppSidebar from '../components/AppSidebar.vue'
 import AppHeader from '../components/AppHeader.vue'
+import TagsView from '../components/TagsView.vue'
 
-const collapsed = ref(false)
+const collapsed = ref(true)
 const mobileOpen = ref(false)
 </script>
 
 <style scoped>
-.admin-layout {
+.app-layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background: var(--color-bg);
 }
-.admin-main {
+
+.main-area {
   flex: 1;
-  min-width: 0;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  overflow: hidden;
+  min-width: 0;
 }
-.admin-content {
+
+.app-content {
   flex: 1;
-  padding: 24px;
-  background: var(--color-bg);
+  overflow: hidden;
 }
+
+.route-transition {
+  height: 100%;
+  animation: routeEnter 0.3s ease;
+}
+
+@keyframes routeEnter {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.content {
+  padding: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+  height: 100%;
+  overflow-y: auto;
+}
+
 .sidebar-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
-  z-index: 35;
+  z-index: 999;
 }
+
 @media (max-width: 880px) {
-  .admin-content {
-    padding: 16px;
+  .content {
+    padding: 10px;
   }
 }
 </style>

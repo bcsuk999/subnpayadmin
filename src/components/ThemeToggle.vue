@@ -63,28 +63,25 @@ onUnmounted(() => {
 
 <style scoped>
 .theme-toggle {
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 32px;
   height: 32px;
   background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
-  color: var(--color-text-secondary);
+  border: none;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition:
-    background-color var(--duration-instant) ease,
-    color var(--duration-instant) ease,
-    border-color var(--duration-instant) ease;
+  color: #fff;
+  transition: background 200ms;
 }
 
 .theme-toggle:hover {
-  background: var(--color-surface-raised);
-  color: var(--color-primary);
+  background: rgba(0, 0, 0, 0.1);
 }
 
 .theme-toggle:focus-visible {
-  outline: 2px solid var(--color-secondary);
+  outline: 2px solid rgba(255, 255, 255, 0.5);
   outline-offset: 2px;
 }
 </style>

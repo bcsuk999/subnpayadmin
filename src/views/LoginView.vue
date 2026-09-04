@@ -9,13 +9,13 @@
       <h1 class="login-title">Sign in to your account</h1>
 
       <form class="login-form" novalidate @submit.prevent="onSubmit">
-        <div class="field">
-          <label class="field-label" for="mobile">Mobile number</label>
+        <div class="login-field">
+          <label class="login-field-label" for="mobile">Mobile number</label>
           <input
             id="mobile"
             v-model="form.mobile"
             v-focus
-            class="input"
+            class="login-input"
             type="tel"
             name="mobile"
             inputmode="tel"
@@ -25,12 +25,12 @@
           />
         </div>
 
-        <div class="field">
-          <label class="field-label" for="password">Password</label>
+        <div class="login-field">
+          <label class="login-field-label" for="password">Password</label>
           <input
             id="password"
             v-model="form.password"
-            class="input"
+            class="login-input"
             type="password"
             name="password"
             autocomplete="current-password"
@@ -41,7 +41,7 @@
 
         <p v-if="errorMessage" class="login-error" role="alert">{{ errorMessage }}</p>
 
-        <button class="btn btn-primary login-submit" type="submit" :disabled="loading">
+        <button class="btn btn-filled login-submit" type="submit" :disabled="loading">
           <span v-if="loading" class="spinner" aria-hidden="true"></span>
           <span>{{ loading ? 'Signing in…' : 'Sign in' }}</span>
         </button>
@@ -104,24 +104,20 @@ const vFocus = {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-20);
-  background: var(--color-bg);
+  background: #000;
+  position: relative;
 }
 
 .login-card {
-  width: 100%;
-  max-width: 360px;
-  background: var(--color-bg);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
-  padding: 40px var(--space-20);
-  transition:
-    background-color var(--duration-fast) ease,
-    border-color var(--duration-fast) ease;
-}
-
-html[data-theme='dark'] .login-card {
-  border: 1px solid var(--color-border);
+  width: 380px;
+  max-width: 90vw;
+  padding: var(--space-4);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .login-brand {
@@ -136,11 +132,12 @@ html[data-theme='dark'] .login-card {
   font-size: var(--text-display);
   font-weight: 700;
   line-height: 1.15;
+  color: #fff;
 }
 
 .login-badge {
-  background: var(--color-surface-raised);
-  color: var(--color-primary);
+  background: rgba(32, 143, 255, 0.3);
+  color: #60a5fa;
   font-family: var(--font-heading);
   font-size: var(--text-body-l);
   font-weight: 600;
@@ -150,44 +147,69 @@ html[data-theme='dark'] .login-card {
 }
 
 .login-title {
-  margin-top: var(--space-12);
+  margin-top: var(--space-4);
   text-align: center;
   font-weight: 600;
+  font-size: 18px;
+  color: #fff;
 }
 
 .login-form {
-  margin-top: var(--space-20);
+  margin-top: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-12);
+  gap: var(--space-7);
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.login-field-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.login-input {
+  padding: var(--space-5) var(--space-3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-family: var(--font-body);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+  transition: border-color var(--motion-fast);
+}
+
+.login-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.login-input:focus,
+.login-input:focus-visible {
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 }
 
 .login-error {
-  color: var(--color-danger);
+  color: #f87171;
   font-size: var(--text-h4);
   line-height: 1.4;
 }
 
 .login-submit {
   width: 100%;
-  margin-top: var(--space-8);
-  padding-block: var(--space-10);
+  margin-top: var(--space-7);
 }
 
 @media (max-width: 640px) {
-  .login-page {
-    align-items: stretch;
-    padding: var(--space-20) var(--space-12);
-  }
-
   .login-card {
-    max-width: none;
-    margin-top: auto;
-    margin-bottom: auto;
     box-shadow: none;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: var(--space-20);
+    padding: var(--space-6);
   }
 }
 </style>

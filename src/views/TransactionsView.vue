@@ -114,6 +114,6 @@ onMounted(()=>fetchTransactions(1))
 .table-wrap{overflow:auto;border:1px solid var(--color-border);border-radius:var(--radius-md)} .table{width:100%;border-collapse:collapse;font-size:var(--text-h4);min-width:900px}
 .table th,.table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--color-border);vertical-align:top} .table th{background:var(--color-surface-raised);font-weight:600}
 .mono{font-family:ui-monospace,monospace;font-size:12px} .muted{color:var(--color-text-secondary);font-size:11px}
-.badge{display:inline-flex;padding:3px 8px;border-radius:var(--radius-round);font-size:11px;font-weight:600} .badge--success{border:1px solid var(--color-success);color:var(--color-success);background:var(--color-surface-raised)} .badge--warning{border:1px solid var(--color-warning);color:var(--color-warning);background:var(--color-surface-raised)} .badge--danger{border:1px solid var(--color-danger);color:var(--color-danger);background:#fef2f2} html[data-theme='dark'] .badge--danger{background:rgba(248,113,113,.12)}
+.badge{display:inline-flex;padding:4px 9px;font-size:12px;font-weight:600;border-radius:3px;white-space:nowrap} .badge--success{background:var(--color-success);color:#fff} .badge--warning{background:var(--color-warning);color:#fff} .badge--danger{background:var(--color-danger);color:#fff}
 .row-actions{display:flex;gap:4px;flex-wrap:wrap} .pagination{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px}
 </style>
