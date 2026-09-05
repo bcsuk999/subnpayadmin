@@ -1,6 +1,6 @@
 <template>
   <section class="page">
-    <div class="page-head">
+    <div class="page-header">
       <div>
         <h1>Payin Config</h1>
       </div>
@@ -10,8 +10,13 @@
       </button>
     </div>
 
-    <!-- Exchange Rate Card -->
-    <div class="card">
+    <div class="tabs">
+      <button :class="['tab', { 'tab--active': activeTab === 'rates' }]" type="button" @click="activeTab = 'rates'">Exchange Rates</button>
+      <button :class="['tab', { 'tab--active': activeTab === 'addresses' }]" type="button" @click="activeTab = 'addresses'">Deposit Addresses</button>
+    </div>
+
+    <!-- Exchange Rates Tab -->
+    <div v-show="activeTab === 'rates'" class="card">
       <div class="card-head">
         <div>
           <h3>Exchange Rate</h3>
@@ -70,6 +75,9 @@
         <button class="btn btn-ghost btn-sm" type="button" :disabled="ratePage >= rateTotalPages || rateLoading" @click="fetchRates(ratePage + 1)">Next</button>
       </div>
     </div>
+
+    <!-- Deposit Addresses Tab -->
+    <div v-show="activeTab === 'addresses'" class="tab-panel">
 
     <!-- Filters for Addresses -->
     <div v-show="showFilters" class="card filters">
@@ -132,6 +140,7 @@
         <button class="btn btn-ghost btn-sm" type="button" :disabled="page >= totalPages || loading" @click="fetchAddresses(page + 1)">Next</button>
       </div>
     </div>
+    </div>
 
     <!-- Address Modal -->
     <div v-if="showModal" class="modal-backdrop" @click.self="closeModal">
@@ -193,6 +202,7 @@ import { useToast } from '../composables/useToast.js'
 
 const toast = useToast()
 const showFilters = ref(true)
+const activeTab = ref('rates')
 
 // — Exchange Rate state —
 const rates = ref([])
@@ -331,11 +341,15 @@ onMounted(() => { fetchRates(1); fetchAddresses(1) })
 </script>
 
 <style scoped>
-.page{display:flex;flex-direction:column;gap:16px} .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px} .page-head h1{font-size:var(--text-h1)} .page-head p{color:var(--color-text-secondary);font-size:var(--text-h4);margin-top:4px}
+.page{display:flex;flex-direction:column;gap:16px}
 .card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px;box-shadow:var(--shadow-subtle)}
 .card.filters{padding:11px}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap} .card-sub{color:var(--color-text-secondary);font-size:var(--text-body-l)}
 .filters .filter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:end} .filters .field{flex:1;min-width:112px;gap:4px} .filters .field-label{font-size:11px} .filters .input{padding:6px 10px;font-size:12px} .filters .btn{padding:6px 10px;font-size:12px} .filter-actions{display:flex;gap:6px;flex-wrap:wrap}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--color-border)}
+.tab{padding:10px 18px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--color-text-secondary);font-size:var(--text-h4);font-weight:500;cursor:pointer;transition:color .15s ease,border-color .15s ease} .tab:hover{color:var(--color-text)}
+.tab--active{color:var(--color-primary);border-bottom-color:var(--color-primary)}
+.tab-panel{display:flex;flex-direction:column;gap:16px}
 .error{color:var(--color-danger);font-size:var(--text-h4);margin-bottom:8px} .empty{color:var(--color-text-secondary);font-size:var(--text-h4)}
 .table-wrap{overflow:auto;border:1px solid var(--color-border);border-radius:var(--radius-md)} .table{width:100%;border-collapse:collapse;font-size:var(--text-h4);min-width:760px}
 .table th,.table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--color-border);vertical-align:top} .table th{background:var(--color-surface-raised);font-weight:600}

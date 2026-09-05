@@ -1,6 +1,6 @@
 <template>
   <section class="page">
-    <div class="page-head">
+    <div class="page-header">
       <div>
         <h1>Payins</h1>
       </div>
@@ -135,7 +135,7 @@ onMounted(()=>fetchPayins(1))
 </script>
 
 <style scoped>
-.page{display:flex;flex-direction:column;gap:16px} .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px} .page-head h1{font-size:var(--text-h1)} .page-head p{color:var(--color-text-secondary);font-size:var(--text-h4);margin-top:4px}
+.page{display:flex;flex-direction:column;gap:16px}
 .card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px;box-shadow:var(--shadow-subtle)}
 .card.filters{padding:11px}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px} .card-sub{color:var(--color-text-secondary);font-size:var(--text-body-l)}

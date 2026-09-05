@@ -430,15 +430,24 @@ input, select, textarea, button {
 }
 
 .page-header {
-  padding: var(--space-7) var(--space-5);
-  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.page-header h2 {
-  font-size: var(--text-h2);
+.page-header h1 {
+  font-size: var(--text-h1);
   font-family: var(--font-heading);
   color: var(--color-text);
   font-weight: 600;
+  margin: 0;
+}
+
+.page-header p {
+  color: var(--color-text-secondary);
+  font-size: var(--text-h4);
+  margin-top: 4px;
 }
 
 .section-title {
@@ -539,7 +548,7 @@ input, select, textarea, button {
     min-width: unset;
   }
   .page-header {
-    padding: var(--space-7) var(--space-6);
+    flex-wrap: wrap;
   }
 }
 
@@ -551,7 +560,6 @@ input, select, textarea, button {
   }
   .btn--sm, .btn-sm { min-height: 44px; font-size: var(--text-body-l); padding: 0 12px; }
   .table .cell-actions .btn { min-height: 44px; font-size: var(--text-body-l); padding: 0 12px; }
-  .page-header h2,
   .section-title {
     font-size: 14px;
   }

@@ -1,6 +1,6 @@
 <template>
   <section class="page">
-    <div class="page-head">
+    <div class="page-header">
       <div>
         <h1>Payouts</h1>
       </div>
@@ -322,7 +322,7 @@ onMounted(() => { fetchPayoutUsers(); fetchPayouts(1) })
 </script>
 
 <style scoped>
-.page{display:flex;flex-direction:column;gap:16px} .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px} .page-head h1{font-size:var(--text-h1)} .page-head p{color:var(--color-text-secondary);font-size:var(--text-h4);margin-top:4px}
+.page{display:flex;flex-direction:column;gap:16px}
 .tabs{display:flex;gap:0;border-bottom:1px solid var(--color-border);margin-bottom:4px}
 .tab{padding:10px 18px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--color-text-secondary);font-size:var(--text-h4);font-weight:500;cursor:pointer;transition:color .15s ease,border-color .15s ease}
 .tab:hover{color:var(--color-text)}
