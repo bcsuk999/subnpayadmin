@@ -15,30 +15,40 @@
       <div class="card-head">
         <div>
           <h3>Exchange Rate</h3>
-          <span class="card-sub">Global USDT rate — applied to every channel (TRC20/BEP20). Payin credited = amount × rate.</span>
+          <span class="card-sub">USDT → INR rate. Payin credited = amount × rate. Configure globally or per network (TRC20/BEP20); network-specific overrides global.</span>
         </div>
         <div class="row-actions">
+          <select v-model="rateNetworkFilter" class="input rate-filter" @change="fetchRates(1)">
+            <option value="">All networks</option>
+            <option value="global">Global</option>
+            <option value="TRC20">TRC20</option>
+            <option value="BEP20">BEP20</option>
+          </select>
           <button class="btn btn-ghost btn-sm" type="button" :disabled="rateLoading" @click="fetchRates()">Refresh</button>
           <button class="btn btn-primary btn-sm" type="button" @click="openCreateRate">Set Rate</button>
         </div>
       </div>
 
-      <div v-if="currentRate !== null" class="rate-hero">
+      <div v-if="effectiveRates.length" class="rate-hero">
         <span class="muted">Current effective</span>
-        <span class="rate-value">₹ {{ currentRate }}</span>
+        <span v-for="er in effectiveRates" :key="er.network" class="rate-chip">
+          <span class="rate-chip-label">{{ er.network }}</span>
+          <span class="rate-value">₹ {{ er.rate }}</span>
+        </span>
         <span class="badge badge--success">USDT → INR</span>
-        <span class="muted">global · network: null</span>
       </div>
       <p v-else-if="rateLoading" class="empty">Loading rate…</p>
+      <div v-else class="rate-hero"><span class="muted">No rate configured — fallback</span><span class="rate-value">₹ 1</span></div>
 
       <p v-if="rateError" class="error" role="alert">{{ rateError }}</p>
 
       <div v-if="rates.length" class="table-wrap" style="margin-top:12px">
         <table class="table">
-          <thead><tr><th>Currency</th><th>Rate</th><th>Label</th><th>Active</th><th>Updated</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Currency</th><th>Network</th><th>Rate</th><th>Label</th><th>Active</th><th>Updated</th><th>Actions</th></tr></thead>
           <tbody>
             <tr v-for="r in rates" :key="r._id">
-              <td><span class="badge">{{ r.currency }}</span> <span class="muted">{{ r.network ?? 'global' }}</span></td>
+              <td><span class="badge">{{ r.currency }}</span></td>
+              <td><span class="badge badge--primary">{{ r.network ?? 'global' }}</span></td>
               <td class="mono"><strong>{{ r.rate }}</strong></td>
               <td>{{ r.label || '—' }}</td>
               <td><span :class="['badge', r.isActive ? 'badge--success' : 'badge--danger']">{{ r.isActive ? 'active' : 'inactive' }}</span></td>
@@ -53,7 +63,7 @@
           </tbody>
         </table>
       </div>
-      <p v-else-if="!rateLoading && !rateError" class="empty" style="margin-top:10px">No exchange rate configured. Default fallback is 112. Click Set Rate to create.</p>
+      <p v-else-if="!rateLoading && !rateError" class="empty" style="margin-top:10px">No exchange rate for this scope. Default fallback is ₹ 1. Click Set Rate to create.</p>
       <div v-if="rateTotalPages > 1" class="pagination">
         <button class="btn btn-ghost btn-sm" type="button" :disabled="ratePage <= 1 || rateLoading" @click="fetchRates(ratePage - 1)">Prev</button>
         <span class="muted">Page {{ ratePage }} of {{ rateTotalPages }}</span>
@@ -70,6 +80,7 @@
             <option value="">All</option>
             <option value="TRC20">TRC20</option>
             <option value="BEP20">BEP20</option>
+            <option value="SPAY">SPAY</option>
           </select>
         </div>
         <div class="field">
@@ -128,12 +139,12 @@
         <h3>{{ editing?._id ? 'Edit Address' : 'Add Address' }}</h3>
         <form @submit.prevent="submit">
           <div class="field"><label class="field-label">Network</label>
-            <select v-model="form.network" class="input"><option value="TRC20">TRC20</option><option value="BEP20">BEP20</option></select>
+            <select v-model="form.network" class="input"><option value="TRC20">TRC20</option><option value="BEP20">BEP20</option><option value="SPAY">SPAY</option></select>
           </div>
           <div class="field"><label class="field-label">Address</label><input v-model="form.address" class="input" placeholder="T... or 0x..." /></div>
           <div class="field"><label class="field-label">Label</label><input v-model="form.label" class="input" placeholder="Main TRC20" /></div>
           <div class="field"><label class="field-label">Currency</label><input v-model="form.currency" class="input" disabled /></div>
-          <div class="field"><label class="field-label">Exchange Rate (optional)</label><input v-model="form.exchangeRate" class="input" type="number" step="0.01" min="0" placeholder="112 — upserts global rate" /></div>
+          <div class="field"><label class="field-label">Exchange Rate (optional)</label><input v-model="form.exchangeRate" class="input" type="number" step="0.01" min="0" :placeholder="`Upserts ${form.network} rate`" /></div>
           <div class="field checkbox"><label><input type="checkbox" v-model="form.isActive" /> Active (deactivates other for same network)</label></div>
           <p v-if="modalError" class="error">{{ modalError }}</p>
           <div class="modal-actions">
@@ -150,10 +161,17 @@
         <h3>{{ editingRate?._id ? 'Edit Exchange Rate' : 'Set Exchange Rate' }}</h3>
         <form @submit.prevent="submitRate">
           <div class="field"><label class="field-label">Currency</label><input v-model="rateForm.currency" class="input" disabled /></div>
+          <div class="field"><label class="field-label">Network</label>
+            <select v-model="rateForm.network" class="input">
+              <option value="global">Global (all networks)</option>
+              <option value="TRC20">TRC20</option>
+              <option value="BEP20">BEP20</option>
+            </select>
+          </div>
           <div class="field"><label class="field-label">Rate (INR per USDT)</label><input v-model="rateForm.rate" class="input" type="number" step="0.01" min="0.01" placeholder="112" required /></div>
           <div class="field"><label class="field-label">Label</label><input v-model="rateForm.label" class="input" placeholder="global 115" /></div>
-          <div class="field checkbox"><label><input type="checkbox" v-model="rateForm.isActive" /> Active (deactivates previous global)</label></div>
-          <p class="muted" style="font-size:11px">Rate is global for all networks (TRC20/BEP20). Use same value everywhere. User GET /api/user/payin/exchange returns this instantly.</p>
+          <div class="field checkbox"><label><input type="checkbox" v-model="rateForm.isActive" /> Active (deactivates previous {{ rateForm.network }} rate)</label></div>
+          <p class="muted" style="font-size:11px">Network-specific rate overrides the global rate for that network. Fallback is ₹ 1. User GET /api/user/exchange-rate returns the effective rate instantly.</p>
           <p v-if="rateModalError" class="error">{{ rateModalError }}</p>
           <div class="modal-actions">
             <button class="btn btn-ghost" type="button" @click="closeRateModal">Cancel</button>
@@ -178,7 +196,8 @@ const showFilters = ref(true)
 
 // — Exchange Rate state —
 const rates = ref([])
-const currentRate = ref(null)
+const effectiveRates = ref([])
+const rateNetworkFilter = ref('')
 const ratePage = ref(1)
 const rateTotalPages = ref(1)
 const rateTotal = ref(0)
@@ -189,33 +208,40 @@ const showRateModal = ref(false)
 const editingRate = ref(null)
 const savingRate = ref(false)
 const rateModalError = ref('')
-const rateForm = reactive({ currency: 'USDT', rate: '', label: '', isActive: true })
+const rateForm = reactive({ currency: 'USDT', network: 'global', rate: '', label: '', isActive: true })
 
 function fmtDate(v) { if (!v) return '—'; try { return new Date(v).toLocaleString() } catch { return String(v) } }
 
 async function fetchRates(p = 1) {
   rateLoading.value = true; rateError.value = ''; ratePage.value = p
   try {
-    const [listData, curData] = await Promise.all([
-      getExchangeRates({ page: ratePage.value, limit: 20 }),
-      getCurrentExchangeRate({ currency: 'USDT' }).catch(() => null),
-    ])
+    const params = { page: ratePage.value, limit: 20 }
+    if (rateNetworkFilter.value) params.network = rateNetworkFilter.value === 'global' ? 'global' : rateNetworkFilter.value
+    const listData = await getExchangeRates(params)
     rates.value = (listData.rates || []).map(r => ({ ...r, rate: r.rate != null ? Number(r.rate) : r.rate }))
     rateTotal.value = listData.count || 0
     rateTotalPages.value = listData.totalPages || 1
-    if (curData && curData.rate != null) currentRate.value = Number(curData.rate)
-    else if (rates.value.find(r => r.isActive)) currentRate.value = Number(rates.value.find(r => r.isActive).rate)
-    else currentRate.value = null
+    // effective rates per scope (network-specific overrides global, fallback 1)
+    const scopes = ['global', 'TRC20', 'BEP20']
+    const currentData = await Promise.all(
+      scopes.map(scope => getCurrentExchangeRate({ currency: 'USDT', network: scope }).catch(() => null))
+    )
+    effectiveRates.value = scopes
+      .map((scope, i) => {
+        const rate = currentData[i] && currentData[i].rate != null ? Number(currentData[i].rate) : null
+        return rate === null ? null : { network: scope, rate }
+      })
+      .filter(Boolean)
   } catch (e) { rateError.value = e.message; toast.error(e.message) } finally { rateLoading.value = false }
 }
 function openCreateRate() {
   editingRate.value = null
-  Object.assign(rateForm, { currency: 'USDT', rate: currentRate.value ? String(currentRate.value) : '112', label: '', isActive: true })
+  Object.assign(rateForm, { currency: 'USDT', network: 'global', rate: '112', label: '', isActive: true })
   rateModalError.value = ''; showRateModal.value = true
 }
 function openEditRate(r) {
   editingRate.value = r
-  Object.assign(rateForm, { currency: r.currency || 'USDT', rate: String(r.rate ?? ''), label: r.label || '', isActive: r.isActive })
+  Object.assign(rateForm, { currency: r.currency || 'USDT', network: r.network || 'global', rate: String(r.rate ?? ''), label: r.label || '', isActive: r.isActive })
   rateModalError.value = ''; showRateModal.value = true
 }
 function closeRateModal() { showRateModal.value = false; editingRate.value = null }
@@ -224,6 +250,7 @@ async function submitRate() {
   const parsed = Number(rateForm.rate)
   if (!isFinite(parsed) || parsed <= 0) { rateModalError.value = 'Rate must be > 0'; savingRate.value = false; return }
   const payload = { currency: 'USDT', rate: parsed, label: rateForm.label.trim(), isActive: rateForm.isActive }
+  if (rateForm.network && rateForm.network !== 'global') payload.network = rateForm.network
   try {
     let data
     if (editingRate.value?._id) data = await updateExchangeRate(editingRate.value._id, payload)
@@ -264,7 +291,7 @@ async function fetchAddresses(p = 1) {
   } catch (e) { error.value = e.message; toast.error(e.message) } finally { loading.value = false }
 }
 function openCreate() { editing.value = null; Object.assign(form, { network: 'TRC20', address: '', label: '', currency: 'USDT', exchangeRate: '', isActive: true }); modalError.value=''; showModal.value=true }
-function openEdit(a) { editing.value = a; Object.assign(form, { network: a.network, address: a.address, label: a.label || '', currency: a.currency || 'USDT', exchangeRate: '', isActive: a.isActive }); modalError.value=''; showModal.value=true }
+function openEdit(a) { editing.value = a; const er = effectiveRates.value.find(x => x.network === a.network); Object.assign(form, { network: a.network, address: a.address, label: a.label || '', currency: a.currency || 'USDT', exchangeRate: er ? String(er.rate) : '', isActive: a.isActive }); modalError.value=''; showModal.value=true }
 function closeModal() { showModal.value=false; editing.value=null }
 async function submit() {
   saving.value=true; modalError.value=''
@@ -308,14 +335,17 @@ onMounted(() => { fetchRates(1); fetchAddresses(1) })
 .card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px;box-shadow:var(--shadow-subtle)}
 .card.filters{padding:11px}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap} .card-sub{color:var(--color-text-secondary);font-size:var(--text-body-l)}
-.rate-hero{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;background:var(--color-surface-raised);border:1px solid var(--color-border);border-radius:var(--radius-md)} .rate-value{font-size:18px;font-weight:700}
 .filters .filter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:end} .filters .field{flex:1;min-width:112px;gap:4px} .filters .field-label{font-size:11px} .filters .input{padding:6px 10px;font-size:12px} .filters .btn{padding:6px 10px;font-size:12px} .filter-actions{display:flex;gap:6px;flex-wrap:wrap}
 .error{color:var(--color-danger);font-size:var(--text-h4);margin-bottom:8px} .empty{color:var(--color-text-secondary);font-size:var(--text-h4)}
 .table-wrap{overflow:auto;border:1px solid var(--color-border);border-radius:var(--radius-md)} .table{width:100%;border-collapse:collapse;font-size:var(--text-h4);min-width:760px}
 .table th,.table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--color-border);vertical-align:top} .table th{background:var(--color-surface-raised);font-weight:600}
 .mono{font-family:ui-monospace,monospace;font-size:12px} .break{word-break:break-all} .muted{color:var(--color-text-secondary);font-size:11px}
-.badge{display:inline-flex;padding:4px 9px;font-size:12px;font-weight:600;border-radius:3px;white-space:nowrap} .badge--success{background:var(--color-success);color:#fff} .badge--danger{background:var(--color-danger);color:#fff}
+.badge{display:inline-flex;padding:4px 9px;font-size:12px;font-weight:600;border-radius:3px;white-space:nowrap} .badge--success{background:var(--color-success);color:#fff} .badge--danger{background:var(--color-danger);color:#fff} .badge--primary{background:var(--color-primary);color:#fff}
 .row-actions{display:flex;gap:4px;flex-wrap:wrap} .pagination{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px}
+.rate-filter{width:130px;padding:6px 10px;font-size:12px}
+.rate-hero{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;background:var(--color-surface-raised);border:1px solid var(--color-border);border-radius:var(--radius-md)}
+.rate-chip{display:inline-flex;align-items:baseline;gap:6px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:4px 10px}
+.rate-chip-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-secondary)} .rate-value{font-size:18px;font-weight:700}
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);display:grid;place-items:center;z-index:50;padding:16px} .modal{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;min-width:360px;max-width:480px;width:100%;display:flex;flex-direction:column;gap:12px}
 .modal h3{font-size:var(--text-h2)} .modal form{display:flex;flex-direction:column;gap:12px} .checkbox label{display:flex;gap:8px;align-items:center;font-size:var(--text-h4)} .modal-actions{display:flex;justify-content:flex-end;gap:8px}
 </style>

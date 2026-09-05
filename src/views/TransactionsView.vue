@@ -30,16 +30,17 @@
       <p v-if="!loading && transactions.length===0 && !error" class="empty">No transactions.</p>
       <div v-if="transactions.length" class="table-wrap">
         <table class="table">
-          <thead><tr><th>Trn ID</th><th>User</th><th>Amount</th><th>Type</th><th>Note</th><th>Balance After</th><th>Status</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Trn ID</th><th>Ref</th><th>User</th><th>Amount</th><th>Type</th><th>Note</th><th>Balance After</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody>
             <tr v-for="t in transactions" :key="t.trnId">
               <td class="mono">{{ t.trnId }}<br /><span class="muted">{{ fmt(t.createdAt) }}</span></td>
-              <td>{{ t.userid }}</td><td>{{ t.amount }}</td><td><span class="badge">{{ t.type }}</span></td><td>{{ t.note }}<br /><span class="muted">{{ t.remark }}</span></td>
-              <td>{{ t.balanceAfter }}</td><td><span :class="['badge', statusClass(t.status)]">{{ t.status }}</span></td>
+              <td class="mono">{{ t.referenceId || '—' }}</td>
+              <td>{{ t.userid }}</td><td class="mono">{{ t.amount }}</td><td><span class="badge">{{ t.type }}</span></td><td>{{ t.note }}<br /><span class="muted">{{ t.remark }}</span></td>
+              <td class="mono">{{ t.balanceAfter }}</td><td><span :class="['badge', statusClass(t.status)]">{{ t.status }}</span></td>
               <td>
                 <div class="row-actions">
-                  <button v-if="t.status==='pending' && t.type==='credit'" class="btn btn-sm action-btn action-btn--success" type="button" :disabled="acting===t.trnId" @click="approve(t)">Approve</button>
-                  <button v-if="t.status==='pending'" class="btn btn-sm action-btn action-btn--danger" type="button" :disabled="acting===t.trnId" @click="reject(t)">Reject</button>
+                  <button v-if="t.status==='pending' && t.type==='credit' && t.referenceId" class="btn btn-sm action-btn action-btn--success" type="button" :disabled="acting===t.trnId" @click="approve(t)">Approve</button>
+                  <button v-if="t.status==='pending' && t.referenceId" class="btn btn-sm action-btn action-btn--danger" type="button" :disabled="acting===t.trnId" @click="reject(t)">Reject</button>
                   <button v-if="t.status==='success' && t.type==='credit'" class="btn btn-sm action-btn" type="button" :disabled="acting===t.trnId" @click="reverse(t)">Reverse</button>
                 </div>
               </td>
@@ -85,14 +86,24 @@ async function fetchTransactions(p=1){
 function reset(){ filters.userid=''; filters.trnId=''; filters.status=''; filters.type=''; filters.note=''; filters.network=''; fetchTransactions(1) }
 
 async function approve(t){
+  const payinId = t.referenceId
+  if (!payinId) return toast.error('No linked payin reference for this transaction')
   const txHash = prompt('Optional txHash (leave empty to skip):') || undefined
+  const rate = prompt('Optional exchangeRate override (USDT→INR, empty = configured rate):', '')
+  const rateNum = rate && rate.trim() ? Number(rate.trim()) : undefined
+  if (rate && rate.trim() && (!isFinite(rateNum) || rateNum <= 0)) return toast.error('Invalid exchange rate')
+  const payload = {}
+  if (txHash) payload.txHash = txHash
+  if (rateNum !== undefined) payload.exchangeRate = rateNum
   acting.value = t.trnId
-  try{ const data = await approveTransaction(t.trnId, txHash ? { txHash } : {}); toast.success(data.msg || 'Approved'); fetchTransactions(page.value) } catch(e){ toast.error(e.message) } finally{ acting.value='' }
+  try{ const data = await approveTransaction(payinId, payload); toast.success(data.msg || 'Approved'); fetchTransactions(page.value) } catch(e){ toast.error(e.message) } finally{ acting.value='' }
 }
 async function reject(t){
+  const payinId = t.referenceId
+  if (!payinId) return toast.error('No linked payin reference for this transaction')
   const remark = prompt('Reject remark (optional):') || undefined
   acting.value = t.trnId
-  try{ const data = await rejectTransaction(t.trnId, remark ? { remark } : {}); toast.success(data.msg || 'Rejected'); fetchTransactions(page.value) } catch(e){ toast.error(e.message) } finally{ acting.value='' }
+  try{ const data = await rejectTransaction(payinId, remark ? { remark } : {}); toast.success(data.msg || 'Rejected'); fetchTransactions(page.value) } catch(e){ toast.error(e.message) } finally{ acting.value='' }
 }
 async function reverse(t){
   if (!confirm(`Reverse ${t.trnId} for ${t.amount}? Creates debit reversal.`)) return

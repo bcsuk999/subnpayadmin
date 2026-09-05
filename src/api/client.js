@@ -167,11 +167,11 @@ export function getAdminTransactions(params = {}) {
 export function getAdminTransaction(trnId) {
   return request(`/admin/transactions/${trnId}`, { method: 'GET' })
 }
-export function approveTransaction(trnId, data = {}) {
-  return request(`/admin/transactions/${trnId}/approve`, { method: 'POST', body: JSON.stringify(data) })
+export function approveTransaction(payinId, data = {}) {
+  return request(`/admin/payins/${payinId}/approve`, { method: 'POST', body: JSON.stringify(data) })
 }
-export function rejectTransaction(trnId, data = {}) {
-  return request(`/admin/transactions/${trnId}/reject`, { method: 'POST', body: JSON.stringify(data) })
+export function rejectTransaction(payinId, data = {}) {
+  return request(`/admin/payins/${payinId}/reject`, { method: 'POST', body: JSON.stringify(data) })
 }
 export function reverseTransaction(trnId, data = {}) {
   return request(`/admin/transactions/${trnId}/reverse`, { method: 'POST', body: JSON.stringify(data) })

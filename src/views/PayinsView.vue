@@ -14,7 +14,7 @@
       <div class="filter-row">
         <div class="field"><label class="field-label">User ID</label><input v-model="filters.userid" class="input" placeholder="3056579" @keyup.enter="fetchPayins(1)" /></div>
         <div class="field"><label class="field-label">Status</label><select v-model="filters.status" class="input"><option value="">All</option><option value="pending">pending</option><option value="success">success</option><option value="failed">failed</option><option value="reversed">reversed</option></select></div>
-        <div class="field"><label class="field-label">Network</label><select v-model="filters.network" class="input"><option value="">All</option><option value="TRC20">TRC20</option><option value="BEP20">BEP20</option></select></div>
+        <div class="field"><label class="field-label">Network</label><select v-model="filters.network" class="input"><option value="">All</option><option value="TRC20">TRC20</option><option value="BEP20">BEP20</option><option value="SPAY">SPAY</option></select></div>
         <div class="filter-actions"><button class="btn btn-primary" type="button" :disabled="loading" @click="fetchPayins(1)">{{ loading ? 'Loading…' : 'Search' }}</button><button class="btn btn-ghost" type="button" @click="reset">Reset</button></div>
       </div>
       <div class="filter-row" style="margin-top:6px">
@@ -29,21 +29,25 @@
       <p v-if="!loading && payins.length===0 && !error" class="empty">No payins. Try different filters.</p>
       <div v-if="payins.length" class="table-wrap">
         <table class="table">
-          <thead><tr><th>Payin ID</th><th>User</th><th>Amount</th><th>Network</th><th>Address</th><th>Trn ID</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Payin ID</th><th>User</th><th>Amount</th><th>Received</th><th>Network</th><th>Address</th><th>Trn ID</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
           <tbody>
             <tr v-for="p in payins" :key="p.payinId || p._id">
-              <td class="mono">{{ p.payinId || p._id }}</td><td>{{ p.userid }}</td><td>{{ p.amount }}</td><td><span class="badge">{{ p.network }}</span></td>
+              <td class="mono">{{ p.payinId || p._id }}</td><td>{{ p.userid }}</td><td class="mono">{{ p.amount }}</td>
+              <td class="mono">
+                {{ p.receivedAmount ?? '—' }}
+                <span v-if="p.bonusAmount"><br /><span class="muted">bonus {{ p.bonusAmount }}</span></span>
+              </td>
+              <td><span class="badge">{{ p.network }}</span></td>
               <td class="mono break">{{ p.address }}</td><td class="mono">{{ p.trnId || '—' }}</td><td><span :class="['badge', statusClass(p.status)]">{{ p.status }}</span></td><td class="muted">{{ fmt(p.createdAt) }}</td>
               <td>
                 <div class="row-actions">
                   <button class="btn btn-sm action-btn" type="button" @click="onCopy(p.payinId || p._id, 'Payin ID')">Copy ID</button>
                   <button v-if="p.trnId" class="btn btn-sm action-btn" type="button" @click="onCopy(p.trnId, 'Trn ID')">Copy Trn</button>
-                  <template v-if="p.trnId">
-                    <button v-if="p.status==='pending'" class="btn btn-sm action-btn action-btn--success" type="button" :disabled="acting===p.payinId" @click="onApprove(p)">{{ acting===p.payinId ? 'Approving…' : 'Approve' }}</button>
-                    <button v-if="p.status==='pending'" class="btn btn-sm action-btn action-btn--danger" type="button" :disabled="acting===p.payinId" @click="onReject(p)">{{ acting===p.payinId ? 'Rejecting…' : 'Reject' }}</button>
-                    <button v-if="p.status==='success'" class="btn btn-sm action-btn" type="button" :disabled="acting===p.payinId" @click="onReverse(p)">{{ acting===p.payinId ? 'Reversing…' : 'Reverse' }}</button>
+                  <template v-if="p.status==='pending'">
+                    <button class="btn btn-sm action-btn action-btn--success" type="button" :disabled="acting===p.payinId" @click="onApprove(p)">{{ acting===p.payinId ? 'Approving…' : 'Approve' }}</button>
+                    <button class="btn btn-sm action-btn action-btn--danger" type="button" :disabled="acting===p.payinId" @click="onReject(p)">{{ acting===p.payinId ? 'Rejecting…' : 'Reject' }}</button>
                   </template>
-                  <span v-else-if="p.status==='pending'" class="muted">no txn</span>
+                  <button v-if="p.status==='success' && p.trnId" class="btn btn-sm action-btn" type="button" :disabled="acting===p.payinId" @click="onReverse(p)">{{ acting===p.payinId ? 'Reversing…' : 'Reverse' }}</button>
                 </div>
               </td>
             </tr>
@@ -85,16 +89,32 @@ function onView(p){
   toast.info(`Payin ${p.payinId||p._id} • ${p.amount} ${p.network} • ${p.status} • Trn: ${trn}`)
 }
 async function onApprove(p){
-  if (!p.trnId) return toast.error('No linked transaction (trnId) for this payin')
+  const payinId = p.payinId || p._id
   const txHash = prompt('Optional txHash (leave empty to skip):') || undefined
-  acting.value = p.payinId
-  try{ const data = await approveTransaction(p.trnId, txHash ? { txHash } : {}); toast.success(data.msg || 'Payin approved'); p.status='success'; await fetchPayins(page.value) } catch(e){ toast.error(e.message) } finally{ acting.value='' }
+  const rate = prompt('Optional exchangeRate override (USDT→INR, empty = configured rate):', '')
+  const rateNum = rate && rate.trim() ? Number(rate.trim()) : undefined
+  if (rate && rate.trim() && (!isFinite(rateNum) || rateNum <= 0)) return toast.error('Invalid exchange rate')
+  const payload = {}
+  if (txHash) payload.txHash = txHash
+  if (rateNum !== undefined) payload.exchangeRate = rateNum
+  acting.value = payinId
+  try{
+    const data = await approveTransaction(payinId, payload)
+    toast.success(data.msg || 'Payin approved')
+    if (data.transaction) p.status='success'
+    await fetchPayins(page.value)
+  } catch(e){ toast.error(e.message || 'Approve failed') } finally{ acting.value='' }
 }
 async function onReject(p){
-  if (!p.trnId) return toast.error('No linked transaction for this payin')
+  const payinId = p.payinId || p._id
   const remark = prompt('Reject remark (optional):') || undefined
-  acting.value = p.payinId
-  try{ const data = await rejectTransaction(p.trnId, remark ? { remark } : {}); toast.success(data.msg || 'Payin rejected'); p.status='failed'; await fetchPayins(page.value) } catch(e){ toast.error(e.message) } finally{ acting.value='' }
+  acting.value = payinId
+  try{
+    const data = await rejectTransaction(payinId, remark ? { remark } : {})
+    toast.success(data.msg || 'Payin rejected')
+    if (data.payin) p.status='failed'
+    await fetchPayins(page.value)
+  } catch(e){ toast.error(e.message || 'Reject failed') } finally{ acting.value='' }
 }
 async function onReverse(p){
   if (!p.trnId) return toast.error('No linked transaction')
