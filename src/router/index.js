@@ -5,6 +5,7 @@ import DashboardView from '../views/DashboardView.vue'
 import UsersView from '../views/UsersView.vue'
 import BanksView from '../views/BanksView.vue'
 import PayinConfigView from '../views/PayinConfigView.vue'
+import AgentsView from '../views/AgentsView.vue'
 import PayinsView from '../views/PayinsView.vue'
 import TransactionsView from '../views/TransactionsView.vue'
 import DepositsView from '../views/DepositsView.vue'
@@ -25,6 +26,7 @@ const router = createRouter({
         { path: 'users', name: 'users', component: UsersView },
         { path: 'banks', name: 'banks', component: BanksView },
         { path: 'payin-config', name: 'payin-config', component: PayinConfigView },
+        { path: 'agents', name: 'agents', component: AgentsView },
         { path: 'deposit-addresses', redirect: '/payin-config' },
         { path: 'payins', name: 'payins', component: PayinsView },
         { path: 'transactions', name: 'transactions', component: TransactionsView },
