@@ -144,6 +144,27 @@ export function updateBonusConfig(data) {
   return request('/admin/bonus-config', { method: 'POST', body: JSON.stringify(data) })
 }
 
+// —— Commission / Referrals (admin) ——
+export function getCommissionConfig() {
+  return request('/admin/commission-config', { method: 'GET' })
+}
+export function updateCommissionConfig(data) {
+  return request('/admin/commission-config', { method: 'POST', body: JSON.stringify(data) })
+}
+export function getReferralStats() {
+  return request('/admin/referral-stats', { method: 'GET' })
+}
+export function getAdminCommissions(params = {}) {
+  const qs = new URLSearchParams()
+  if (params.userid) qs.set('userid', String(params.userid))
+  if (params.status) qs.set('status', params.status)
+  if (params.currency) qs.set('currency', params.currency)
+  if (params.page) qs.set('page', String(params.page))
+  if (params.limit) qs.set('limit', String(params.limit))
+  const suffix = qs.toString() ? `?${qs.toString()}` : ''
+  return request(`/admin/commissions${suffix}`, { method: 'GET' })
+}
+
 // —— Payins / Transactions (admin) ——
 export function getAdminPayins(params = {}) {
   const qs = new URLSearchParams()
