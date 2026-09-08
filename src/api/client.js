@@ -114,7 +114,6 @@ export function seedDepositAddresses() {
 export function getExchangeRates(params = {}) {
   const qs = new URLSearchParams()
   if (params.currency) qs.set('currency', params.currency)
-  if (params.network) qs.set('network', params.network)
   if (params.isActive !== undefined && params.isActive !== '') qs.set('isActive', String(params.isActive))
   if (params.page) qs.set('page', String(params.page))
   if (params.limit) qs.set('limit', String(params.limit))
@@ -124,7 +123,6 @@ export function getExchangeRates(params = {}) {
 export function getCurrentExchangeRate(params = {}) {
   const qs = new URLSearchParams()
   if (params.currency) qs.set('currency', params.currency)
-  if (params.network) qs.set('network', params.network)
   const suffix = qs.toString() ? `?${qs.toString()}` : ''
   return request(`/admin/exchange-rates/current${suffix}`, { method: 'GET' })
 }
@@ -136,6 +134,14 @@ export function updateExchangeRate(id, data) {
 }
 export function deleteExchangeRate(id) {
   return request(`/admin/exchange-rates/${id}`, { method: 'DELETE' })
+}
+
+// —— Bonus Config (admin) ——
+export function getBonusConfig() {
+  return request('/admin/bonus-config', { method: 'GET' })
+}
+export function updateBonusConfig(data) {
+  return request('/admin/bonus-config', { method: 'POST', body: JSON.stringify(data) })
 }
 
 // —— Payins / Transactions (admin) ——
