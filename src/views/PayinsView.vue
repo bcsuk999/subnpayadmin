@@ -91,12 +91,10 @@ function onView(p){
 async function onApprove(p){
   const payinId = p.payinId || p._id
   const txHash = prompt('Optional txHash (leave empty to skip):') || undefined
-  const rate = prompt('Optional exchangeRate override (USDT→INR, empty = configured rate):', '')
-  const rateNum = rate && rate.trim() ? Number(rate.trim()) : undefined
-  if (rate && rate.trim() && (!isFinite(rateNum) || rateNum <= 0)) return toast.error('Invalid exchange rate')
+  const remark = prompt('Optional remark (leave empty to skip):') || undefined
   const payload = {}
   if (txHash) payload.txHash = txHash
-  if (rateNum !== undefined) payload.exchangeRate = rateNum
+  if (remark) payload.remark = remark
   acting.value = payinId
   try{
     const data = await approveTransaction(payinId, payload)

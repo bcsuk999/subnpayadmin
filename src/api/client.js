@@ -53,6 +53,13 @@ export function updateUserStatus(userid, status, remark) {
   })
 }
 
+export function resetUserPassword(userid, newPassword) {
+  return request(`/admin/users/${userid}/reset-password`, {
+    method: 'POST',
+    body: JSON.stringify({ newPassword }),
+  })
+}
+
 export function getAdminUsers(params = {}) {
   const qs = new URLSearchParams()
   if (params.uid) qs.set('uid', String(params.uid))

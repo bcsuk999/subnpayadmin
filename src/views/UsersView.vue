@@ -40,7 +40,10 @@
               <td><span :class="['badge', statusClass(u.status)]">{{ u.status }}</span></td>
               <td class="muted remark">{{ u.remark || '—' }}</td>
               <td>
-                <button class="btn btn-sm action-btn" type="button" :disabled="dialog.open && dialog.uid===u.uid && dialog.saving" @click="openDialog(u)">Change Status</button>
+                <div class="row-actions">
+                  <button class="btn btn-sm action-btn" type="button" :disabled="dialog.open && dialog.uid===u.uid && dialog.saving" @click="openDialog(u)">Change Status</button>
+                  <button class="btn btn-sm action-btn" type="button" :disabled="pwdDialog.open && pwdDialog.uid===u.uid && pwdDialog.saving" @click="openPwdDialog(u)">Reset Password</button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -79,12 +82,31 @@
         </div>
       </div>
     </div>
+
+    <div v-if="pwdDialog.open" class="modal-overlay" @click.self="closePwdDialog">
+      <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-head">
+          <h3>Reset Password — UID {{ pwdDialog.uid }}</h3>
+          <button class="btn btn-ghost btn-sm" type="button" aria-label="Close" @click="closePwdDialog">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="field">
+            <label class="field-label">New Password</label>
+            <input v-model="pwdDialog.newPassword" class="input" type="password" placeholder="new12345" @keyup.enter="confirmPwdDialog" />
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" type="button" @click="closePwdDialog">Cancel</button>
+          <button class="btn btn-primary" type="button" :disabled="pwdDialog.saving" @click="confirmPwdDialog">{{ pwdDialog.saving ? 'Resetting…' : 'Reset' }}</button>
+        </div>
+      </div>
+    </div>
   </section>
 </template>
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
-import { getAdminUsers, updateUserStatus } from '../api/client.js'
+import { getAdminUsers, updateUserStatus, resetUserPassword } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
 
 const toast = useToast()
@@ -97,12 +119,24 @@ const totalPages = ref(1)
 const loading = ref(false)
 const error = ref('')
 const dialog = reactive({ open:false, uid:'', status:'active', remark:'', saving:false })
+const pwdDialog = reactive({ open:false, uid:'', newPassword:'', saving:false })
 
 function statusClass(s){ return s === 'active' ? 'badge--success' : s === 'ban' ? 'badge--danger' : s === 'suspend' ? 'badge--warning' : 'badge--warning' }
 function formatNum(n){ try { return Number(n || 0).toLocaleString() } catch { return n } }
 function fmt(d){ try{ return new Date(d).toLocaleDateString() } catch{ return d || '—' } }
 function openDialog(u){ dialog.open=true; dialog.uid=u.uid; dialog.status='active'; dialog.remark=''; dialog.saving=false }
 function closeDialog(){ dialog.open=false }
+function openPwdDialog(u){ pwdDialog.open=true; pwdDialog.uid=u.uid; pwdDialog.newPassword=''; pwdDialog.saving=false }
+function closePwdDialog(){ pwdDialog.open=false }
+async function confirmPwdDialog(){
+  if (!pwdDialog.newPassword.trim()) return toast.error('New password is required')
+  pwdDialog.saving=true
+  try {
+    const data = await resetUserPassword(pwdDialog.uid, pwdDialog.newPassword.trim())
+    toast.success(data.msg || `Password reset for user ${pwdDialog.uid}`)
+    closePwdDialog()
+  } catch (e) { toast.error(e.message || 'Failed to reset password') } finally { pwdDialog.saving=false }
+}
 async function confirmDialog(){
   if (!dialog.remark.trim()) return toast.error('A reason is required')
   dialog.saving=true
