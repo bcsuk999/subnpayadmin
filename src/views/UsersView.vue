@@ -49,11 +49,7 @@
           </tbody>
         </table>
       </div>
-      <div v-if="totalPages > 1" class="pagination">
-        <button class="btn btn-ghost btn-sm" type="button" :disabled="page<=1 || loading" @click="fetchUsers(page-1)">Prev</button>
-        <span class="muted">Page {{ page }} of {{ totalPages }}</span>
-        <button class="btn btn-ghost btn-sm" type="button" :disabled="page>=totalPages || loading" @click="fetchUsers(page+1)">Next</button>
-      </div>
+      <Pagination :page="page" :total-pages="totalPages" :disabled="loading" @change="fetchUsers" />
     </div>
 
     <div v-if="dialog.open" class="modal-overlay" @click.self="closeDialog">
@@ -109,6 +105,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { getAdminUsers, updateUserStatus, resetUserPassword } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
 import { fmtDateTime as fmt } from '../utils/format.js'
+import Pagination from '../components/Pagination.vue'
 
 const toast = useToast()
 const filters = reactive({ uid:'', mobile:'', sortBalance:'', from:'', to:'' })

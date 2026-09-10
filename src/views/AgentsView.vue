@@ -106,11 +106,7 @@
             </tbody>
           </table>
         </div>
-        <div v-if="commTotalPages > 1" class="pagination">
-          <button class="btn btn-ghost btn-sm" type="button" :disabled="commPage <= 1 || commLoading" @click="fetchCommissions(commPage - 1)">Prev</button>
-          <span class="muted">Page {{ commPage }} of {{ commTotalPages }}</span>
-          <button class="btn btn-ghost btn-sm" type="button" :disabled="commPage >= commTotalPages || commLoading" @click="fetchCommissions(commPage + 1)">Next</button>
-        </div>
+        <Pagination :page="commPage" :total-pages="commTotalPages" :disabled="commLoading" @change="fetchCommissions" />
       </div>
     </div>
   </section>
@@ -123,6 +119,7 @@ import {
 } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
 import { fmtDateTime as fmtDate } from '../utils/format.js'
+import Pagination from '../components/Pagination.vue'
 
 const toast = useToast()
 const subTab = ref('config')

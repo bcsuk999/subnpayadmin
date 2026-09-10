@@ -88,11 +88,7 @@
             </tbody>
           </table>
         </div>
-        <div v-if="payoutTotalPages > 1" class="pagination">
-          <button class="btn btn-ghost btn-sm" type="button" :disabled="payoutPage<=1 || payoutsLoading" @click="fetchPayouts(payoutPage-1)">Prev</button>
-          <span class="muted">Page {{ payoutPage }} of {{ payoutTotalPages }}</span>
-          <button class="btn btn-ghost btn-sm" type="button" :disabled="payoutPage>=payoutTotalPages || payoutsLoading" @click="fetchPayouts(payoutPage+1)">Next</button>
-        </div>
+        <Pagination :page="payoutPage" :total-pages="payoutTotalPages" :disabled="payoutsLoading" @change="fetchPayouts" />
       </div>
     </div>
 
@@ -186,6 +182,7 @@ import { onMounted, reactive, ref, computed } from 'vue'
 import { getPayoutUsers, createPayout, getAdminPayouts, approvePayout, rejectPayout } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
 import { fmtDateTime as fmt } from '../utils/format.js'
+import Pagination from '../components/Pagination.vue'
 
 const toast = useToast()
 

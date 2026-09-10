@@ -63,11 +63,7 @@
           </tbody>
         </table>
       </div>
-      <div v-if="totalPages > 1" class="pagination">
-        <button class="btn btn-ghost btn-sm" type="button" :disabled="page<=1 || loading" @click="fetchPayins(page-1)">Prev</button>
-        <span class="muted">Page {{ page }} of {{ totalPages }}</span>
-        <button class="btn btn-ghost btn-sm" type="button" :disabled="page>=totalPages || loading" @click="fetchPayins(page+1)">Next</button>
-      </div>
+      <Pagination :page="page" :total-pages="totalPages" :disabled="loading" @change="fetchPayins" />
     </div>
   </section>
 </template>
@@ -77,6 +73,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { getAdminPayins, approveTransaction, rejectTransaction, reverseTransaction } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
 import { fmtDateTime as fmt } from '../utils/format.js'
+import Pagination from '../components/Pagination.vue'
 
 const toast = useToast()
 const filters = reactive({ userid:'', status:'', network:'', payinId:'' })

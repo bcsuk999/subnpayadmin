@@ -115,11 +115,7 @@
             </tbody>
           </table>
         </div>
-        <div v-if="totalPages > 1" class="pagination">
-          <button class="btn btn-ghost btn-sm" type="button" :disabled="page <= 1 || loading" @click="fetchAddresses(page - 1)">Prev</button>
-          <span class="muted">Page {{ page }} of {{ totalPages }}</span>
-          <button class="btn btn-ghost btn-sm" type="button" :disabled="page >= totalPages || loading" @click="fetchAddresses(page + 1)">Next</button>
-        </div>
+        <Pagination :page="page" :total-pages="totalPages" :disabled="loading" @change="fetchAddresses" />
       </div>
     </div>
 
@@ -198,6 +194,7 @@ import {
 } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
 import { fmtDateTime as fmtDate } from '../utils/format.js'
+import Pagination from '../components/Pagination.vue'
 
 const toast = useToast()
 const activeTab = ref('usdt')

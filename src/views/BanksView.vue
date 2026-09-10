@@ -83,11 +83,7 @@
         </table>
       </div>
 
-      <div v-if="totalPages > 1" class="pagination">
-        <button class="btn btn-ghost btn-sm" type="button" :disabled="page <= 1 || loading" @click="goPage(page - 1)">Prev</button>
-        <span class="muted">Page {{ page }} of {{ totalPages }}</span>
-        <button class="btn btn-ghost btn-sm" type="button" :disabled="page >= totalPages || loading" @click="goPage(page + 1)">Next</button>
-      </div>
+      <Pagination :page="page" :total-pages="totalPages" :disabled="loading" @change="goPage" />
     </div>
   </section>
 </template>
@@ -96,6 +92,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { getAdminBanks, updateAdminBankStatus } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
+import Pagination from '../components/Pagination.vue'
 
 const toast = useToast()
 
