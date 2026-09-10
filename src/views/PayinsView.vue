@@ -28,7 +28,7 @@
       <p v-if="!loading && payins.length===0 && !error" class="empty">No payins. Try different filters.</p>
       <div v-if="payins.length" class="table-wrap">
         <table class="table">
-          <thead><tr><th>User ID</th><th>Payin ID</th><th>Network</th><th>Address / Deep Link</th><th>Amount</th><th>Rate / Bonus</th><th>Recv Amt</th><th>UTR</th><th>Status</th><th>Created</th><th>Updated</th><th>Actions</th></tr></thead>
+          <thead><tr><th>User ID</th><th>Payin ID</th><th>Network</th><th>Address / Deep Link</th><th>Amount</th><th>Rate / Bonus</th><th>Recv Amt</th><th>UTR</th><th>Status</th><th>Created</th><th>Updated</th><th>Remark</th><th>Actions</th></tr></thead>
           <tbody>
             <tr v-for="p in payins" :key="p.payinId || p._id">
               <td>{{ p.userid }}</td>
@@ -47,6 +47,7 @@
                 {{ p.status }}
               </span></td>
               <td class="muted">{{ fmt(p.createdAt) }}</td><td class="muted">{{ fmt(p.updatedAt) }}</td>
+              <td class="copy-cell" :title="p.remark || ''" @click="onCopy(p.remark, 'Remark')">{{ p.remark || '—' }}</td>
               <td>
                 <div class="row-actions">
                   <button class="btn btn-sm action-btn" type="button" @click="onCopy(p.payinId || p._id, 'Payin ID')">Copy ID</button>
@@ -147,10 +148,10 @@ onMounted(()=>fetchPayins(1))
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px} .card-sub{color:var(--color-text-secondary);font-size:var(--text-body-l)}
 .filters .filter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:end} .filters .field{flex:1;min-width:112px;gap:4px} .filters .field-label{font-size:11px} .filters .input{padding:6px 10px;font-size:12px} .filters .btn{padding:6px 10px;font-size:12px} .filter-actions{display:flex;gap:6px}
 .error{color:var(--color-danger);font-size:var(--text-h4);margin-bottom:8px} .empty{color:var(--color-text-secondary);font-size:var(--text-h4)}
-.table-wrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;border:1px solid var(--color-border);border-radius:var(--radius-md);scrollbar-width:thin;scrollbar-color:var(--color-border) transparent} .table-wrap::-webkit-scrollbar{height:8px} .table-wrap::-webkit-scrollbar-thumb{background:var(--color-border);border-radius:4px} .table-wrap::-webkit-scrollbar-track{background:transparent} .table{width:100%;border-collapse:collapse;font-size:var(--text-h4);min-width:1100px}
+.table-wrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;border:1px solid var(--color-border);border-radius:var(--radius-md);scrollbar-width:thin;scrollbar-color:var(--color-border) transparent} .table-wrap::-webkit-scrollbar{height:8px} .table-wrap::-webkit-scrollbar-thumb{background:var(--color-border);border-radius:4px} .table-wrap::-webkit-scrollbar-track{background:transparent} .table{width:100%;border-collapse:collapse;font-size:var(--text-h4);min-width:1250px}
 .table th,.table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--color-border);vertical-align:top} .table th{background:var(--color-surface-raised);font-weight:600}
 .mono{font-family:ui-monospace,monospace;font-size:12px} .break{word-break:break-all} .muted{color:var(--color-text-secondary);font-size:11px}
-.copy-cell{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer} .copy-cell:hover{color:var(--color-primary)}
+.copy-cell{max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer} .copy-cell:hover{color:var(--color-primary)}
 .status-pill{display:inline-flex;align-items:center;gap:6px;text-transform:capitalize}
 .status-ico{flex-shrink:0;display:inline-block} .status-ico--success{color:var(--color-success)} .status-ico--warning{color:var(--color-warning)} .status-ico--danger{color:var(--color-danger)} .status-ico--reversed{color:var(--color-primary)}
 .badge{display:inline-flex;padding:4px 9px;font-size:12px;font-weight:600;border-radius:3px;white-space:nowrap} .badge--success{background:var(--color-success);color:#fff} .badge--warning{background:var(--color-warning);color:#fff} .badge--danger{background:var(--color-danger);color:#fff}
