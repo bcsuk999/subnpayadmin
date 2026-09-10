@@ -28,17 +28,24 @@
       <p v-if="!loading && payins.length===0 && !error" class="empty">No payins. Try different filters.</p>
       <div v-if="payins.length" class="table-wrap">
         <table class="table">
-          <thead><tr><th>User ID</th><th>Payin ID</th><th>Network</th><th>Amount</th><th>Rate / Bonus</th><th>Recv Amt</th><th>UTR</th><th>Status</th><th>Created</th><th>Updated</th><th>Actions</th></tr></thead>
+          <thead><tr><th>User ID</th><th>Payin ID</th><th>Network</th><th>Address / Deep Link</th><th>Amount</th><th>Rate / Bonus</th><th>Recv Amt</th><th>UTR</th><th>Status</th><th>Created</th><th>Updated</th><th>Actions</th></tr></thead>
           <tbody>
             <tr v-for="p in payins" :key="p.payinId || p._id">
               <td>{{ p.userid }}</td>
               <td class="mono">{{ p.payinId || p._id }}</td>
               <td><span class="badge">{{ p.network }}</span></td>
+              <td class="mono copy-cell" :title="p.address || p.deepLink || ''" @click="onCopy(p.address || p.deepLink, p.address ? 'Address' : 'Deep Link')">{{ p.address || p.deepLink || '—' }}</td>
               <td class="mono">{{ p.amount }} <span class="muted">{{ p.currency }}</span></td>
               <td class="mono copy-cell" :title="`rate ${p.exchangeRate ?? '—'}, bonus ${p.bonus ?? 0}`" @click="onCopy(`rate ${p.exchangeRate ?? '—'}, bonus ${p.bonus ?? 0}`, 'Rate / Bonus')">₹{{ p.exchangeRate ?? '—' }} <span class="muted">+{{ p.bonus ?? 0 }}</span></td>
               <td class="mono">{{ p.receivedAmount ?? '—' }}</td>
               <td class="mono copy-cell" :title="p.txHash || ''" @click="onCopy(p.txHash, 'UTR')">{{ p.txHash || '—' }}</td>
-              <td><span class="status-pill"><i :class="['status-dot', statusDotClass(p.status)]"></i>{{ p.status }}</span></td>
+              <td><span class="status-pill">
+                <svg v-if="p.status==='success'" class="status-ico status-ico--success" width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <svg v-else-if="p.status==='pending'" class="status-ico status-ico--warning" width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.2"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <svg v-else-if="p.status==='reversed'" class="status-ico status-ico--reversed" width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M4 10h13m0 0l-4-4m4 4l-4 4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 14H7m0 0l4-4m-4 4l4 4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <svg v-else class="status-ico status-ico--danger" width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>
+                {{ p.status }}
+              </span></td>
               <td class="muted">{{ fmt(p.createdAt) }}</td><td class="muted">{{ fmt(p.updatedAt) }}</td>
               <td>
                 <div class="row-actions">
@@ -81,7 +88,6 @@ const loading = ref(false)
 const error = ref('')
 const acting = ref('')
 
-function statusDotClass(s){ return s==='success' ? 'status-dot--success' : s==='pending' ? 'status-dot--warning' : s==='reversed' ? 'status-dot--reversed' : 'status-dot--danger' }
 async function onCopy(text, label){
   if (!text) return
   try{ await navigator.clipboard.writeText(String(text)); toast.success(`${label} copied`) } catch{ toast.error('Copy failed') }
@@ -146,7 +152,7 @@ onMounted(()=>fetchPayins(1))
 .mono{font-family:ui-monospace,monospace;font-size:12px} .break{word-break:break-all} .muted{color:var(--color-text-secondary);font-size:11px}
 .copy-cell{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer} .copy-cell:hover{color:var(--color-primary)}
 .status-pill{display:inline-flex;align-items:center;gap:6px;text-transform:capitalize}
-.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--color-text-secondary)} .status-dot--success{background:var(--color-success)} .status-dot--warning{background:var(--color-warning)} .status-dot--danger{background:var(--color-danger)} .status-dot--reversed{background:var(--color-primary)}
+.status-ico{flex-shrink:0;display:inline-block} .status-ico--success{color:var(--color-success)} .status-ico--warning{color:var(--color-warning)} .status-ico--danger{color:var(--color-danger)} .status-ico--reversed{color:var(--color-primary)}
 .badge{display:inline-flex;padding:4px 9px;font-size:12px;font-weight:600;border-radius:3px;white-space:nowrap} .badge--success{background:var(--color-success);color:#fff} .badge--warning{background:var(--color-warning);color:#fff} .badge--danger{background:var(--color-danger);color:#fff}
 .row-actions{display:flex;gap:4px;flex-wrap:nowrap;white-space:nowrap} .pagination{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px}
 </style>
