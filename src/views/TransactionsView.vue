@@ -61,6 +61,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { getAdminTransactions, approveTransaction, rejectTransaction, reverseTransaction } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
+import { fmtDateTime as fmt } from '../utils/format.js'
 
 const toast = useToast()
 const filters = reactive({ userid:'', trnId:'', status:'', type:'', note:'', network:'' })
@@ -74,7 +75,6 @@ const error = ref('')
 const acting = ref('')
 
 function statusClass(s){ return s==='success' ? 'badge--success' : s==='pending' ? 'badge--warning' : 'badge--danger' }
-function fmt(d){ try{ return new Date(d).toLocaleString() } catch{ return d } }
 
 async function fetchTransactions(p=1){
   loading.value=true; error.value=''; page.value=p

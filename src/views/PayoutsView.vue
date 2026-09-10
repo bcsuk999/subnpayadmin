@@ -185,6 +185,7 @@
 import { onMounted, reactive, ref, computed } from 'vue'
 import { getPayoutUsers, createPayout, getAdminPayouts, approvePayout, rejectPayout } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
+import { fmtDateTime as fmt } from '../utils/format.js'
 
 const toast = useToast()
 
@@ -212,7 +213,6 @@ const approveDialog = reactive({ open: false, payoutId: '', remark: '', saving: 
 const rejectDialog = reactive({ open: false, payoutId: '', remark: '', saving: false })
 
 function formatNum(n) { try { return Number(n || 0).toLocaleString() } catch { return n } }
-function fmt(d) { try { return new Date(d).toLocaleString() } catch { return d || '—' } }
 function payoutStatusClass(s) { return s === 'success' ? 'badge--success' : s === 'pending' ? 'badge--warning' : 'badge--danger' }
 
 async function fetchPayoutUsers() {

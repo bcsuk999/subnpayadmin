@@ -179,7 +179,6 @@ export function getAdminPayins(params = {}) {
   if (params.status) qs.set('status', params.status)
   if (params.network) qs.set('network', params.network)
   if (params.payinId) qs.set('payinId', params.payinId)
-  if (params.trnId) qs.set('trnId', params.trnId)
   if (params.page) qs.set('page', String(params.page))
   if (params.limit) qs.set('limit', String(params.limit))
   const suffix = qs.toString() ? `?${qs.toString()}` : ''

@@ -18,8 +18,7 @@
         <div class="filter-actions"><button class="btn btn-primary" type="button" :disabled="loading" @click="fetchPayins(1)">{{ loading ? 'Loading…' : 'Search' }}</button><button class="btn btn-ghost" type="button" @click="reset">Reset</button></div>
       </div>
       <div class="filter-row" style="margin-top:6px">
-        <div class="field"><label class="field-label">Payin ID</label><input v-model="filters.payinId" class="input" placeholder="PAY..." @keyup.enter="fetchPayins(1)" /></div>
-        <div class="field"><label class="field-label">Trn ID</label><input v-model="filters.trnId" class="input" placeholder="TXN..." @keyup.enter="fetchPayins(1)" /></div>
+        <div class="field"><label class="field-label">Payin ID</label><input v-model="filters.payinId" class="input" placeholder="P20260908..." @keyup.enter="fetchPayins(1)" /></div>
       </div>
     </div>
 
@@ -29,20 +28,23 @@
       <p v-if="!loading && payins.length===0 && !error" class="empty">No payins. Try different filters.</p>
       <div v-if="payins.length" class="table-wrap">
         <table class="table">
-          <thead><tr><th>Payin ID</th><th>User</th><th>Amount</th><th>Received</th><th>Network</th><th>Address</th><th>Trn ID</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Payin ID</th><th>User</th><th>Amount</th><th>Received</th><th>Network</th><th>Address</th><th>Deep Link</th><th>Rate</th><th>Tx Hash</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
           <tbody>
             <tr v-for="p in payins" :key="p.payinId || p._id">
-              <td class="mono">{{ p.payinId || p._id }}</td><td>{{ p.userid }}</td><td class="mono">{{ p.amount }}</td>
+              <td class="mono">{{ p.payinId || p._id }}</td><td>{{ p.userid }}</td><td class="mono">{{ p.amount }} <span class="muted">{{ p.currency }}</span></td>
               <td class="mono">
                 {{ p.receivedAmount ?? '—' }}
-                <span v-if="p.bonusAmount"><br /><span class="muted">bonus {{ p.bonusAmount }}</span></span>
+                <span v-if="p.bonus"><br /><span class="muted">bonus {{ p.bonus }}</span></span>
               </td>
               <td><span class="badge">{{ p.network }}</span></td>
-              <td class="mono break">{{ p.address }}</td><td class="mono">{{ p.trnId || '—' }}</td><td><span :class="['badge', statusClass(p.status)]">{{ p.status }}</span></td><td class="muted">{{ fmt(p.createdAt) }}</td>
+              <td class="mono break">{{ p.address || '—' }}</td>
+              <td class="mono break">{{ p.deepLink || '—' }}</td>
+              <td class="mono">{{ p.exchangeRate ?? '—' }}</td>
+              <td class="mono">{{ p.txHash || '—' }}</td><td><span :class="['badge', statusClass(p.status)]">{{ p.status }}</span></td><td class="muted">{{ fmt(p.createdAt) }}</td>
               <td>
                 <div class="row-actions">
                   <button class="btn btn-sm action-btn" type="button" @click="onCopy(p.payinId || p._id, 'Payin ID')">Copy ID</button>
-                  <button v-if="p.trnId" class="btn btn-sm action-btn" type="button" @click="onCopy(p.trnId, 'Trn ID')">Copy Trn</button>
+                  <button v-if="p.txHash" class="btn btn-sm action-btn" type="button" @click="onCopy(p.txHash, 'Tx Hash')">Copy Tx</button>
                   <template v-if="p.status==='pending'">
                     <button class="btn btn-sm action-btn action-btn--success" type="button" :disabled="acting===p.payinId" @click="onApprove(p)">{{ acting===p.payinId ? 'Approving…' : 'Approve' }}</button>
                     <button class="btn btn-sm action-btn action-btn--danger" type="button" :disabled="acting===p.payinId" @click="onReject(p)">{{ acting===p.payinId ? 'Rejecting…' : 'Reject' }}</button>
@@ -67,9 +69,10 @@
 import { onMounted, reactive, ref } from 'vue'
 import { getAdminPayins, approveTransaction, rejectTransaction, reverseTransaction } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
+import { fmtDateTime as fmt } from '../utils/format.js'
 
 const toast = useToast()
-const filters = reactive({ userid:'', status:'', network:'', payinId:'', trnId:'' })
+const filters = reactive({ userid:'', status:'', network:'', payinId:'' })
 const showFilters = ref(true)
 const payins = ref([])
 const total = ref(0)
@@ -80,7 +83,6 @@ const error = ref('')
 const acting = ref('')
 
 function statusClass(s){ return s==='success' ? 'badge--success' : s==='pending' ? 'badge--warning' : 'badge--danger' }
-function fmt(d){ try{ return new Date(d).toLocaleString() } catch{ return d } }
 async function onCopy(text, label){
   try{ await navigator.clipboard.writeText(String(text)); toast.success(`${label} copied`) } catch{ toast.error('Copy failed') }
 }
@@ -124,11 +126,11 @@ async function onReverse(p){
 async function fetchPayins(p=1){
   loading.value=true; error.value=''; page.value=p
   try{
-    const data = await getAdminPayins({ userid: filters.userid.trim() || undefined, status: filters.status || undefined, network: filters.network || undefined, payinId: filters.payinId.trim() || undefined, trnId: filters.trnId.trim() || undefined, page: page.value, limit: 20 })
+    const data = await getAdminPayins({ userid: filters.userid.trim() || undefined, status: filters.status || undefined, network: filters.network || undefined, payinId: filters.payinId.trim() || undefined, page: page.value, limit: 20 })
     payins.value = data.payins || []; total.value=data.count||0; totalPages.value=data.totalPages||1
   } catch(e){ error.value=e.message; toast.error(e.message) } finally{ loading.value=false }
 }
-function reset(){ filters.userid=''; filters.status=''; filters.network=''; filters.payinId=''; filters.trnId=''; fetchPayins(1) }
+function reset(){ filters.userid=''; filters.status=''; filters.network=''; filters.payinId=''; fetchPayins(1) }
 onMounted(()=>fetchPayins(1))
 </script>
 
@@ -139,7 +141,7 @@ onMounted(()=>fetchPayins(1))
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px} .card-sub{color:var(--color-text-secondary);font-size:var(--text-body-l)}
 .filters .filter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:end} .filters .field{flex:1;min-width:112px;gap:4px} .filters .field-label{font-size:11px} .filters .input{padding:6px 10px;font-size:12px} .filters .btn{padding:6px 10px;font-size:12px} .filter-actions{display:flex;gap:6px}
 .error{color:var(--color-danger);font-size:var(--text-h4);margin-bottom:8px} .empty{color:var(--color-text-secondary);font-size:var(--text-h4)}
-.table-wrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;border:1px solid var(--color-border);border-radius:var(--radius-md);scrollbar-width:thin;scrollbar-color:var(--color-border) transparent} .table-wrap::-webkit-scrollbar{height:8px} .table-wrap::-webkit-scrollbar-thumb{background:var(--color-border);border-radius:4px} .table-wrap::-webkit-scrollbar-track{background:transparent} .table{width:100%;border-collapse:collapse;font-size:var(--text-h4);min-width:1080px}
+.table-wrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;border:1px solid var(--color-border);border-radius:var(--radius-md);scrollbar-width:thin;scrollbar-color:var(--color-border) transparent} .table-wrap::-webkit-scrollbar{height:8px} .table-wrap::-webkit-scrollbar-thumb{background:var(--color-border);border-radius:4px} .table-wrap::-webkit-scrollbar-track{background:transparent} .table{width:100%;border-collapse:collapse;font-size:var(--text-h4);min-width:1300px}
 .table th,.table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--color-border);vertical-align:top} .table th{background:var(--color-surface-raised);font-weight:600}
 .mono{font-family:ui-monospace,monospace;font-size:12px} .break{word-break:break-all} .muted{color:var(--color-text-secondary);font-size:11px}
 .badge{display:inline-flex;padding:4px 9px;font-size:12px;font-weight:600;border-radius:3px;white-space:nowrap} .badge--success{background:var(--color-success);color:#fff} .badge--warning{background:var(--color-warning);color:#fff} .badge--danger{background:var(--color-danger);color:#fff}

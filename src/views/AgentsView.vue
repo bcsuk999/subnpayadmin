@@ -122,6 +122,7 @@ import {
   getCommissionConfig, updateCommissionConfig, getAdminCommissions, getReferralStats,
 } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
+import { fmtDateTime as fmtDate } from '../utils/format.js'
 
 const toast = useToast()
 const subTab = ref('config')
@@ -147,7 +148,7 @@ const commTotalPages = ref(1)
 const commLoading = ref(false)
 const commError = ref('')
 
-function fmtDate(v) { if (!v) return '—'; try { return new Date(v).toLocaleString() } catch { return String(v) } }
+
 
 async function fetchCommission() {
   commissionLoading.value = true; commissionError.value = ''

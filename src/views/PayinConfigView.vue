@@ -197,6 +197,7 @@ import {
   getBonusConfig, updateBonusConfig,
 } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
+import { fmtDateTime as fmtDate } from '../utils/format.js'
 
 const toast = useToast()
 const activeTab = ref('usdt')
@@ -237,7 +238,7 @@ const bonusSaving = ref(false)
 const bonusError = ref('')
 const bonusMessage = ref('')
 
-function fmtDate(v) { if (!v) return '—'; try { return new Date(v).toLocaleString() } catch { return String(v) } }
+
 
 async function fetchRates() {
   rateLoading.value = true; rateError.value = ''

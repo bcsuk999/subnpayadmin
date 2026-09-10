@@ -108,6 +108,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { getAdminUsers, updateUserStatus, resetUserPassword } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
+import { fmtDateTime as fmt } from '../utils/format.js'
 
 const toast = useToast()
 const filters = reactive({ uid:'', mobile:'', sortBalance:'', from:'', to:'' })
@@ -123,7 +124,6 @@ const pwdDialog = reactive({ open:false, uid:'', newPassword:'', saving:false })
 
 function statusClass(s){ return s === 'active' ? 'badge--success' : s === 'ban' ? 'badge--danger' : s === 'suspend' ? 'badge--warning' : 'badge--warning' }
 function formatNum(n){ try { return Number(n || 0).toLocaleString() } catch { return n } }
-function fmt(d){ try{ return new Date(d).toLocaleDateString() } catch{ return d || '—' } }
 function openDialog(u){ dialog.open=true; dialog.uid=u.uid; dialog.status='active'; dialog.remark=''; dialog.saving=false }
 function closeDialog(){ dialog.open=false }
 function openPwdDialog(u){ pwdDialog.open=true; pwdDialog.uid=u.uid; pwdDialog.newPassword=''; pwdDialog.saving=false }
