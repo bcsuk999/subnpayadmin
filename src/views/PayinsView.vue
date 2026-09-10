@@ -28,7 +28,7 @@
       <p v-if="!loading && payins.length===0 && !error" class="empty">No payins. Try different filters.</p>
       <div v-if="payins.length" class="table-wrap">
         <table class="table">
-          <thead><tr><th>Payin ID</th><th>User</th><th>Amount</th><th>Received</th><th>Network</th><th>Address / Link</th><th>Rate</th><th>Tx Hash</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Payin ID</th><th>User</th><th>Amount</th><th>Received</th><th>Network</th><th>Address / Link</th><th>Rate</th><th>Tx Hash</th><th>Status</th><th>Created</th><th>Updated</th><th>Actions</th></tr></thead>
           <tbody>
             <tr v-for="p in payins" :key="p.payinId || p._id">
               <td class="mono">{{ p.payinId || p._id }}</td><td>{{ p.userid }}</td><td class="mono">{{ p.amount }} <span class="muted">{{ p.currency }}</span></td>
@@ -39,7 +39,7 @@
               <td><span class="badge">{{ p.network }}</span></td>
               <td class="mono copy-cell" :title="p.address || p.deepLink || ''" @click="onCopy(p.address || p.deepLink, p.address ? 'Address' : 'Deep Link')">{{ p.address || p.deepLink || '—' }}</td>
               <td class="mono">{{ p.exchangeRate ?? '—' }}</td>
-              <td class="mono">{{ p.txHash || '—' }}</td><td><span :class="['badge', statusClass(p.status)]">{{ p.status }}</span></td><td class="muted">{{ fmt(p.createdAt) }}</td>
+              <td class="mono">{{ p.txHash || '—' }}</td><td><span :class="['badge', statusClass(p.status)]">{{ p.status }}</span></td><td class="muted">{{ fmt(p.createdAt) }}</td><td class="muted">{{ fmt(p.updatedAt) }}</td>
               <td>
                 <div class="row-actions">
                   <button class="btn btn-sm action-btn" type="button" @click="onCopy(p.payinId || p._id, 'Payin ID')">Copy ID</button>

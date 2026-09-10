@@ -10,11 +10,12 @@ export function fmtDateTime(v) {
   }
   if (isNaN(d.getTime())) return s
   let h = d.getHours()
-  const m = String(d.getMinutes()).padStart(2, '0')
-  const ampm = h >= 12 ? 'pm' : 'am'
+  const min = String(d.getMinutes()).padStart(2, '0')
+  const ampm = h >= 12 ? 'PM' : 'AM'
   h = h % 12 || 12
   const dd = String(d.getDate()).padStart(2, '0')
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sept', 'oct', 'nov', 'dec']
+  const mon = months[d.getMonth()]
   const yy = String(d.getFullYear()).slice(-2)
-  return `${h}.${m} ${ampm} ${dd}/${mm}/${yy}`
+  return `${h}:${min} ${ampm} , ${dd} ${mon} ${yy}`
 }
