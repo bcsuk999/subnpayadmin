@@ -28,7 +28,7 @@
       <p v-if="!loading && payins.length===0 && !error" class="empty">No payins. Try different filters.</p>
       <div v-if="payins.length" class="table-wrap">
         <table class="table">
-          <thead><tr><th>User ID</th><th>Payin ID</th><th>Network</th><th>Address / Deep Link</th><th>Amount</th><th>Rate / Bonus</th><th>Recv Amt</th><th>UTR</th><th>Status</th><th>Created</th><th>Updated</th><th>Remark</th><th>Actions</th></tr></thead>
+          <thead><tr><th>User ID</th><th>Payin ID</th><th>Network</th><th>Address / Deep Link</th><th>Amount</th><th>Rate / Bonus</th><th>Recv Amt</th><th>UTR</th><th>Status</th><th>Time</th><th>Remark</th><th>Actions</th></tr></thead>
           <tbody>
             <tr v-for="p in payins" :key="p.payinId || p._id">
               <td>{{ p.userid }}</td>
@@ -36,7 +36,7 @@
               <td><span class="badge">{{ p.network }}</span></td>
               <td class="mono copy-cell" :title="p.address || p.deepLink || ''" @click="onCopy(p.address || p.deepLink, p.address ? 'Address' : 'Deep Link')">{{ p.address || p.deepLink || '—' }}</td>
               <td class="mono">{{ p.amount }} <span class="muted">{{ p.currency }}</span></td>
-              <td class="mono copy-cell" :title="`rate ${p.exchangeRate ?? '—'}, bonus ${p.bonus ?? 0}`" @click="onCopy(`rate ${p.exchangeRate ?? '—'}, bonus ${p.bonus ?? 0}`, 'Rate / Bonus')">₹{{ p.exchangeRate ?? '—' }} <span class="muted">+{{ p.bonus ?? 0 }}</span></td>
+              <td class="mono copy-cell" :title="`rate ${p.exchangeRate ?? '—'}, bonus ${p.bonus ?? 0}`" @click="onCopy(`rate ${p.exchangeRate ?? '—'}, bonus ${p.bonus ?? 0}`, 'Rate / Bonus')">₹{{ p.exchangeRate ?? '—' }} +{{ p.bonus ?? 0 }}</td>
               <td class="mono">{{ p.receivedAmount ?? '—' }}</td>
               <td class="mono copy-cell" :title="p.txHash || ''" @click="onCopy(p.txHash, 'UTR')">{{ p.txHash || '—' }}</td>
               <td><span class="status-pill">
@@ -46,7 +46,10 @@
                 <svg v-else class="status-ico status-ico--danger" width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>
                 {{ p.status }}
               </span></td>
-              <td class="muted">{{ fmt(p.createdAt) }}</td><td class="muted">{{ fmt(p.updatedAt) }}</td>
+              <td class="times-cell" :title="`create time : ${fmt(p.createdAt)}\ntransaction time : ${fmt(p.updatedAt)}`" @click="onCopy(`create time : ${fmt(p.createdAt)}\ntransaction time : ${fmt(p.updatedAt)}`, 'Times')">
+                <div class="time-row"><span class="time-label">create time :</span> {{ fmt(p.createdAt) }}</div>
+                <div class="time-row"><span class="time-label">transaction time :</span> {{ fmt(p.updatedAt) }}</div>
+              </td>
               <td class="copy-cell" :title="p.remark || ''" @click="onCopy(p.remark, 'Remark')">{{ p.remark || '—' }}</td>
               <td>
                 <div class="row-actions">
@@ -149,6 +152,7 @@ onMounted(()=>fetchPayins(1))
 .table th,.table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--color-border);vertical-align:top} .table th{background:var(--color-surface-raised);font-weight:600}
 .mono{font-family:ui-monospace,monospace;font-size:12px} .break{word-break:break-all} .muted{color:var(--color-text-secondary);font-size:11px}
 .copy-cell{max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer} .copy-cell:hover{color:var(--color-primary)}
+.times-cell{cursor:pointer;white-space:nowrap} .times-cell:hover .time-label{color:var(--color-primary)} .time-row{display:flex;gap:4px;align-items:baseline} .time-label{color:var(--color-text-secondary);font-size:11px}
 .status-pill{display:inline-flex;align-items:center;gap:6px;text-transform:capitalize}
 .status-ico{flex-shrink:0;display:inline-block} .status-ico--success{color:var(--color-success)} .status-ico--warning{color:var(--color-warning)} .status-ico--danger{color:var(--color-danger)} .status-ico--reversed{color:var(--color-primary)}
 .badge{display:inline-flex;padding:4px 9px;font-size:12px;font-weight:600;border-radius:3px;white-space:nowrap} .badge--success{background:var(--color-success);color:#fff} .badge--warning{background:var(--color-warning);color:#fff} .badge--danger{background:var(--color-danger);color:#fff}
