@@ -221,6 +221,9 @@ export function getPayoutUsers(params = {}) {
 export function createPayout(data) {
   return request('/admin/payout', { method: 'POST', body: JSON.stringify(data) })
 }
+export function createSimplyPayPayout(data) {
+  return request('/admin/simplypay/payout', { method: 'POST', body: JSON.stringify(data) })
+}
 export function getAdminPayouts(params = {}) {
   const qs = new URLSearchParams()
   if (params.userid) qs.set('userid', String(params.userid))

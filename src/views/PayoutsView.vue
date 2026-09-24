@@ -9,6 +9,7 @@
     <div class="tabs">
       <button :class="['tab', { 'tab--active': activeTab === 'users' }]" type="button" @click="activeTab = 'users'">Payout Users</button>
       <button :class="['tab', { 'tab--active': activeTab === 'payouts' }]" type="button" @click="activeTab = 'payouts'">All Payouts</button>
+      <button :class="['tab', { 'tab--active': activeTab === 'simplypay' }]" type="button" @click="activeTab = 'simplypay'">SimplyPay Payout</button>
     </div>
 
     <!-- Payout Users Tab -->
@@ -45,6 +46,62 @@
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- SimplyPay Payout Tab -->
+    <div v-show="activeTab === 'simplypay'" class="card">
+      <div class="card-head">
+        <h3>Create SimplyPay Payout</h3>
+      </div>
+      <p v-if="spError" class="error" role="alert">{{ spError }}</p>
+      <div class="form-grid">
+        <div class="field">
+          <label class="field-label">User ID <span class="required">*</span></label>
+          <input v-model.number="spForm.userid" class="input" type="number" placeholder="12345" />
+        </div>
+        <div class="field">
+          <label class="field-label">Amount (INR) <span class="required">*</span></label>
+          <input v-model.number="spForm.amount" class="input" type="number" min="1" placeholder="1000" />
+        </div>
+        <div class="field">
+          <label class="field-label">Payout Type</label>
+          <select v-model="spForm.payoutType" class="input">
+            <option value="IFSC">IFSC</option>
+            <option value="UPI">UPI</option>
+          </select>
+        </div>
+        <div class="field" v-if="spForm.payoutType === 'UPI'">
+          <label class="field-label">VPA (UPI ID) <span class="required">*</span></label>
+          <input v-model="spForm.vpa" class="input" type="text" placeholder="user@upi" />
+        </div>
+        <div class="field">
+          <label class="field-label">Bank ID (optional)</label>
+          <input v-model="spForm.bankId" class="input" type="text" placeholder="Bank account ID" />
+        </div>
+        <div class="field">
+          <label class="field-label">IFSC (optional)</label>
+          <input v-model="spForm.ifsc" class="input" type="text" placeholder="IFSC code" />
+        </div>
+        <div class="field">
+          <label class="field-label">Account Number (optional)</label>
+          <input v-model="spForm.account" class="input" type="text" placeholder="Account number" />
+        </div>
+        <div class="field">
+          <label class="field-label">Beneficiary Name (optional)</label>
+          <input v-model="spForm.name" class="input" type="text" placeholder="Beneficiary name" />
+        </div>
+        <div class="field">
+          <label class="field-label">Email (optional)</label>
+          <input v-model="spForm.email" class="input" type="email" placeholder="beneficiary@example.com" />
+        </div>
+        <div class="field">
+          <label class="field-label">Mobile (optional)</label>
+          <input v-model="spForm.mobile" class="input" type="text" placeholder="9876543210" />
+        </div>
+      </div>
+      <div class="modal-foot" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--color-border);">
+        <button class="btn btn-primary" type="button" :disabled="spForm.saving" @click="submitSimplyPayPayout">{{ spForm.saving ? 'Creating…' : 'Create SimplyPay Payout' }}</button>
       </div>
     </div>
 
@@ -179,7 +236,7 @@
 
 <script setup>
 import { onMounted, reactive, ref, computed } from 'vue'
-import { getPayoutUsers, createPayout, getAdminPayouts, approvePayout, rejectPayout } from '../api/client.js'
+import { getPayoutUsers, createPayout, createSimplyPayPayout, getAdminPayouts, approvePayout, rejectPayout } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
 import { fmtDateTime as fmt } from '../utils/format.js'
 import Pagination from '../components/Pagination.vue'
@@ -208,6 +265,22 @@ Object.defineProperty(createForm, 'total', { get() { return createTotal.value } 
 
 const approveDialog = reactive({ open: false, payoutId: '', remark: '', saving: false })
 const rejectDialog = reactive({ open: false, payoutId: '', remark: '', saving: false })
+
+// SimplyPay Payout
+const spError = ref('')
+const spForm = reactive({
+  userid: '',
+  amount: '',
+  payoutType: 'IFSC',
+  vpa: '',
+  bankId: '',
+  ifsc: '',
+  account: '',
+  name: '',
+  email: '',
+  mobile: '',
+  saving: false
+})
 
 function formatNum(n) { try { return Number(n || 0).toLocaleString() } catch { return n } }
 function payoutStatusClass(s) { return s === 'success' ? 'badge--success' : s === 'pending' ? 'badge--warning' : 'badge--danger' }
@@ -275,6 +348,43 @@ async function submitCreatePayout() {
   } catch (e) { createForm.error = e.message; toast.error(e.message) } finally { createForm.saving = false }
 }
 
+async function submitSimplyPayPayout() {
+  spError.value = ''
+  const userid = Number(spForm.userid)
+  const amount = Number(spForm.amount)
+  if (!userid || userid <= 0) { spError.value = 'Enter a valid User ID'; return }
+  if (!amount || amount <= 0) { spError.value = 'Enter a valid amount'; return }
+  if (spForm.payoutType === 'UPI' && !spForm.vpa.trim()) { spError.value = 'VPA is required for UPI payout'; return }
+  spForm.saving = true
+  try {
+    const payload = {
+      userid,
+      amount,
+      payoutType: spForm.payoutType,
+    }
+    if (spForm.payoutType === 'UPI') payload.vpa = spForm.vpa.trim()
+    if (spForm.bankId.trim()) payload.bankId = spForm.bankId.trim()
+    if (spForm.ifsc.trim()) payload.ifsc = spForm.ifsc.trim()
+    if (spForm.account.trim()) payload.account = spForm.account.trim()
+    if (spForm.name.trim()) payload.name = spForm.name.trim()
+    if (spForm.email.trim()) payload.email = spForm.email.trim()
+    if (spForm.mobile.trim()) payload.mobile = spForm.mobile.trim()
+    const data = await createSimplyPayPayout(payload)
+    toast.success(data.msg || 'SimplyPay payout created')
+    spForm.userid = ''
+    spForm.amount = ''
+    spForm.payoutType = 'IFSC'
+    spForm.vpa = ''
+    spForm.bankId = ''
+    spForm.ifsc = ''
+    spForm.account = ''
+    spForm.name = ''
+    spForm.email = ''
+    spForm.mobile = ''
+    fetchPayouts(1)
+  } catch (e) { spError.value = e.message; toast.error(e.message) } finally { spForm.saving = false }
+}
+
 function openApproveDialog(p) {
   approveDialog.payoutId = p.payoutId
   approveDialog.remark = ''
@@ -337,4 +447,6 @@ onMounted(() => { fetchPayoutUsers(); fetchPayouts(1) })
 .row-actions{display:flex;gap:4px;flex-wrap:nowrap;white-space:nowrap} .pagination{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px}
 .modal-overlay{position:fixed;inset:0;background:rgba(15,18,24,.5);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px} .modal{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:var(--shadow-dropdown);width:100%;max-width:420px} .modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--color-border)} .modal-head h3{font-size:var(--text-h3)} .modal-body{padding:16px} .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 16px;border-top:1px solid var(--color-border)} .modal .field-label{font-size:11px} .modal textarea{resize:vertical;font-family:inherit}
 .total-row{display:flex;justify-content:space-between;padding:8px 12px;background:var(--color-surface-raised);border-radius:var(--radius-sm);font-size:var(--text-h4);font-weight:600}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.required{color:var(--color-danger);margin-left:4px}
 </style>
