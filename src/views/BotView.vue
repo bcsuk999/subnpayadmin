@@ -47,12 +47,12 @@
             </thead>
             <tbody>
               <tr v-for="g in groups" :key="g.groupId">
-                <td class="mono"><span class="badge badge--primary">{{ uidFor(g.groupId, g.uid) }}</span></td>
+                <td class="mono"><span class="badge uid-badge">{{ uidFor(g.groupId, g.uid) }}</span></td>
                 <td class="mono">{{ g.groupId }}</td>
                 <td>{{ g.title || '—' }}</td>
                 <td class="mono">{{ g.username ? '@' + g.username : '—' }}</td>
                 <td><span class="badge">{{ g.type || '—' }}</span></td>
-                <td><span :class="['badge', statusClass(g.status)]">{{ g.status }}</span></td>
+                <td><span :class="['badge', 'status-badge', statusClass(g.status)]">{{ g.status }}</span></td>
                 <td class="mono">{{ money(g.balance) }}</td>
                 <td class="mono">{{ g.totalDeposits ?? 0 }}</td>
                 <td class="muted">{{ fmt(g.lastActiveAt) }}</td>
@@ -85,7 +85,7 @@
         <div class="modal-body">
           <div class="status-popup-info">
             <span class="detail-label">Current status</span>
-            <span :class="['badge', statusClass(groupStatusPopup.group?.status)]">{{ groupStatusPopup.group?.status }}</span>
+            <span :class="['badge', 'status-badge', statusClass(groupStatusPopup.group?.status)]">{{ groupStatusPopup.group?.status }}</span>
           </div>
           <div class="status-popup-actions">
             <button class="btn btn-primary status-action-btn" type="button" @click="openGroupDetail(groupStatusPopup.group); groupStatusPopup.open = false">
@@ -175,14 +175,14 @@
             <tbody>
               <tr v-for="t in transactions" :key="t.trnId">
                 <td class="mono">{{ t.trnId }}</td>
-                <td class="mono"><span class="badge badge--primary">{{ uidFor(t.groupId, t.uid) }}</span></td>
+                <td class="mono"><span class="badge uid-badge">{{ uidFor(t.groupId, t.uid) }}</span></td>
                 <td class="mono">{{ t.groupId }}</td>
                 <td class="mono">{{ t.orderId || '—' }}</td>
                 <td class="mono">{{ money(t.amount) }}</td>
                 <td><span :class="['badge', t.type === 'credit' ? 'badge--success' : 'badge--danger']">{{ t.type }}</span></td>
                 <td><span class="badge">{{ t.note }}</span></td>
                 <td class="mono">{{ money(t.balanceAfter) }}</td>
-                <td><span :class="['badge', statusClass(t.status)]">{{ t.status }}</span></td>
+                <td><span :class="['badge', 'status-badge', statusClass(t.status)]">{{ t.status }}</span></td>
                 <td class="muted remark">{{ t.remark || '—' }}</td>
                 <td class="muted">{{ fmt(t.createdAt) }}</td>
               </tr>
@@ -243,11 +243,11 @@
             <tbody>
               <tr v-for="o in orders" :key="o.orderId">
                 <td class="mono">{{ o.orderId }}</td>
-                <td class="mono"><span class="badge badge--primary">{{ uidFor(o.groupId) }}</span></td>
+                <td class="mono"><span class="badge uid-badge">{{ uidFor(o.groupId) }}</span></td>
                 <td class="mono">{{ o.groupId }}</td>
                 <td class="mono">{{ money(o.amount) }}</td>
                 <td class="mono">{{ money(o.receivedAmount) }}</td>
-                <td><span :class="['badge', statusClass(o.status)]">{{ o.status }}</span></td>
+                <td><span :class="['badge', 'status-badge', statusClass(o.status)]">{{ o.status }}</span></td>
                 <td class="mono">{{ o.upiId || '—' }}</td>
                 <td class="mono">{{ o.simplypayOrderNo || '—' }}</td>
                 <td class="mono">{{ o.trnId || '—' }}</td>
@@ -287,14 +287,14 @@
           <template v-else-if="detail.group">
             <div class="stats-grid">
               <div class="stat"><span class="stat-label">Balance</span><span class="stat-value">{{ money(detail.group.balance) }}</span></div>
-              <div class="stat"><span class="stat-label">Status</span><span class="stat-value stat-value--sm"><span :class="['badge', statusClass(detail.group.status)]">{{ detail.group.status }}</span></span></div>
+              <div class="stat"><span class="stat-label">Status</span><span class="stat-value stat-value--sm"><span :class="['badge', 'status-badge', statusClass(detail.group.status)]">{{ detail.group.status }}</span></span></div>
               <div class="stat"><span class="stat-label">Total Deposits</span><span class="stat-value">{{ detail.group.totalDeposits ?? 0 }}</span></div>
               <div class="stat"><span class="stat-label">Total Credited</span><span class="stat-value">{{ money(detail.group.totalCredited) }}</span></div>
               <div class="stat"><span class="stat-label">Total Failed</span><span class="stat-value">{{ detail.group.totalFailed ?? 0 }}</span></div>
             </div>
 
             <div class="detail-grid">
-              <div><span class="detail-label">UID</span><span><span class="badge badge--primary">{{ uidFor(detail.group.groupId, detail.group.uid) }}</span></span></div>
+              <div><span class="detail-label">UID</span><span><span class="badge uid-badge">{{ uidFor(detail.group.groupId, detail.group.uid) }}</span></span></div>
               <div><span class="detail-label">Title</span><span>{{ detail.group.title || '—' }}</span></div>
               <div><span class="detail-label">Username</span><span class="mono">{{ detail.group.username ? '@' + detail.group.username : '—' }}</span></div>
               <div><span class="detail-label">Type</span><span>{{ detail.group.type || '—' }}</span></div>
@@ -341,9 +341,9 @@
                 <tbody>
                   <tr v-for="o in detail.recentOrders" :key="o.orderId">
                     <td class="mono">{{ o.orderId }}</td>
-                    <td class="mono"><span class="badge badge--primary">{{ uidFor(o.groupId || detail.groupId, o.uid) }}</span></td>
+                    <td class="mono"><span class="badge uid-badge">{{ uidFor(o.groupId || detail.groupId, o.uid) }}</span></td>
                     <td class="mono">{{ money(o.amount) }}</td>
-                    <td><span :class="['badge', statusClass(o.status)]">{{ o.status }}</span></td>
+                    <td><span :class="['badge', 'status-badge', statusClass(o.status)]">{{ o.status }}</span></td>
                     <td class="muted">{{ fmt(o.createdAt) }}</td>
                   </tr>
                 </tbody>
@@ -354,7 +354,7 @@
             <p v-if="detail.history.length === 0" class="empty">No status changes yet.</p>
             <ul v-else class="history-list">
               <li v-for="(h, i) in detail.history" :key="i">
-                <span :class="['badge', statusClass(h.status)]">{{ h.status }}</span>
+                <span :class="['badge', 'status-badge', statusClass(h.status)]">{{ h.status }}</span>
                 <span class="history-remark">{{ h.remark || '—' }}</span>
                 <span class="muted">{{ fmt(h.changedAt) }} • by {{ h.changedBy }}</span>
               </li>
@@ -432,7 +432,7 @@
           <p v-if="orderDetail.loading" class="empty">Loading…</p>
           <template v-else-if="orderDetail.order">
             <div class="detail-grid">
-              <div><span class="detail-label">Status</span><span><span :class="['badge', statusClass(orderDetail.order.status)]">{{ orderDetail.order.status }}</span></span></div>
+              <div><span class="detail-label">Status</span><span><span :class="['badge', 'status-badge', statusClass(orderDetail.order.status)]">{{ orderDetail.order.status }}</span></span></div>
               <div><span class="detail-label">Group</span><span class="mono">{{ orderDetail.order.groupId }}</span></div>
               <div><span class="detail-label">UID</span><span class="mono">{{ uidFor(orderDetail.order.groupId, orderDetail.transaction?.uid) }}</span></div>
               <div><span class="detail-label">Amount</span><span class="mono">{{ money(orderDetail.order.amount) }}</span></div>
@@ -456,7 +456,7 @@
               <div><span class="detail-label">Note</span><span class="badge">{{ orderDetail.transaction.note }}</span></div>
               <div><span class="detail-label">Amount</span><span class="mono">{{ money(orderDetail.transaction.amount) }}</span></div>
               <div><span class="detail-label">Balance After</span><span class="mono">{{ money(orderDetail.transaction.balanceAfter) }}</span></div>
-              <div><span class="detail-label">Status</span><span :class="['badge', statusClass(orderDetail.transaction.status)]">{{ orderDetail.transaction.status }}</span></div>
+              <div><span class="detail-label">Status</span><span :class="['badge', 'status-badge', statusClass(orderDetail.transaction.status)]">{{ orderDetail.transaction.status }}</span></div>
               <div class="detail-full"><span class="detail-label">Remark</span><span>{{ orderDetail.transaction.remark || '—' }}</span></div>
               <div><span class="detail-label">Created</span><span>{{ fmt(orderDetail.transaction.createdAt) }}</span></div>
             </div>
@@ -991,6 +991,7 @@ onMounted(() => {
 .badge--danger{background:var(--color-danger);color:#fff}
 .badge--warning{background:var(--color-warning);color:#fff}
 .badge--primary{background:var(--color-primary);color:#fff}
+.uid-badge,.status-badge{background:transparent;color:var(--color-text-secondary);border:1px solid var(--color-border)}
 .row-actions{display:flex;gap:4px;flex-wrap:wrap}
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
 .stat{display:flex;flex-direction:column;gap:4px;padding:12px;background:var(--color-surface-raised);border:1px solid var(--color-border);border-radius:var(--radius-md)}
