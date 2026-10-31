@@ -942,7 +942,7 @@ onMounted(() => {
 
 /* Table card — no padding so scroll + footer hug the border */
 .table-card{height:min(68vh,720px);min-height:280px;padding:0;display:flex;flex-direction:column;overflow:hidden}
-.tbl-scroll{min-height:0;overflow:auto;flex:1;-webkit-overflow-scrolling:touch}
+.tbl-scroll{min-height:0;min-width:0;overflow:auto;flex:1;-webkit-overflow-scrolling:touch}
 /* Keep the horizontal scrollbar right above the footer (not at page bottom) */
 .tbl-scroll::-webkit-scrollbar{height:6px}
 .tbl-scroll::-webkit-scrollbar-track{background:transparent}
@@ -977,15 +977,16 @@ onMounted(() => {
 .error{color:var(--color-danger);font-size:var(--text-h4);margin-bottom:8px}
 .empty{color:var(--color-text-secondary);font-size:var(--text-h4)}
 .table-wrap{overflow:auto;border:1px solid var(--color-border);border-radius:var(--radius-md)}
-.table{width:100%;border-collapse:separate;border-spacing:0;font-size:var(--text-h4);min-width:760px}
+.table{width:max-content;min-width:760px;border-collapse:separate;border-spacing:0;font-size:var(--text-h4)}
 .table--wide{min-width:1150px}
 .table--compact{min-width:0}
-.table th,.table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--color-border);vertical-align:top}
+.table th,.table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--color-border);vertical-align:middle}
+.tbl-scroll .table th,.tbl-scroll .table td{white-space:nowrap}
 .table th{background:var(--color-surface-raised);font-weight:600;white-space:nowrap;position:sticky;top:0;z-index:2}
 .mono{font-family:ui-monospace,monospace;font-size:12px}
 .break{word-break:break-all}
 .muted{color:var(--color-text-secondary);font-size:11px}
-.remark{max-width:180px;word-break:break-word}
+.remark{max-width:180px;overflow:hidden;text-overflow:ellipsis}
 .badge{display:inline-flex;padding:4px 9px;font-size:12px;font-weight:600;border-radius:3px;white-space:nowrap}
 .badge--success{background:var(--color-success);color:#fff}
 .badge--danger{background:var(--color-danger);color:#fff}
@@ -997,7 +998,8 @@ onMounted(() => {
 .status-badge.badge--danger,.type-badge.badge--danger{color:var(--color-danger)}
 .status-badge.badge--warning{color:var(--color-warning)}
 .status-badge.badge--primary{color:var(--color-primary)}
-.row-actions{display:flex;gap:4px;flex-wrap:wrap}
+.row-actions{display:flex;align-items:center;gap:4px;flex-wrap:nowrap;white-space:nowrap}
+.row-actions>.btn{flex:0 0 auto}
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
 .stat{display:flex;flex-direction:column;gap:4px;padding:12px;background:var(--color-surface-raised);border:1px solid var(--color-border);border-radius:var(--radius-md)}
 .stat-label{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-secondary)}
