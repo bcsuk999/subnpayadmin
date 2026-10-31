@@ -1,44 +1,22 @@
 <template>
   <nav v-if="directInput || totalPages > 1" class="pagination" aria-label="Pagination">
-    <template v-if="directInput">
-      <label v-if="showPageSizes" class="page-size" :for="sizeInputId">
-        <select :id="sizeInputId" v-model.number="selectedPageSize" class="page-size__select" :disabled="disabled" @change="changePageSize">
-          <option v-for="size in pageSizes" :key="size" :value="size">{{ size }} / page</option>
-        </select>
-      </label>
-      <button class="btn btn-ghost btn-sm page-arrow" type="button" aria-label="Previous page" :disabled="page <= 1 || disabled" @click="$emit('change', page - 1)">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-      <button v-if="page > 1" class="btn btn-sm page-btn" type="button" :disabled="disabled" @click="$emit('change', page - 1)">{{ page - 1 }}</button>
-      <button class="btn btn-sm page-btn active" type="button" aria-current="page" :disabled="disabled">{{ page }}</button>
-      <button v-if="page < normalizedTotalPages" class="btn btn-sm page-btn" type="button" :disabled="disabled" @click="$emit('change', page + 1)">{{ page + 1 }}</button>
-      <button class="btn btn-ghost btn-sm page-arrow" type="button" aria-label="Next page" :disabled="page >= normalizedTotalPages || disabled" @click="$emit('change', page + 1)">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-      <label class="page-jump" :for="inputId">Go to
-        <input :id="inputId" v-model="inputPage" class="page-input" type="number" inputmode="numeric" min="1" :max="normalizedTotalPages" :disabled="disabled" @input="limitPageInput" @change="commitPage" />
-      </label>
-    </template>
-    <template v-else>
-    <button class="btn btn-ghost btn-sm" type="button" aria-label="First page" :disabled="page <= 1 || disabled" @click="$emit('change', 1)">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M11 6l-5 6 5 6M19 6l-5 6 5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </button>
+    <label v-if="showPageSizes" class="page-size" :for="sizeInputId">
+      <select :id="sizeInputId" v-model.number="selectedPageSize" class="page-size__select" :disabled="disabled" @change="changePageSize">
+        <option v-for="size in pageSizes" :key="size" :value="size">{{ size }} / page</option>
+      </select>
+    </label>
     <button class="btn btn-ghost btn-sm" type="button" aria-label="Previous page" :disabled="page <= 1 || disabled" @click="$emit('change', page - 1)">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
-
-    <template v-for="(p, i) in pages" :key="`${p}-${i}`">
-      <span v-if="p === '…'" class="page-dots">{{ p }}</span>
-      <button v-else :class="['btn btn-sm page-btn', { active: p === page }]" type="button" :aria-current="p === page ? 'page' : undefined" :disabled="disabled" @click="$emit('change', p)">{{ p }}</button>
-    </template>
-
-    <button class="btn btn-ghost btn-sm" type="button" aria-label="Next page" :disabled="page >= totalPages || disabled" @click="$emit('change', page + 1)">
+    <button v-if="page > 1" class="btn btn-sm page-btn" type="button" :disabled="disabled" @click="$emit('change', page - 1)">{{ page - 1 }}</button>
+    <button class="btn btn-sm page-btn active" type="button" aria-current="page" :disabled="disabled">{{ page }}</button>
+    <button v-if="page < normalizedTotalPages" class="btn btn-sm page-btn" type="button" :disabled="disabled" @click="$emit('change', page + 1)">{{ page + 1 }}</button>
+    <button class="btn btn-ghost btn-sm" type="button" aria-label="Next page" :disabled="page >= normalizedTotalPages || disabled" @click="$emit('change', page + 1)">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
-    <button class="btn btn-ghost btn-sm" type="button" aria-label="Last page" :disabled="page >= totalPages || disabled" @click="$emit('change', totalPages)">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M13 6l5 6-5 6M5 6l5 6-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </button>
-    </template>
+    <label v-if="directInput" class="page-jump" :for="inputId">Go to
+      <input :id="inputId" v-model="inputPage" class="page-input" type="number" inputmode="numeric" min="1" :max="normalizedTotalPages" :disabled="disabled" @input="limitPageInput" @change="commitPage" />
+    </label>
   </nav>
 </template>
 
@@ -99,22 +77,6 @@ function commitPage() {
   if (page !== props.page) emit('change', page)
 }
 
-const pages = computed(() => {
-  const total = normalizedTotalPages.value
-  const current = Math.min(total, Math.max(1, props.page))
-  if (total <= 7) {
-    return Array.from({ length: total }, (_, i) => i + 1)
-  }
-  const delta = 2
-  const out = [1]
-  const left = Math.max(2, current - delta)
-  const right = Math.min(total - 1, current + delta)
-  if (left > 2) out.push('…')
-  for (let i = left; i <= right; i++) out.push(i)
-  if (right < total - 1) out.push('…')
-  out.push(total)
-  return out
-})
 </script>
 
 <style scoped>
@@ -125,11 +87,6 @@ const pages = computed(() => {
   gap: 4px;
   margin-top: 0;
   flex-wrap: wrap;
-}
-.page-dots {
-  color: var(--color-text-secondary);
-  padding: 0 4px;
-  font-size: 13px;
 }
 .page-btn {
   min-width: 32px;
@@ -157,6 +114,12 @@ const pages = computed(() => {
   font-weight: 600;
   text-align: center;
 }
+.page-input:focus,
+.page-input:focus-visible {
+  border-color: var(--color-control-border);
+  outline: 2px solid var(--color-control-border);
+  outline-offset: 1px;
+}
 .page-jump {
   display: inline-flex;
   align-items: center;
@@ -168,14 +131,19 @@ const pages = computed(() => {
 }
 .page-size__select {
   height: 30px;
-  padding: 0 24px 0 8px;
-  border: 1px solid var(--color-control-border);
+  padding: 0 20px 0 4px;
+  border: 0;
   border-radius: var(--radius-sm);
   background: var(--color-control-bg);
   color: var(--color-text-secondary);
   font: inherit;
   font-size: 12px;
   cursor: pointer;
+}
+.page-size__select:focus,
+.page-size__select:focus-visible {
+  outline: 2px solid var(--color-control-border);
+  outline-offset: 1px;
 }
 .page-size__select:disabled {
   opacity: 0.6;
@@ -215,7 +183,6 @@ const pages = computed(() => {
   border-color: var(--color-primary);
   color: #fff;
 }
-.page-dots,
 .page-btn {
   margin: 0;
 }
