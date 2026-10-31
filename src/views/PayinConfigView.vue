@@ -1,11 +1,5 @@
 <template>
   <section class="page">
-    <div class="page-header">
-      <div>
-        <h1>Payin Config</h1>
-      </div>
-    </div>
-
     <div class="tabs">
       <button :class="['tab', { 'tab--active': activeTab === 'usdt' }]" type="button" @click="activeTab = 'usdt'">USDT</button>
       <button :class="['tab', { 'tab--active': activeTab === 'inr' }]" type="button" @click="activeTab = 'inr'">INR</button>

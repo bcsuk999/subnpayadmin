@@ -1,9 +1,6 @@
 <template>
   <section class="page">
-    <div class="page-header">
-      <div>
-        <h1>Deposit Addresses</h1>
-      </div>
+    <div class="page-actions">
       <button class="btn btn-ghost btn-sm filter-toggle" type="button" @click="showFilters = !showFilters">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6h18M3 12h10M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="15" cy="12" r="2" stroke="currentColor" stroke-width="1.4"/></svg>
         {{ showFilters ? 'Hide filters' : 'Show filters' }}

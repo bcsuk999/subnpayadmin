@@ -430,25 +430,11 @@ input, select, textarea, button {
   outline: none;
 }
 
-.page-header {
+.page-actions {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: flex-end;
   gap: 12px;
-}
-
-.page-header h1 {
-  font-size: var(--text-h1);
-  font-family: var(--font-heading);
-  color: var(--color-text);
-  font-weight: 600;
-  margin: 0;
-}
-
-.page-header p {
-  color: var(--color-text-secondary);
-  font-size: var(--text-h4);
-  margin-top: 4px;
 }
 
 .section-title {
@@ -548,7 +534,7 @@ input, select, textarea, button {
     width: 100%;
     min-width: unset;
   }
-  .page-header {
+  .page-actions {
     flex-wrap: wrap;
   }
 }

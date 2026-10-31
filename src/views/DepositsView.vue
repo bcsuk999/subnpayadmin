@@ -1,9 +1,5 @@
 <template>
   <section class="page">
-    <div class="page-header">
-      <h1>Deposits</h1>
-
-    </div>
     <div class="card">
       <div class="card-head">
         <h3>Deposit queue</h3>

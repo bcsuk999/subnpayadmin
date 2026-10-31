@@ -1,9 +1,6 @@
 <template>
   <section class="page">
-    <div class="page-header">
-      <div>
-        <h1>Agents</h1>
-      </div>
+    <div class="page-actions">
       <button class="btn btn-ghost btn-sm" type="button" :disabled="statsLoading" @click="fetchStats">Refresh</button>
     </div>
 
