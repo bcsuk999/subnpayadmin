@@ -9,10 +9,9 @@
       <button class="btn btn-ghost btn-sm page-arrow" type="button" aria-label="Previous page" :disabled="page <= 1 || disabled" @click="$emit('change', page - 1)">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
-      <template v-for="(p, i) in pages" :key="`${p}-${i}`">
-        <span v-if="p === '…'" class="page-dots">{{ p }}</span>
-        <button v-else :class="['btn btn-sm page-btn', { active: p === page }]" type="button" :aria-current="p === page ? 'page' : undefined" :disabled="disabled" @click="$emit('change', p)">{{ p }}</button>
-      </template>
+      <button v-if="page > 1" class="btn btn-sm page-btn" type="button" :disabled="disabled" @click="$emit('change', page - 1)">{{ page - 1 }}</button>
+      <button class="btn btn-sm page-btn active" type="button" aria-current="page" :disabled="disabled">{{ page }}</button>
+      <button v-if="page < normalizedTotalPages" class="btn btn-sm page-btn" type="button" :disabled="disabled" @click="$emit('change', page + 1)">{{ page + 1 }}</button>
       <button class="btn btn-ghost btn-sm page-arrow" type="button" aria-label="Next page" :disabled="page >= normalizedTotalPages || disabled" @click="$emit('change', page + 1)">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
@@ -45,6 +44,7 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
+import { useToast } from '../composables/useToast.js'
 
 const props = defineProps({
   page: { type: Number, required: true },
@@ -56,6 +56,7 @@ const props = defineProps({
   pageSizes: { type: Array, default: () => [10, 20, 50, 100] },
 })
 const emit = defineEmits(['change', 'size-change'])
+const toast = useToast()
 const inputId = `pagination-page-${Math.random().toString(36).slice(2)}`
 const sizeInputId = `pagination-size-${Math.random().toString(36).slice(2)}`
 const inputPage = ref(String(props.page))
@@ -82,6 +83,7 @@ function limitPageInput(event) {
     const maximumPage = String(normalizedTotalPages.value)
     inputPage.value = maximumPage
     event.target.value = maximumPage
+    toast.warning(`Page number cannot exceed ${maximumPage}.`)
   }
 }
 
