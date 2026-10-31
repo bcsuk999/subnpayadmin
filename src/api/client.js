@@ -240,3 +240,57 @@ export function approvePayout(payoutId, data = {}) {
 export function rejectPayout(payoutId, data = {}) {
   return request(`/admin/payouts/${payoutId}/reject`, { method: 'POST', body: JSON.stringify(data) })
 }
+
+// —— Bot (admin) ——
+function botQuery(params = {}) {
+  const qs = new URLSearchParams()
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') qs.set(key, String(value))
+  })
+  const suffix = qs.toString() ? `?${qs.toString()}` : ''
+  return suffix
+}
+
+export function getBotGroups(params = {}) {
+  return request(`/bot/groups${botQuery(params)}`, { method: 'GET' })
+}
+export function getBotGroup(groupId) {
+  return request(`/bot/groups/${encodeURIComponent(groupId)}`, { method: 'GET' })
+}
+export function updateBotGroupStatus(groupId, data) {
+  return request(`/bot/groups/${encodeURIComponent(groupId)}/status`, { method: 'PATCH', body: JSON.stringify(data) })
+}
+export function banBotGroup(groupId, remark) {
+  return request(`/bot/groups/${encodeURIComponent(groupId)}/ban`, { method: 'POST', body: JSON.stringify({ remark }) })
+}
+export function suspendBotGroup(groupId, remark) {
+  return request(`/bot/groups/${encodeURIComponent(groupId)}/suspend`, { method: 'POST', body: JSON.stringify({ remark }) })
+}
+export function unbanBotGroup(groupId, remark) {
+  return request(`/bot/groups/${encodeURIComponent(groupId)}/unban`, { method: 'POST', body: JSON.stringify({ remark }) })
+}
+export function adjustBotGroupBalance(groupId, data) {
+  return request(`/bot/groups/${encodeURIComponent(groupId)}/adjust`, { method: 'POST', body: JSON.stringify(data) })
+}
+export function getBotOrders(params = {}) {
+  return request(`/bot/orders${botQuery(params)}`, { method: 'GET' })
+}
+export function getBotOrder(orderId) {
+  return request(`/bot/orders/${encodeURIComponent(orderId)}`, { method: 'GET' })
+}
+export function approveBotOrder(orderId) {
+  return request(`/bot/orders/${encodeURIComponent(orderId)}/approve`, { method: 'POST' })
+}
+export function rejectBotOrder(orderId, remark) {
+  const body = remark ? { remark } : {}
+  return request(`/bot/orders/${encodeURIComponent(orderId)}/reject`, { method: 'POST', body: JSON.stringify(body) })
+}
+export function getBotTransactions(params = {}) {
+  return request(`/bot/transactions${botQuery(params)}`, { method: 'GET' })
+}
+export function getBotTransaction(trnId) {
+  return request(`/bot/transactions/${encodeURIComponent(trnId)}`, { method: 'GET' })
+}
+export function getBotGroupStats(groupId, window = 'all') {
+  return request(`/bot/stats/${encodeURIComponent(groupId)}${botQuery({ window })}`, { method: 'GET' })
+}
