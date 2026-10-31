@@ -179,7 +179,7 @@
                 <td class="mono">{{ t.groupId }}</td>
                 <td class="mono">{{ t.orderId || '—' }}</td>
                 <td class="mono">{{ money(t.amount) }}</td>
-                <td><span :class="['badge', t.type === 'credit' ? 'badge--success' : 'badge--danger']">{{ t.type }}</span></td>
+                <td><span :class="['badge', 'type-badge', t.type === 'credit' ? 'badge--success' : 'badge--danger']">{{ t.type }}</span></td>
                 <td><span class="badge">{{ t.note }}</span></td>
                 <td class="mono">{{ money(t.balanceAfter) }}</td>
                 <td><span :class="['badge', 'status-badge', statusClass(t.status)]">{{ t.status }}</span></td>
@@ -977,11 +977,11 @@ onMounted(() => {
 .error{color:var(--color-danger);font-size:var(--text-h4);margin-bottom:8px}
 .empty{color:var(--color-text-secondary);font-size:var(--text-h4)}
 .table-wrap{overflow:auto;border:1px solid var(--color-border);border-radius:var(--radius-md)}
-.table{width:100%;border-collapse:collapse;font-size:var(--text-h4);min-width:760px}
+.table{width:100%;border-collapse:separate;border-spacing:0;font-size:var(--text-h4);min-width:760px}
 .table--wide{min-width:1150px}
 .table--compact{min-width:0}
 .table th,.table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--color-border);vertical-align:top}
-.table th{background:var(--color-surface-raised);font-weight:600;white-space:nowrap;position:sticky;top:0;z-index:1}
+.table th{background:var(--color-surface-raised);font-weight:600;white-space:nowrap;position:sticky;top:0;z-index:2}
 .mono{font-family:ui-monospace,monospace;font-size:12px}
 .break{word-break:break-all}
 .muted{color:var(--color-text-secondary);font-size:11px}
@@ -991,7 +991,12 @@ onMounted(() => {
 .badge--danger{background:var(--color-danger);color:#fff}
 .badge--warning{background:var(--color-warning);color:#fff}
 .badge--primary{background:var(--color-primary);color:#fff}
-.uid-badge,.status-badge{background:transparent;color:var(--color-text-secondary);border:1px solid var(--color-border)}
+.uid-badge{background:transparent;color:var(--color-primary);border:1px solid var(--color-border)}
+.status-badge,.type-badge{background:transparent;border:1px solid var(--color-border)}
+.status-badge.badge--success,.type-badge.badge--success{color:var(--color-success)}
+.status-badge.badge--danger,.type-badge.badge--danger{color:var(--color-danger)}
+.status-badge.badge--warning{color:var(--color-warning)}
+.status-badge.badge--primary{color:var(--color-primary)}
 .row-actions{display:flex;gap:4px;flex-wrap:wrap}
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
 .stat{display:flex;flex-direction:column;gap:4px;padding:12px;background:var(--color-surface-raised);border:1px solid var(--color-border);border-radius:var(--radius-md)}
