@@ -11,6 +11,7 @@
       <div class="card filters">
         <div class="filter-row">
           <div class="field"><label class="field-label">Group ID</label><input v-model="groupFilters.groupId" class="input" placeholder="-100..." @keyup.enter="fetchGroups(1)" /></div>
+          <div class="field"><label class="field-label">UID</label><input v-model="groupFilters.uid" class="input" placeholder="32045" maxlength="5" inputmode="numeric" @keyup.enter="fetchGroups(1)" /></div>
           <div class="field"><label class="field-label">Title</label><input v-model="groupFilters.title" class="input" placeholder="SubnPay" @keyup.enter="fetchGroups(1)" /></div>
           <div class="field">
             <label class="field-label">Status</label>
@@ -40,10 +41,11 @@
         <div v-if="groups.length" class="table-wrap">
           <table class="table">
             <thead>
-              <tr><th>Group ID</th><th>Title</th><th>Username</th><th>Type</th><th>Status</th><th>Balance</th><th>Deposits</th><th>Last Active</th><th>Actions</th></tr>
+              <tr><th>UID</th><th>Group ID</th><th>Title</th><th>Username</th><th>Type</th><th>Status</th><th>Balance</th><th>Deposits</th><th>Last Active</th><th>Actions</th></tr>
             </thead>
             <tbody>
               <tr v-for="g in groups" :key="g.groupId">
+                <td class="mono"><span class="badge badge--primary">{{ g.uid || '—' }}</span></td>
                 <td class="mono">{{ g.groupId }}</td>
                 <td>{{ g.title || '—' }}</td>
                 <td class="mono">{{ g.username ? '@' + g.username : '—' }}</td>
@@ -76,6 +78,7 @@
           <div class="field"><label class="field-label">Trn ID</label><input v-model="txnFilters.trnId" class="input" placeholder="BTXN..." @keyup.enter="fetchTransactions(1)" /></div>
           <div class="field"><label class="field-label">Order ID</label><input v-model="txnFilters.orderId" class="input" placeholder="B2026..." @keyup.enter="fetchTransactions(1)" /></div>
           <div class="field"><label class="field-label">Group ID</label><input v-model="txnFilters.groupId" class="input" placeholder="-100..." @keyup.enter="fetchTransactions(1)" /></div>
+          <div class="field"><label class="field-label">UID</label><input v-model="txnFilters.uid" class="input" placeholder="32045" maxlength="5" inputmode="numeric" @keyup.enter="fetchTransactions(1)" /></div>
           <div class="field">
             <label class="field-label">Type</label>
             <select v-model="txnFilters.type" class="input">
@@ -120,11 +123,12 @@
         <div v-if="transactions.length" class="table-wrap">
           <table class="table">
             <thead>
-              <tr><th>Trn ID</th><th>Group</th><th>Order</th><th>Amount</th><th>Type</th><th>Note</th><th>Balance After</th><th>Status</th><th>Remark</th><th>Created</th></tr>
+              <tr><th>Trn ID</th><th>UID</th><th>Group</th><th>Order</th><th>Amount</th><th>Type</th><th>Note</th><th>Balance After</th><th>Status</th><th>Remark</th><th>Created</th></tr>
             </thead>
             <tbody>
               <tr v-for="t in transactions" :key="t.trnId">
                 <td class="mono">{{ t.trnId }}</td>
+                <td class="mono"><span class="badge badge--primary">{{ t.uid || '—' }}</span></td>
                 <td class="mono">{{ t.groupId }}</td>
                 <td class="mono">{{ t.orderId || '—' }}</td>
                 <td class="mono">{{ money(t.amount) }}</td>
@@ -227,6 +231,7 @@
             </div>
 
             <div class="detail-grid">
+              <div><span class="detail-label">UID</span><span><span class="badge badge--primary">{{ detail.group.uid || '—' }}</span></span></div>
               <div><span class="detail-label">Title</span><span>{{ detail.group.title || '—' }}</span></div>
               <div><span class="detail-label">Username</span><span class="mono">{{ detail.group.username ? '@' + detail.group.username : '—' }}</span></div>
               <div><span class="detail-label">Type</span><span>{{ detail.group.type || '—' }}</span></div>
@@ -365,6 +370,7 @@
             <div class="detail-grid">
               <div><span class="detail-label">Status</span><span><span :class="['badge', statusClass(orderDetail.order.status)]">{{ orderDetail.order.status }}</span></span></div>
               <div><span class="detail-label">Group</span><span class="mono">{{ orderDetail.order.groupId }}</span></div>
+              <div><span class="detail-label">UID</span><span class="mono">{{ orderDetail.transaction?.uid || '—' }}</span></div>
               <div><span class="detail-label">Amount</span><span class="mono">{{ money(orderDetail.order.amount) }}</span></div>
               <div><span class="detail-label">Received</span><span class="mono">{{ money(orderDetail.order.receivedAmount) }}</span></div>
               <div><span class="detail-label">UPI ID</span><span class="mono">{{ orderDetail.order.upiId || '—' }}</span></div>
@@ -438,7 +444,7 @@ const activeTab = ref('groups')
 
 // — Groups —
 const groups = ref([])
-const groupFilters = reactive({ groupId: '', title: '', status: '', from: '', to: '' })
+const groupFilters = reactive({ groupId: '', uid: '', title: '', status: '', from: '', to: '' })
 const groupPage = ref(1)
 const groupTotal = ref(0)
 const groupTotalPages = ref(1)
@@ -446,11 +452,18 @@ const groupsLoading = ref(false)
 const groupsError = ref('')
 
 async function fetchGroups(p = 1) {
+  const uid = groupFilters.uid.trim()
+  if (uid && !/^\d{5}$/.test(uid)) {
+    groupsError.value = 'UID must be a 5 digit number'
+    toast.error(groupsError.value)
+    return
+  }
   groupsLoading.value = true
   groupsError.value = ''
   try {
     const res = await getBotGroups({
       groupId: groupFilters.groupId.trim(),
+      uid,
       title: groupFilters.title.trim(),
       status: groupFilters.status,
       from: groupFilters.from,
@@ -471,7 +484,7 @@ async function fetchGroups(p = 1) {
 }
 
 function resetGroupFilters() {
-  Object.assign(groupFilters, { groupId: '', title: '', status: '', from: '', to: '' })
+  Object.assign(groupFilters, { groupId: '', uid: '', title: '', status: '', from: '', to: '' })
   fetchGroups(1)
 }
 
@@ -590,7 +603,7 @@ async function submitAdjust() {
 
 // — Transactions —
 const transactions = ref([])
-const txnFilters = reactive({ trnId: '', orderId: '', groupId: '', type: '', note: '', status: '', from: '', to: '' })
+const txnFilters = reactive({ trnId: '', orderId: '', groupId: '', uid: '', type: '', note: '', status: '', from: '', to: '' })
 const txnPage = ref(1)
 const txnTotal = ref(0)
 const txnTotalPages = ref(1)
@@ -598,6 +611,12 @@ const txnsLoading = ref(false)
 const txnsError = ref('')
 
 async function fetchTransactions(p = 1) {
+  const uid = txnFilters.uid.trim()
+  if (uid && !/^\d{5}$/.test(uid)) {
+    txnsError.value = 'UID must be a 5 digit number'
+    toast.error(txnsError.value)
+    return
+  }
   txnsLoading.value = true
   txnsError.value = ''
   try {
@@ -605,6 +624,7 @@ async function fetchTransactions(p = 1) {
       trnId: txnFilters.trnId.trim(),
       orderId: txnFilters.orderId.trim(),
       groupId: txnFilters.groupId.trim(),
+      uid,
       type: txnFilters.type,
       note: txnFilters.note,
       status: txnFilters.status,
@@ -626,7 +646,7 @@ async function fetchTransactions(p = 1) {
 }
 
 function resetTxnFilters() {
-  Object.assign(txnFilters, { trnId: '', orderId: '', groupId: '', type: '', note: '', status: '', from: '', to: '' })
+  Object.assign(txnFilters, { trnId: '', orderId: '', groupId: '', uid: '', type: '', note: '', status: '', from: '', to: '' })
   fetchTransactions(1)
 }
 
