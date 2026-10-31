@@ -4,4 +4,12 @@ import router from './router'
 import './styles/tokens.css'
 import './styles/base.css'
 
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((error) => {
+      console.error('Service worker registration failed:', error)
+    })
+  })
+}
+
 createApp(App).use(router).mount('#app')
