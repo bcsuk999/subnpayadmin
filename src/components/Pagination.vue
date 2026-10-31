@@ -1,6 +1,11 @@
 <template>
   <nav v-if="directInput || totalPages > 1" class="pagination" aria-label="Pagination">
     <template v-if="directInput">
+      <label v-if="showPageSizes" class="page-size" :for="sizeInputId">
+        <select :id="sizeInputId" v-model.number="selectedPageSize" class="page-size__select" :disabled="disabled" @change="changePageSize">
+          <option v-for="size in pageSizes" :key="size" :value="size">{{ size }} / page</option>
+        </select>
+      </label>
       <button class="btn btn-ghost btn-sm page-arrow" type="button" aria-label="Previous page" :disabled="page <= 1 || disabled" @click="$emit('change', page - 1)">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
@@ -46,15 +51,30 @@ const props = defineProps({
   totalPages: { type: Number, required: true },
   disabled: { type: Boolean, default: false },
   directInput: { type: Boolean, default: false },
+  showPageSizes: { type: Boolean, default: false },
+  pageSize: { type: Number, default: 20 },
+  pageSizes: { type: Array, default: () => [10, 20, 50, 100] },
 })
-const emit = defineEmits(['change'])
+const emit = defineEmits(['change', 'size-change'])
 const inputId = `pagination-page-${Math.random().toString(36).slice(2)}`
+const sizeInputId = `pagination-size-${Math.random().toString(36).slice(2)}`
 const inputPage = ref(String(props.page))
+const selectedPageSize = ref(props.pageSize)
 const normalizedTotalPages = computed(() => Math.max(1, Number(props.totalPages) || 1))
 
 watch(() => props.page, (page) => {
   inputPage.value = String(page)
 })
+
+watch(() => props.pageSize, (size) => {
+  selectedPageSize.value = size
+})
+
+function changePageSize() {
+  if (selectedPageSize.value !== props.pageSize) {
+    emit('size-change', selectedPageSize.value)
+  }
+}
 
 function limitPageInput(event) {
   const value = Number(event.target.value)
@@ -143,6 +163,21 @@ const pages = computed(() => {
   color: var(--color-text-secondary);
   font-size: 12px;
   white-space: nowrap;
+}
+.page-size__select {
+  height: 30px;
+  padding: 0 24px 0 8px;
+  border: 1px solid var(--color-control-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-control-bg);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.page-size__select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 .page-arrow {
   width: 30px;

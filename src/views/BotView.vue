@@ -67,7 +67,7 @@
         </div>
         <div class="tbl-footer">
           <span class="tbl-total-pages" aria-live="polite">Total {{ groupTotal.toLocaleString() }}</span>
-          <Pagination class="tbl-pagination" :page="groupPage" :total-pages="groupTotalPages" :disabled="groupsLoading" direct-input @change="fetchGroups" />
+          <Pagination class="tbl-pagination" :page="groupPage" :total-pages="groupTotalPages" :page-size="groupPageSize" :disabled="groupsLoading" direct-input show-page-sizes @change="fetchGroups" @size-change="setGroupPageSize" />
         </div>
       </div>
     </div>
@@ -188,7 +188,7 @@
         </div>
         <div class="tbl-footer">
           <span class="tbl-total-pages" aria-live="polite">Total {{ txnTotal.toLocaleString() }}</span>
-          <Pagination class="tbl-pagination" :page="txnPage" :total-pages="txnTotalPages" :disabled="txnsLoading" direct-input @change="fetchTransactions" />
+          <Pagination class="tbl-pagination" :page="txnPage" :total-pages="txnTotalPages" :page-size="txnPageSize" :disabled="txnsLoading" direct-input show-page-sizes @change="fetchTransactions" @size-change="setTxnPageSize" />
         </div>
       </div>
     </div>
@@ -260,7 +260,7 @@
         </div>
         <div class="tbl-footer">
           <span class="tbl-total-pages" aria-live="polite">Total {{ orderTotal.toLocaleString() }}</span>
-          <Pagination class="tbl-pagination" :page="orderPage" :total-pages="orderTotalPages" :disabled="ordersLoading" direct-input @change="fetchOrders" />
+          <Pagination class="tbl-pagination" :page="orderPage" :total-pages="orderTotalPages" :page-size="orderPageSize" :disabled="ordersLoading" direct-input show-page-sizes @change="fetchOrders" @size-change="setOrderPageSize" />
         </div>
       </div>
     </div>
@@ -550,6 +550,7 @@ function openGroupStatusPopup(g) {
   groupStatusPopup.open = true
 }
 const groupPage = ref(1)
+const groupPageSize = ref(BOT_PAGE_SIZE)
 const groupTotal = ref(0)
 const groupTotalPages = ref(1)
 const groupsLoading = ref(false)
@@ -573,7 +574,7 @@ async function fetchGroups(p = 1) {
       from: groupFilters.from,
       to: groupFilters.to,
       page: p,
-      limit: BOT_PAGE_SIZE,
+      limit: groupPageSize.value,
     })
     groups.value = res.data || []
     rememberGroups(groups.value)
@@ -586,6 +587,11 @@ async function fetchGroups(p = 1) {
   } finally {
     groupsLoading.value = false
   }
+}
+
+function setGroupPageSize(size) {
+  groupPageSize.value = size
+  fetchGroups(1)
 }
 
 function resetGroupFilters() {
@@ -718,6 +724,7 @@ function onTxnSearchInput(field) {
   }
 }
 const txnPage = ref(1)
+const txnPageSize = ref(BOT_PAGE_SIZE)
 const txnTotal = ref(0)
 const txnTotalPages = ref(1)
 const txnsLoading = ref(false)
@@ -744,7 +751,7 @@ async function fetchTransactions(p = 1) {
       from: txnFilters.from,
       to: txnFilters.to,
       page: p,
-      limit: BOT_PAGE_SIZE,
+      limit: txnPageSize.value,
     })
     transactions.value = res.data || []
     rememberGroups(transactions.value.map((t) => ({ groupId: t.groupId, uid: t.uid })))
@@ -757,6 +764,11 @@ async function fetchTransactions(p = 1) {
   } finally {
     txnsLoading.value = false
   }
+}
+
+function setTxnPageSize(size) {
+  txnPageSize.value = size
+  fetchTransactions(1)
 }
 
 function resetTxnFilters() {
@@ -776,6 +788,7 @@ function onOrderSearchInput(field) {
   }
 }
 const orderPage = ref(1)
+const orderPageSize = ref(BOT_PAGE_SIZE)
 const orderTotal = ref(0)
 const orderTotalPages = ref(1)
 const ordersLoading = ref(false)
@@ -814,7 +827,7 @@ async function fetchOrders(p = 1) {
       from: orderFilters.from,
       to: orderFilters.to,
       page: p,
-      limit: BOT_PAGE_SIZE,
+      limit: orderPageSize.value,
     })
     orders.value = res.data || []
     orderPage.value = res.meta?.page || p
@@ -826,6 +839,11 @@ async function fetchOrders(p = 1) {
   } finally {
     ordersLoading.value = false
   }
+}
+
+function setOrderPageSize(size) {
+  orderPageSize.value = size
+  fetchOrders(1)
 }
 
 function resetOrderFilters() {
