@@ -1,16 +1,19 @@
 <template>
   <nav v-if="directInput || totalPages > 1" class="pagination" aria-label="Pagination">
     <template v-if="directInput">
-      <button class="btn btn-ghost btn-sm" type="button" aria-label="Previous page" :disabled="page <= 1 || disabled" @click="$emit('change', page - 1)">
+      <button class="btn btn-ghost btn-sm page-arrow" type="button" aria-label="Previous page" :disabled="page <= 1 || disabled" @click="$emit('change', page - 1)">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
-      <button v-if="page > 1" class="btn btn-sm page-btn page-btn--adjacent" type="button" :disabled="disabled" @click="$emit('change', page - 1)">{{ page - 1 }}</button>
-      <label class="sr-only" :for="inputId">Current page (1 to {{ normalizedTotalPages }})</label>
-      <input :id="inputId" v-model="inputPage" class="page-input" type="number" inputmode="numeric" min="1" :max="normalizedTotalPages" step="1" :disabled="disabled" :aria-valuemin="1" :aria-valuemax="normalizedTotalPages" :aria-valuenow="page" @input="limitPageInput" @change="commitPage" />
-      <button v-if="page < normalizedTotalPages" class="btn btn-sm page-btn page-btn--adjacent" type="button" :disabled="disabled" @click="$emit('change', page + 1)">{{ page + 1 }}</button>
-      <button class="btn btn-ghost btn-sm" type="button" aria-label="Next page" :disabled="page >= normalizedTotalPages || disabled" @click="$emit('change', page + 1)">
+      <template v-for="(p, i) in pages" :key="`${p}-${i}`">
+        <span v-if="p === '…'" class="page-dots">{{ p }}</span>
+        <button v-else :class="['btn btn-sm page-btn', { active: p === page }]" type="button" :aria-current="p === page ? 'page' : undefined" :disabled="disabled" @click="$emit('change', p)">{{ p }}</button>
+      </template>
+      <button class="btn btn-ghost btn-sm page-arrow" type="button" aria-label="Next page" :disabled="page >= normalizedTotalPages || disabled" @click="$emit('change', page + 1)">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
+      <label class="page-jump" :for="inputId">Go to
+        <input :id="inputId" v-model="inputPage" class="page-input" type="number" inputmode="numeric" min="1" :max="normalizedTotalPages" :disabled="disabled" @input="limitPageInput" @change="commitPage" />
+      </label>
     </template>
     <template v-else>
     <button class="btn btn-ghost btn-sm" type="button" aria-label="First page" :disabled="page <= 1 || disabled" @click="$emit('change', 1)">
@@ -75,8 +78,8 @@ function commitPage() {
 }
 
 const pages = computed(() => {
-  const total = props.totalPages || 1
-  const current = props.page
+  const total = normalizedTotalPages.value
+  const current = Math.min(total, Math.max(1, props.page))
   if (total <= 7) {
     return Array.from({ length: total }, (_, i) => i + 1)
   }
@@ -121,9 +124,9 @@ const pages = computed(() => {
 }
 .page-input {
   width: 52px;
-  height: 36px;
+  height: 30px;
   padding: 0 4px;
-  border: 1px solid var(--color-primary);
+  border: 1px solid var(--color-control-border);
   border-radius: var(--radius-sm);
   background: var(--color-control-bg);
   color: var(--color-text);
@@ -131,6 +134,21 @@ const pages = computed(() => {
   font: inherit;
   font-weight: 600;
   text-align: center;
+}
+.page-jump {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.page-arrow {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
 }
 .page-input::-webkit-inner-spin-button,
 .page-input::-webkit-outer-spin-button {
