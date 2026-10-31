@@ -127,9 +127,15 @@ const pages = computed(() => {
   border-radius: var(--radius-sm);
   background: var(--color-control-bg);
   color: var(--color-text);
+  appearance: textfield;
   font: inherit;
   font-weight: 600;
   text-align: center;
+}
+.page-input::-webkit-inner-spin-button,
+.page-input::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
 }
 .page-input:disabled {
   opacity: 0.6;

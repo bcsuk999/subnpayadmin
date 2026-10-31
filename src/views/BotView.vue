@@ -66,6 +66,7 @@
           </table>
         </div>
         <div class="tbl-footer">
+          <span class="tbl-total-pages" aria-live="polite">Total pages: {{ groupTotalPages || 1 }}</span>
           <Pagination class="tbl-pagination" :page="groupPage" :total-pages="groupTotalPages" :disabled="groupsLoading" direct-input @change="fetchGroups" />
         </div>
       </div>
@@ -186,6 +187,7 @@
           </table>
         </div>
         <div class="tbl-footer">
+          <span class="tbl-total-pages" aria-live="polite">Total pages: {{ txnTotalPages || 1 }}</span>
           <Pagination class="tbl-pagination" :page="txnPage" :total-pages="txnTotalPages" :disabled="txnsLoading" direct-input @change="fetchTransactions" />
         </div>
       </div>
@@ -257,6 +259,7 @@
           </table>
         </div>
         <div class="tbl-footer">
+          <span class="tbl-total-pages" aria-live="polite">Total pages: {{ orderTotalPages || 1 }}</span>
           <Pagination class="tbl-pagination" :page="orderPage" :total-pages="orderTotalPages" :disabled="ordersLoading" direct-input @change="fetchOrders" />
         </div>
       </div>
@@ -926,8 +929,9 @@ onMounted(() => {
 .tbl-scroll::-webkit-scrollbar{height:6px}
 .tbl-scroll::-webkit-scrollbar-track{background:transparent}
 .tbl-scroll::-webkit-scrollbar-thumb{background:var(--color-border);border-radius:3px}
-.tbl-footer{position:fixed;left:var(--sidebar-width, 0px);right:0;bottom:0;z-index:25;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;padding:12px 14px;border-top:1px solid var(--color-border);background:var(--color-surface-raised);box-shadow:0 -4px 14px rgba(0,0,0,.08)}
-.tbl-footer :deep(.pagination){justify-content:flex-end;gap:6px}
+.tbl-footer{position:fixed;left:var(--sidebar-width, 0px);right:0;bottom:0;z-index:25;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:12px 14px;border-top:1px solid var(--color-border);background:var(--color-surface-raised);box-shadow:0 -4px 14px rgba(0,0,0,.08)}
+.tbl-total-pages{font-size:12px;color:var(--color-text-secondary);white-space:nowrap}
+.tbl-footer :deep(.pagination){justify-content:flex-end;gap:6px;margin-left:auto}
 .tbl-footer :deep(.pagination > .btn){width:36px;height:36px;min-height:36px;padding:0;border:1px solid var(--color-control-border);border-radius:var(--radius-sm);background:var(--color-control-bg);color:var(--color-text)}
 .tbl-footer :deep(.pagination > .btn:hover:not(:disabled)){border-color:var(--color-primary);color:var(--color-primary)}
 .tbl-footer :deep(.pagination > .page-btn){min-width:36px;min-height:36px}
@@ -1019,7 +1023,8 @@ onMounted(() => {
   .tbl-footer{left:0}
 }
 @media(max-width:640px){
-  .tbl-footer{padding-bottom:max(12px,env(safe-area-inset-bottom))}
+  .tbl-footer{padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom))}
+  .tbl-total-pages{font-size:11px}
   .page{padding-bottom:112px}
   .table-card{height:60vh;min-height:240px}
   .filter-card-head{margin-bottom:10px}
