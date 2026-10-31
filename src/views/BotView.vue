@@ -10,7 +10,7 @@
     <div v-show="activeTab === 'groups'" class="tab-panel">
       <div class="card filters">
         <div class="filter-row">
-          <div class="field"><label class="field-label">Group ID</label><input v-model="groupFilters.groupId" class="input" placeholder="-100..." @keyup.enter="fetchGroups(1)" /></div>
+          <div class="field"><label class="field-label">Group ID</label><input v-model="groupFilters.groupId" class="input" placeholder="-100..." @input="onGroupSearchInput('groupId')" @keyup.enter="fetchGroups(1)" /></div>
           <div class="field"><label class="field-label">UID</label><input v-model="groupFilters.uid" class="input" placeholder="32045" maxlength="5" inputmode="numeric" @input="onGroupSearchInput('uid')" @keyup.enter="fetchGroups(1)" /></div>
           <div class="field"><label class="field-label">Title</label><input v-model="groupFilters.title" class="input" placeholder="SubnPay" @input="onGroupSearchInput('title')" @keyup.enter="fetchGroups(1)" /></div>
           <div class="field">
@@ -114,10 +114,10 @@
     <div v-show="activeTab === 'transactions'" class="tab-panel">
       <div class="card filters">
         <div class="filter-row">
-          <div class="field"><label class="field-label">Trn ID</label><input v-model="txnFilters.trnId" class="input" placeholder="BTXN..." @keyup.enter="fetchTransactions(1)" /></div>
-          <div class="field"><label class="field-label">Order ID</label><input v-model="txnFilters.orderId" class="input" placeholder="B2026..." @keyup.enter="fetchTransactions(1)" /></div>
-          <div class="field"><label class="field-label">Group ID</label><input v-model="txnFilters.groupId" class="input" placeholder="-100..." @keyup.enter="fetchTransactions(1)" /></div>
-          <div class="field"><label class="field-label">UID</label><input v-model="txnFilters.uid" class="input" placeholder="32045" maxlength="5" inputmode="numeric" @keyup.enter="fetchTransactions(1)" /></div>
+          <div class="field"><label class="field-label">Trn ID</label><input v-model="txnFilters.trnId" class="input" placeholder="BTXN..." @input="onTxnSearchInput('trnId')" @keyup.enter="fetchTransactions(1)" /></div>
+          <div class="field"><label class="field-label">Order ID</label><input v-model="txnFilters.orderId" class="input" placeholder="B2026..." @input="onTxnSearchInput('orderId')" @keyup.enter="fetchTransactions(1)" /></div>
+          <div class="field"><label class="field-label">Group ID</label><input v-model="txnFilters.groupId" class="input" placeholder="-100..." @input="onTxnSearchInput('groupId')" @keyup.enter="fetchTransactions(1)" /></div>
+          <div class="field"><label class="field-label">UID</label><input v-model="txnFilters.uid" class="input" placeholder="32045" maxlength="5" inputmode="numeric" @input="onTxnSearchInput('uid')" @keyup.enter="fetchTransactions(1)" /></div>
           <div class="field">
             <label class="field-label">Type</label>
             <select v-model="txnFilters.type" class="input">
@@ -192,7 +192,7 @@
       <div class="card filters">
         <div class="filter-row">
           <div class="field"><label class="field-label">Order ID</label><input v-model="orderFilters.orderId" class="input" placeholder="B2026..." @input="onOrderSearchInput('orderId')" @keyup.enter="fetchOrders(1)" /></div>
-          <div class="field"><label class="field-label">Group ID</label><input v-model="orderFilters.groupId" class="input" placeholder="-100..." @keyup.enter="fetchOrders(1)" /></div>
+          <div class="field"><label class="field-label">Group ID</label><input v-model="orderFilters.groupId" class="input" placeholder="-100..." @input="onOrderSearchInput('groupId')" @keyup.enter="fetchOrders(1)" /></div>
           <div class="field"><label class="field-label">UID</label><input v-model="orderFilters.uid" class="input" placeholder="32045" maxlength="5" inputmode="numeric" @input="onOrderSearchInput('uid')" @keyup.enter="fetchOrders(1)" /></div>
           <div class="field">
             <label class="field-label">Status</label>
@@ -531,13 +531,11 @@ async function loadAllGroupUids() {
 const groups = ref([])
 const groupFilters = reactive({ groupId: '', uid: '', title: '', status: '', from: '', to: '' })
 
-// Mutually-exclusive search: only one of uid / title can be active at a time.
-// Group ID is independent (it's a different identifier field).
 function onGroupSearchInput(field) {
-  if (field === 'uid' && groupFilters.uid.trim()) {
-    groupFilters.title = ''
-  } else if (field === 'title' && groupFilters.title.trim()) {
-    groupFilters.uid = ''
+  if (groupFilters[field].trim()) {
+    for (const key of ['groupId', 'uid', 'title']) {
+      if (key !== field) groupFilters[key] = ''
+    }
   }
 }
 
@@ -709,6 +707,13 @@ async function submitAdjust() {
 // — Transactions —
 const transactions = ref([])
 const txnFilters = reactive({ trnId: '', orderId: '', groupId: '', uid: '', type: '', note: '', status: '', from: '', to: '' })
+function onTxnSearchInput(field) {
+  if (txnFilters[field].trim()) {
+    for (const key of ['trnId', 'orderId', 'groupId', 'uid']) {
+      if (key !== field) txnFilters[key] = ''
+    }
+  }
+}
 const txnPage = ref(1)
 const txnTotal = ref(0)
 const txnTotalPages = ref(1)
@@ -760,12 +765,11 @@ function resetTxnFilters() {
 const orders = ref([])
 const orderFilters = reactive({ orderId: '', groupId: '', uid: '', status: '', from: '', to: '' })
 
-// Mutually-exclusive search: orderId and uid cannot both be active at once.
 function onOrderSearchInput(field) {
-  if (field === 'orderId' && orderFilters.orderId.trim()) {
-    orderFilters.uid = ''
-  } else if (field === 'uid' && orderFilters.uid.trim()) {
-    orderFilters.orderId = ''
+  if (orderFilters[field].trim()) {
+    for (const key of ['orderId', 'groupId', 'uid']) {
+      if (key !== field) orderFilters[key] = ''
+    }
   }
 }
 const orderPage = ref(1)
