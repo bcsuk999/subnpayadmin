@@ -954,7 +954,7 @@ onMounted(() => {
 .error{color:var(--color-danger);font-size:var(--text-h4);margin-bottom:8px}
 .empty{color:var(--color-text-secondary);font-size:var(--text-h4)}
 .table-wrap{overflow:auto;border:1px solid var(--color-border);border-radius:var(--radius-md)}
-.table{width:max-content;min-width:760px;border-collapse:separate;border-spacing:0;font-size:var(--text-h4)}
+.table{width:100%;min-width:760px;border-collapse:separate;border-spacing:0;font-size:var(--text-h4)}
 .table--wide{min-width:1150px}
 .table--compact{min-width:0}
 .table th,.table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--color-border);vertical-align:middle}
