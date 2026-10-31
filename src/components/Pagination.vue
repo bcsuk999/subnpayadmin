@@ -9,7 +9,7 @@
 
     <template v-for="(p, i) in pages" :key="`${p}-${i}`">
       <span v-if="p === '…'" class="page-dots">{{ p }}</span>
-      <button v-else :class="['btn btn-sm page-btn', { active: p === page }]" type="button" :disabled="disabled" @click="$emit('change', p)">{{ p }}</button>
+      <button v-else :class="['btn btn-sm page-btn', { active: p === page }]" type="button" :aria-current="p === page ? 'page' : undefined" :disabled="disabled" @click="$emit('change', p)">{{ p }}</button>
     </template>
 
     <button class="btn btn-ghost btn-sm" type="button" aria-label="Next page" :disabled="page >= totalPages || disabled" @click="$emit('change', page + 1)">
