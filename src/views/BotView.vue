@@ -66,11 +66,7 @@
           </table>
         </div>
         <div class="tbl-footer">
-          <div class="tbl-footer__summary">
-            <span class="tbl-info">{{ paginationSummary(groupTotal, groupPage, 'groups') }}</span>
-            <span class="tbl-page-status" aria-live="polite">Page {{ groupPage }} of {{ groupTotalPages || 1 }}</span>
-          </div>
-          <Pagination class="tbl-pagination" :page="groupPage" :total-pages="groupTotalPages" :disabled="groupsLoading" @change="fetchGroups" />
+          <Pagination class="tbl-pagination" :page="groupPage" :total-pages="groupTotalPages" :disabled="groupsLoading" direct-input @change="fetchGroups" />
         </div>
       </div>
     </div>
@@ -190,11 +186,7 @@
           </table>
         </div>
         <div class="tbl-footer">
-          <div class="tbl-footer__summary">
-            <span class="tbl-info">{{ paginationSummary(txnTotal, txnPage, 'transactions') }}</span>
-            <span class="tbl-page-status" aria-live="polite">Page {{ txnPage }} of {{ txnTotalPages || 1 }}</span>
-          </div>
-          <Pagination class="tbl-pagination" :page="txnPage" :total-pages="txnTotalPages" :disabled="txnsLoading" @change="fetchTransactions" />
+          <Pagination class="tbl-pagination" :page="txnPage" :total-pages="txnTotalPages" :disabled="txnsLoading" direct-input @change="fetchTransactions" />
         </div>
       </div>
     </div>
@@ -265,11 +257,7 @@
           </table>
         </div>
         <div class="tbl-footer">
-          <div class="tbl-footer__summary">
-            <span class="tbl-info">{{ paginationSummary(orderTotal, orderPage, 'records') }}</span>
-            <span class="tbl-page-status" aria-live="polite">Page {{ orderPage }} of {{ orderTotalPages || 1 }}</span>
-          </div>
-          <Pagination class="tbl-pagination" :page="orderPage" :total-pages="orderTotalPages" :disabled="ordersLoading" @change="fetchOrders" />
+          <Pagination class="tbl-pagination" :page="orderPage" :total-pages="orderTotalPages" :disabled="ordersLoading" direct-input @change="fetchOrders" />
         </div>
       </div>
     </div>
@@ -509,15 +497,6 @@ const groupFiltersOpen = ref(true)
 const txnFiltersOpen = ref(true)
 const orderFiltersOpen = ref(true)
 const BOT_PAGE_SIZE = 20
-
-function paginationSummary(total, page, label) {
-  const count = Number(total) || 0
-  if (!count) return `Showing 0 ${label}`
-
-  const start = (Math.max(1, page) - 1) * BOT_PAGE_SIZE + 1
-  const end = Math.min(start + BOT_PAGE_SIZE - 1, count)
-  return `Showing ${start.toLocaleString()}–${end.toLocaleString()} of ${count.toLocaleString()} ${label}`
-}
 
 // The orders endpoint does not return uid, so keep a groupId → uid cache
 // built from every group payload we receive.
@@ -947,14 +926,12 @@ onMounted(() => {
 .tbl-scroll::-webkit-scrollbar{height:6px}
 .tbl-scroll::-webkit-scrollbar-track{background:transparent}
 .tbl-scroll::-webkit-scrollbar-thumb{background:var(--color-border);border-radius:3px}
-.tbl-footer{position:fixed;left:var(--sidebar-width, 0px);right:0;bottom:0;z-index:25;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:12px 14px;border-top:1px solid var(--color-border);background:var(--color-surface-raised);box-shadow:0 -4px 14px rgba(0,0,0,.08)}
-.tbl-footer__summary{display:flex;flex-direction:column;gap:4px;min-width:0}
-.tbl-info{font-size:12px;color:var(--color-text);font-weight:600;white-space:nowrap}
-.tbl-page-status{font-size:11px;color:var(--color-text-secondary)}
+.tbl-footer{position:fixed;left:var(--sidebar-width, 0px);right:0;bottom:0;z-index:25;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;padding:12px 14px;border-top:1px solid var(--color-border);background:var(--color-surface-raised);box-shadow:0 -4px 14px rgba(0,0,0,.08)}
 .tbl-footer :deep(.pagination){justify-content:flex-end;gap:6px}
 .tbl-footer :deep(.pagination > .btn){width:36px;height:36px;min-height:36px;padding:0;border:1px solid var(--color-control-border);border-radius:var(--radius-sm);background:var(--color-control-bg);color:var(--color-text)}
 .tbl-footer :deep(.pagination > .btn:hover:not(:disabled)){border-color:var(--color-primary);color:var(--color-primary)}
 .tbl-footer :deep(.pagination > .page-btn){min-width:36px;min-height:36px}
+.tbl-footer :deep(.pagination > .page-input){height:36px}
 .tbl-footer :deep(.pagination > .page-btn.active){background:var(--color-button-primary-bg);border-color:var(--color-button-primary-bg);color:var(--color-button-primary-text)}
 .tbl-error{padding:12px 14px;margin:0}
 .tbl-empty{padding:20px 14px;margin:0}
@@ -1050,7 +1027,7 @@ onMounted(() => {
   .tbl-footer :deep(.pagination){justify-content:flex-start}
   .tbl-footer :deep(.pagination > button[aria-label="First page"]),
   .tbl-footer :deep(.pagination > button[aria-label="Last page"]),
-  .tbl-footer :deep(.pagination > .page-btn:not(.active)),
+  .tbl-footer :deep(.pagination > .page-btn:not(.page-btn--adjacent)),
   .tbl-footer :deep(.pagination > .page-dots){display:none}
 }
 </style>
