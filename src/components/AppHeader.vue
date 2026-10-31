@@ -1,7 +1,7 @@
 <template>
   <header class="app-header">
     <div class="header-left">
-      <button class="sidebar-toggle" type="button" :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'" @click="$emit('toggle-sidebar')">
+      <button class="sidebar-toggle hide-mobile" type="button" :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'" @click="$emit('toggle-sidebar')">
         <svg class="hamburger" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
       </button>
       <button class="sidebar-toggle hide-desktop" type="button" aria-label="Open menu" @click="$emit('toggle-mobile')">
