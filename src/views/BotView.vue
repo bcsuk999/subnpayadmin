@@ -9,7 +9,13 @@
     <!-- Groups -->
     <div v-show="activeTab === 'groups'" class="tab-panel">
       <div class="card filters">
-        <div class="filter-row">
+        <div class="filter-card-head">
+          <h3>Group filters</h3>
+          <button class="btn btn-ghost filter-toggle" type="button" :aria-expanded="groupFiltersOpen" aria-controls="group-filters" @click="groupFiltersOpen = !groupFiltersOpen">
+            {{ groupFiltersOpen ? 'Hide filters' : 'Show filters' }}
+          </button>
+        </div>
+        <div v-show="groupFiltersOpen" id="group-filters" class="filter-row">
           <div class="field"><label class="field-label">Group ID</label><input v-model="groupFilters.groupId" class="input" placeholder="-100..." @input="onGroupSearchInput('groupId')" @keyup.enter="fetchGroups(1)" /></div>
           <div class="field"><label class="field-label">UID</label><input v-model="groupFilters.uid" class="input" placeholder="32045" maxlength="5" inputmode="numeric" @input="onGroupSearchInput('uid')" @keyup.enter="fetchGroups(1)" /></div>
           <div class="field"><label class="field-label">Title</label><input v-model="groupFilters.title" class="input" placeholder="SubnPay" @input="onGroupSearchInput('title')" @keyup.enter="fetchGroups(1)" /></div>
@@ -113,7 +119,13 @@
     <!-- Transactions -->
     <div v-show="activeTab === 'transactions'" class="tab-panel">
       <div class="card filters">
-        <div class="filter-row">
+        <div class="filter-card-head">
+          <h3>Transaction filters</h3>
+          <button class="btn btn-ghost filter-toggle" type="button" :aria-expanded="txnFiltersOpen" aria-controls="transaction-filters" @click="txnFiltersOpen = !txnFiltersOpen">
+            {{ txnFiltersOpen ? 'Hide filters' : 'Show filters' }}
+          </button>
+        </div>
+        <div v-show="txnFiltersOpen" id="transaction-filters" class="filter-row">
           <div class="field"><label class="field-label">Trn ID</label><input v-model="txnFilters.trnId" class="input" placeholder="BTXN..." @input="onTxnSearchInput('trnId')" @keyup.enter="fetchTransactions(1)" /></div>
           <div class="field"><label class="field-label">Order ID</label><input v-model="txnFilters.orderId" class="input" placeholder="B2026..." @input="onTxnSearchInput('orderId')" @keyup.enter="fetchTransactions(1)" /></div>
           <div class="field"><label class="field-label">Group ID</label><input v-model="txnFilters.groupId" class="input" placeholder="-100..." @input="onTxnSearchInput('groupId')" @keyup.enter="fetchTransactions(1)" /></div>
@@ -190,7 +202,13 @@
     <!-- Deposit Records (orders) -->
     <div v-show="activeTab === 'orders'" class="tab-panel">
       <div class="card filters">
-        <div class="filter-row">
+        <div class="filter-card-head">
+          <h3>Deposit record filters</h3>
+          <button class="btn btn-ghost filter-toggle" type="button" :aria-expanded="orderFiltersOpen" aria-controls="deposit-record-filters" @click="orderFiltersOpen = !orderFiltersOpen">
+            {{ orderFiltersOpen ? 'Hide filters' : 'Show filters' }}
+          </button>
+        </div>
+        <div v-show="orderFiltersOpen" id="deposit-record-filters" class="filter-row">
           <div class="field"><label class="field-label">Order ID</label><input v-model="orderFilters.orderId" class="input" placeholder="B2026..." @input="onOrderSearchInput('orderId')" @keyup.enter="fetchOrders(1)" /></div>
           <div class="field"><label class="field-label">Group ID</label><input v-model="orderFilters.groupId" class="input" placeholder="-100..." @input="onOrderSearchInput('groupId')" @keyup.enter="fetchOrders(1)" /></div>
           <div class="field"><label class="field-label">UID</label><input v-model="orderFilters.uid" class="input" placeholder="32045" maxlength="5" inputmode="numeric" @input="onOrderSearchInput('uid')" @keyup.enter="fetchOrders(1)" /></div>
@@ -487,6 +505,9 @@ import {
 
 const toast = useToast()
 const activeTab = ref('groups')
+const groupFiltersOpen = ref(true)
+const txnFiltersOpen = ref(true)
+const orderFiltersOpen = ref(true)
 const BOT_PAGE_SIZE = 20
 
 function paginationSummary(total, page, label) {
@@ -920,8 +941,8 @@ onMounted(() => {
 .card-sub{color:var(--color-text-secondary);font-size:var(--text-body-l)}
 
 /* Table card — no padding so scroll + footer hug the border */
-.table-card{padding:0;display:flex;flex-direction:column;overflow:hidden}
-.tbl-scroll{overflow-x:auto;overflow-y:visible;flex:1;-webkit-overflow-scrolling:touch}
+.table-card{height:min(68vh,720px);min-height:280px;padding:0;display:flex;flex-direction:column;overflow:hidden}
+.tbl-scroll{min-height:0;overflow:auto;flex:1;-webkit-overflow-scrolling:touch}
 /* Keep the horizontal scrollbar right above the footer (not at page bottom) */
 .tbl-scroll::-webkit-scrollbar{height:6px}
 .tbl-scroll::-webkit-scrollbar-track{background:transparent}
@@ -943,6 +964,10 @@ onMounted(() => {
 .tab:hover{color:var(--color-text)}
 .tab--active{color:var(--color-primary);border-bottom-color:var(--color-primary)}
 .tab-panel{display:flex;flex-direction:column;gap:16px}
+.filter-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.filter-card-head h3{font-size:var(--text-h4);font-weight:600}
+.filter-card-head .filter-toggle{padding:6px 10px;border:1px solid var(--color-control-border);border-radius:var(--radius-sm);background:var(--color-control-bg);color:var(--color-text);font-size:12px}
+.filter-card-head .filter-toggle:hover{background:var(--color-control-hover-bg);border-color:var(--color-primary);color:var(--color-primary)}
 .filter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-bottom:12px}
 .filter-row .field{flex:1;min-width:120px;gap:4px}
 .filter-row .field-label{font-size:11px}
@@ -1006,6 +1031,8 @@ onMounted(() => {
 .status-action-text strong{font-size:13px;font-weight:600}
 .status-action-text small{font-size:11px;opacity:.8}
 @media(max-width:640px){
+  .table-card{height:60vh;min-height:240px}
+  .filter-card-head{margin-bottom:10px}
   .tbl-footer{align-items:stretch;gap:10px;padding:12px}
   .tbl-footer :deep(.pagination){justify-content:flex-start}
   .tbl-footer :deep(.pagination > button[aria-label="First page"]),
