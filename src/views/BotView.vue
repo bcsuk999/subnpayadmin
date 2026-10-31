@@ -11,8 +11,8 @@
       <div class="card filters">
         <div class="filter-row">
           <div class="field"><label class="field-label">Group ID</label><input v-model="groupFilters.groupId" class="input" placeholder="-100..." @keyup.enter="fetchGroups(1)" /></div>
-          <div class="field"><label class="field-label">UID</label><input v-model="groupFilters.uid" class="input" placeholder="32045" maxlength="5" inputmode="numeric" @keyup.enter="fetchGroups(1)" /></div>
-          <div class="field"><label class="field-label">Title</label><input v-model="groupFilters.title" class="input" placeholder="SubnPay" @keyup.enter="fetchGroups(1)" /></div>
+          <div class="field"><label class="field-label">UID</label><input v-model="groupFilters.uid" class="input" placeholder="32045" maxlength="5" inputmode="numeric" @input="onGroupSearchInput('uid')" @keyup.enter="fetchGroups(1)" /></div>
+          <div class="field"><label class="field-label">Title</label><input v-model="groupFilters.title" class="input" placeholder="SubnPay" @input="onGroupSearchInput('title')" @keyup.enter="fetchGroups(1)" /></div>
           <div class="field">
             <label class="field-label">Status</label>
             <select v-model="groupFilters.status" class="input">
@@ -31,21 +31,17 @@
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-head">
-          <h3>Groups ({{ groupTotal }})</h3>
-          <span class="card-sub">Page {{ groupPage }} / {{ groupTotalPages || 1 }}</span>
-        </div>
-        <p v-if="groupsError" class="error" role="alert">{{ groupsError }}</p>
-        <p v-if="!groupsLoading && groups.length === 0 && !groupsError" class="empty">No bot groups found.</p>
-        <div v-if="groups.length" class="table-wrap">
+      <div class="card table-card">
+        <p v-if="groupsError" class="error tbl-error" role="alert">{{ groupsError }}</p>
+        <p v-if="!groupsLoading && groups.length === 0 && !groupsError" class="empty tbl-empty">No bot groups found.</p>
+        <div v-if="groups.length || groupsLoading" class="tbl-scroll">
           <table class="table">
             <thead>
               <tr><th>UID</th><th>Group ID</th><th>Title</th><th>Username</th><th>Type</th><th>Status</th><th>Balance</th><th>Deposits</th><th>Last Active</th><th>Actions</th></tr>
             </thead>
             <tbody>
               <tr v-for="g in groups" :key="g.groupId">
-                <td class="mono"><span class="badge badge--primary">{{ g.uid || '—' }}</span></td>
+                <td class="mono"><span class="badge badge--primary">{{ uidFor(g.groupId, g.uid) }}</span></td>
                 <td class="mono">{{ g.groupId }}</td>
                 <td>{{ g.title || '—' }}</td>
                 <td class="mono">{{ g.username ? '@' + g.username : '—' }}</td>
@@ -56,18 +52,58 @@
                 <td class="muted">{{ fmt(g.lastActiveAt) }}</td>
                 <td>
                   <div class="row-actions">
-                    <button class="btn btn-sm action-btn" type="button" @click="openGroupDetail(g)">View</button>
-                    <button class="btn btn-sm action-btn action-btn--success" type="button" @click="openAdjust(g)">Adjust</button>
-                    <button v-if="g.status !== 'banned'" class="btn btn-sm action-btn action-btn--danger" type="button" @click="openStatus(g, 'ban')">Ban</button>
-                    <button v-if="g.status !== 'suspended'" class="btn btn-sm action-btn action-btn--warning" type="button" @click="openStatus(g, 'suspend')">Suspend</button>
-                    <button v-if="g.status !== 'active'" class="btn btn-sm action-btn action-btn--success" type="button" @click="openStatus(g, 'unban')">Unban</button>
+                    <button class="btn btn-sm action-btn" type="button" @click="openGroupStatusPopup(g)">Change Status</button>
                   </div>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <Pagination :page="groupPage" :total-pages="groupTotalPages" :disabled="groupsLoading" @change="fetchGroups" />
+        <div class="tbl-footer">
+          <span class="tbl-info">{{ groupTotal }} groups &nbsp;·&nbsp; Page {{ groupPage }} / {{ groupTotalPages || 1 }}</span>
+          <Pagination :page="groupPage" :total-pages="groupTotalPages" :disabled="groupsLoading" @change="fetchGroups" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Group Status Popup -->
+    <div v-if="groupStatusPopup.open" class="modal-overlay" @click.self="groupStatusPopup.open = false">
+      <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-head">
+          <h3>Change Status — {{ groupStatusPopup.group?.groupId }}</h3>
+          <button class="btn btn-ghost btn-sm" type="button" aria-label="Close" @click="groupStatusPopup.open = false">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="status-popup-info">
+            <span class="detail-label">Current status</span>
+            <span :class="['badge', statusClass(groupStatusPopup.group?.status)]">{{ groupStatusPopup.group?.status }}</span>
+          </div>
+          <div class="status-popup-actions">
+            <button class="btn btn-primary status-action-btn" type="button" @click="openGroupDetail(groupStatusPopup.group); groupStatusPopup.open = false">
+              <span class="status-action-icon">👁</span>
+              <span class="status-action-text"><strong>View</strong><small>Open group details</small></span>
+            </button>
+            <button class="btn status-action-btn status-action-btn--adjust" type="button" @click="openAdjust(groupStatusPopup.group); groupStatusPopup.open = false">
+              <span class="status-action-icon">💰</span>
+              <span class="status-action-text"><strong>Adjust Balance</strong><small>Credit or debit balance</small></span>
+            </button>
+            <button v-if="groupStatusPopup.group?.status !== 'banned'" class="btn status-action-btn status-action-btn--danger" type="button" @click="openStatus(groupStatusPopup.group, 'ban'); groupStatusPopup.open = false">
+              <span class="status-action-icon">🚫</span>
+              <span class="status-action-text"><strong>Ban</strong><small>Permanently block group</small></span>
+            </button>
+            <button v-if="groupStatusPopup.group?.status !== 'suspended'" class="btn status-action-btn status-action-btn--warning" type="button" @click="openStatus(groupStatusPopup.group, 'suspend'); groupStatusPopup.open = false">
+              <span class="status-action-icon">⏸</span>
+              <span class="status-action-text"><strong>Suspend</strong><small>Temporarily pause group</small></span>
+            </button>
+            <button v-if="groupStatusPopup.group?.status !== 'active'" class="btn status-action-btn status-action-btn--success" type="button" @click="openStatus(groupStatusPopup.group, 'unban'); groupStatusPopup.open = false">
+              <span class="status-action-icon">✅</span>
+              <span class="status-action-text"><strong>Unban / Activate</strong><small>Restore group access</small></span>
+            </button>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" type="button" @click="groupStatusPopup.open = false">Close</button>
+        </div>
       </div>
     </div>
 
@@ -113,14 +149,10 @@
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-head">
-          <h3>Transactions ({{ txnTotal }})</h3>
-          <span class="card-sub">Page {{ txnPage }} / {{ txnTotalPages || 1 }}</span>
-        </div>
-        <p v-if="txnsError" class="error" role="alert">{{ txnsError }}</p>
-        <p v-if="!txnsLoading && transactions.length === 0 && !txnsError" class="empty">No bot transactions found.</p>
-        <div v-if="transactions.length" class="table-wrap">
+      <div class="card table-card">
+        <p v-if="txnsError" class="error tbl-error" role="alert">{{ txnsError }}</p>
+        <p v-if="!txnsLoading && transactions.length === 0 && !txnsError" class="empty tbl-empty">No bot transactions found.</p>
+        <div v-if="transactions.length || txnsLoading" class="tbl-scroll">
           <table class="table">
             <thead>
               <tr><th>Trn ID</th><th>UID</th><th>Group</th><th>Order</th><th>Amount</th><th>Type</th><th>Note</th><th>Balance After</th><th>Status</th><th>Remark</th><th>Created</th></tr>
@@ -128,7 +160,7 @@
             <tbody>
               <tr v-for="t in transactions" :key="t.trnId">
                 <td class="mono">{{ t.trnId }}</td>
-                <td class="mono"><span class="badge badge--primary">{{ t.uid || '—' }}</span></td>
+                <td class="mono"><span class="badge badge--primary">{{ uidFor(t.groupId, t.uid) }}</span></td>
                 <td class="mono">{{ t.groupId }}</td>
                 <td class="mono">{{ t.orderId || '—' }}</td>
                 <td class="mono">{{ money(t.amount) }}</td>
@@ -142,7 +174,10 @@
             </tbody>
           </table>
         </div>
-        <Pagination :page="txnPage" :total-pages="txnTotalPages" :disabled="txnsLoading" @change="fetchTransactions" />
+        <div class="tbl-footer">
+          <span class="tbl-info">{{ txnTotal }} transactions &nbsp;·&nbsp; Page {{ txnPage }} / {{ txnTotalPages || 1 }}</span>
+          <Pagination :page="txnPage" :total-pages="txnTotalPages" :disabled="txnsLoading" @change="fetchTransactions" />
+        </div>
       </div>
     </div>
 
@@ -150,8 +185,9 @@
     <div v-show="activeTab === 'orders'" class="tab-panel">
       <div class="card filters">
         <div class="filter-row">
-          <div class="field"><label class="field-label">Order ID</label><input v-model="orderFilters.orderId" class="input" placeholder="B2026..." @keyup.enter="fetchOrders(1)" /></div>
+          <div class="field"><label class="field-label">Order ID</label><input v-model="orderFilters.orderId" class="input" placeholder="B2026..." @input="onOrderSearchInput('orderId')" @keyup.enter="fetchOrders(1)" /></div>
           <div class="field"><label class="field-label">Group ID</label><input v-model="orderFilters.groupId" class="input" placeholder="-100..." @keyup.enter="fetchOrders(1)" /></div>
+          <div class="field"><label class="field-label">UID</label><input v-model="orderFilters.uid" class="input" placeholder="32045" maxlength="5" inputmode="numeric" @input="onOrderSearchInput('uid')" @keyup.enter="fetchOrders(1)" /></div>
           <div class="field">
             <label class="field-label">Status</label>
             <select v-model="orderFilters.status" class="input">
@@ -172,21 +208,18 @@
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-head">
-          <h3>Deposit Records ({{ orderTotal }})</h3>
-          <span class="card-sub">Page {{ orderPage }} / {{ orderTotalPages || 1 }}</span>
-        </div>
-        <p v-if="ordersError" class="error" role="alert">{{ ordersError }}</p>
-        <p v-if="!ordersLoading && orders.length === 0 && !ordersError" class="empty">No deposit records found.</p>
-        <div v-if="orders.length" class="table-wrap">
+      <div class="card table-card">
+        <p v-if="ordersError" class="error tbl-error" role="alert">{{ ordersError }}</p>
+        <p v-if="!ordersLoading && orders.length === 0 && !ordersError" class="empty tbl-empty">No deposit records found.</p>
+        <div v-if="orders.length || ordersLoading" class="tbl-scroll">
           <table class="table table--wide">
             <thead>
-              <tr><th>Order ID</th><th>Group</th><th>Amount</th><th>Received</th><th>Status</th><th>UPI ID</th><th>SimplyPay No</th><th>Trn ID</th><th>Requested By</th><th>Created</th><th>Actions</th></tr>
+              <tr><th>Order ID</th><th>UID</th><th>Group</th><th>Amount</th><th>Received</th><th>Status</th><th>UPI ID</th><th>SimplyPay No</th><th>Trn ID</th><th>Requested By</th><th>Created</th><th>Actions</th></tr>
             </thead>
             <tbody>
               <tr v-for="o in orders" :key="o.orderId">
                 <td class="mono">{{ o.orderId }}</td>
+                <td class="mono"><span class="badge badge--primary">{{ uidFor(o.groupId) }}</span></td>
                 <td class="mono">{{ o.groupId }}</td>
                 <td class="mono">{{ money(o.amount) }}</td>
                 <td class="mono">{{ money(o.receivedAmount) }}</td>
@@ -207,7 +240,10 @@
             </tbody>
           </table>
         </div>
-        <Pagination :page="orderPage" :total-pages="orderTotalPages" :disabled="ordersLoading" @change="fetchOrders" />
+        <div class="tbl-footer">
+          <span class="tbl-info">{{ orderTotal }} records &nbsp;·&nbsp; Page {{ orderPage }} / {{ orderTotalPages || 1 }}</span>
+          <Pagination :page="orderPage" :total-pages="orderTotalPages" :disabled="ordersLoading" @change="fetchOrders" />
+        </div>
       </div>
     </div>
 
@@ -231,7 +267,7 @@
             </div>
 
             <div class="detail-grid">
-              <div><span class="detail-label">UID</span><span><span class="badge badge--primary">{{ detail.group.uid || '—' }}</span></span></div>
+              <div><span class="detail-label">UID</span><span><span class="badge badge--primary">{{ uidFor(detail.group.groupId, detail.group.uid) }}</span></span></div>
               <div><span class="detail-label">Title</span><span>{{ detail.group.title || '—' }}</span></div>
               <div><span class="detail-label">Username</span><span class="mono">{{ detail.group.username ? '@' + detail.group.username : '—' }}</span></div>
               <div><span class="detail-label">Type</span><span>{{ detail.group.type || '—' }}</span></div>
@@ -274,10 +310,11 @@
             <p v-if="detail.recentOrders.length === 0" class="empty">No recent orders.</p>
             <div v-else class="table-wrap">
               <table class="table table--compact">
-                <thead><tr><th>Order ID</th><th>Amount</th><th>Status</th><th>Created</th></tr></thead>
+                <thead><tr><th>Order ID</th><th>UID</th><th>Amount</th><th>Status</th><th>Created</th></tr></thead>
                 <tbody>
                   <tr v-for="o in detail.recentOrders" :key="o.orderId">
                     <td class="mono">{{ o.orderId }}</td>
+                    <td class="mono"><span class="badge badge--primary">{{ uidFor(o.groupId || detail.groupId, o.uid) }}</span></td>
                     <td class="mono">{{ money(o.amount) }}</td>
                     <td><span :class="['badge', statusClass(o.status)]">{{ o.status }}</span></td>
                     <td class="muted">{{ fmt(o.createdAt) }}</td>
@@ -370,7 +407,7 @@
             <div class="detail-grid">
               <div><span class="detail-label">Status</span><span><span :class="['badge', statusClass(orderDetail.order.status)]">{{ orderDetail.order.status }}</span></span></div>
               <div><span class="detail-label">Group</span><span class="mono">{{ orderDetail.order.groupId }}</span></div>
-              <div><span class="detail-label">UID</span><span class="mono">{{ orderDetail.transaction?.uid || '—' }}</span></div>
+              <div><span class="detail-label">UID</span><span class="mono">{{ uidFor(orderDetail.order.groupId, orderDetail.transaction?.uid) }}</span></div>
               <div><span class="detail-label">Amount</span><span class="mono">{{ money(orderDetail.order.amount) }}</span></div>
               <div><span class="detail-label">Received</span><span class="mono">{{ money(orderDetail.order.receivedAmount) }}</span></div>
               <div><span class="detail-label">UPI ID</span><span class="mono">{{ orderDetail.order.upiId || '—' }}</span></div>
@@ -442,9 +479,56 @@ import {
 const toast = useToast()
 const activeTab = ref('groups')
 
+// The orders endpoint does not return uid, so keep a groupId → uid cache
+// built from every group payload we receive.
+const groupUidMap = reactive({})
+
+function rememberGroups(list) {
+  (list || []).forEach((g) => {
+    if (g && g.groupId && g.uid) groupUidMap[g.groupId] = String(g.uid)
+  })
+}
+
+function uidFor(groupId, uid) {
+  return uid || (groupId ? groupUidMap[groupId] : '') || '—'
+}
+
+async function loadAllGroupUids() {
+  try {
+    let page = 1
+    let totalPages = 1
+    do {
+      const res = await getBotGroups({ page, limit: 100 })
+      rememberGroups(res.data)
+      totalPages = res.meta?.totalPages || 1
+      page += 1
+    } while (page <= totalPages && page <= 10)
+  } catch {
+    // UID lookup is best-effort; the tables still render without it.
+  }
+}
+
 // — Groups —
 const groups = ref([])
 const groupFilters = reactive({ groupId: '', uid: '', title: '', status: '', from: '', to: '' })
+
+// Mutually-exclusive search: only one of uid / title can be active at a time.
+// Group ID is independent (it's a different identifier field).
+function onGroupSearchInput(field) {
+  if (field === 'uid' && groupFilters.uid.trim()) {
+    groupFilters.title = ''
+  } else if (field === 'title' && groupFilters.title.trim()) {
+    groupFilters.uid = ''
+  }
+}
+
+// — Group status popup (single "Change Status" button) —
+const groupStatusPopup = reactive({ open: false, group: null })
+
+function openGroupStatusPopup(g) {
+  groupStatusPopup.group = g
+  groupStatusPopup.open = true
+}
 const groupPage = ref(1)
 const groupTotal = ref(0)
 const groupTotalPages = ref(1)
@@ -472,6 +556,7 @@ async function fetchGroups(p = 1) {
       limit: 20,
     })
     groups.value = res.data || []
+    rememberGroups(groups.value)
     groupPage.value = res.meta?.page || p
     groupTotal.value = res.meta?.total || 0
     groupTotalPages.value = res.meta?.totalPages || 1
@@ -502,6 +587,7 @@ async function openGroupDetail(g) {
   try {
     const res = await getBotGroup(g.groupId)
     detail.group = res.data?.group || null
+    if (detail.group) rememberGroups([detail.group])
     detail.history = res.data?.statusHistory || []
     detail.counts = res.data?.counts || {}
     detail.recentOrders = res.data?.recentOrders || []
@@ -634,6 +720,7 @@ async function fetchTransactions(p = 1) {
       limit: 20,
     })
     transactions.value = res.data || []
+    rememberGroups(transactions.value.map((t) => ({ groupId: t.groupId, uid: t.uid })))
     txnPage.value = res.meta?.page || p
     txnTotal.value = res.meta?.total || 0
     txnTotalPages.value = res.meta?.totalPages || 1
@@ -652,7 +739,16 @@ function resetTxnFilters() {
 
 // — Orders (deposit records) —
 const orders = ref([])
-const orderFilters = reactive({ orderId: '', groupId: '', status: '', from: '', to: '' })
+const orderFilters = reactive({ orderId: '', groupId: '', uid: '', status: '', from: '', to: '' })
+
+// Mutually-exclusive search: orderId and uid cannot both be active at once.
+function onOrderSearchInput(field) {
+  if (field === 'orderId' && orderFilters.orderId.trim()) {
+    orderFilters.uid = ''
+  } else if (field === 'uid' && orderFilters.uid.trim()) {
+    orderFilters.orderId = ''
+  }
+}
 const orderPage = ref(1)
 const orderTotal = ref(0)
 const orderTotalPages = ref(1)
@@ -660,12 +756,34 @@ const ordersLoading = ref(false)
 const ordersError = ref('')
 
 async function fetchOrders(p = 1) {
+  const uid = orderFilters.uid.trim()
+  if (uid && !/^\d{5}$/.test(uid)) {
+    ordersError.value = 'UID must be a 5 digit number'
+    toast.error(ordersError.value)
+    return
+  }
   ordersLoading.value = true
   ordersError.value = ''
   try {
+    let groupId = orderFilters.groupId.trim()
+    // The orders endpoint has no uid filter, so resolve it to a groupId first.
+    if (uid && !groupId) {
+      const gres = await getBotGroups({ uid, limit: 1 })
+      const match = (gres.data || [])[0]
+      rememberGroups(gres.data)
+      if (!match) {
+        orders.value = []
+        orderPage.value = 1
+        orderTotal.value = 0
+        orderTotalPages.value = 1
+        ordersError.value = `No group found for UID ${uid}`
+        return
+      }
+      groupId = match.groupId
+    }
     const res = await getBotOrders({
       orderId: orderFilters.orderId.trim(),
-      groupId: orderFilters.groupId.trim(),
+      groupId,
       status: orderFilters.status,
       from: orderFilters.from,
       to: orderFilters.to,
@@ -685,7 +803,7 @@ async function fetchOrders(p = 1) {
 }
 
 function resetOrderFilters() {
-  Object.assign(orderFilters, { orderId: '', groupId: '', status: '', from: '', to: '' })
+  Object.assign(orderFilters, { orderId: '', groupId: '', uid: '', status: '', from: '', to: '' })
   fetchOrders(1)
 }
 
@@ -768,6 +886,7 @@ onMounted(() => {
   fetchGroups(1)
   fetchTransactions(1)
   fetchOrders(1)
+  loadAllGroupUids()
 })
 </script>
 
@@ -776,6 +895,19 @@ onMounted(() => {
 .card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px;box-shadow:var(--shadow-subtle)}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
 .card-sub{color:var(--color-text-secondary);font-size:var(--text-body-l)}
+
+/* Table card — no padding so scroll + footer hug the border */
+.table-card{padding:0;display:flex;flex-direction:column;overflow:hidden}
+.tbl-scroll{overflow-x:auto;overflow-y:visible;flex:1;-webkit-overflow-scrolling:touch}
+/* Keep the horizontal scrollbar right above the footer (not at page bottom) */
+.tbl-scroll::-webkit-scrollbar{height:6px}
+.tbl-scroll::-webkit-scrollbar-track{background:transparent}
+.tbl-scroll::-webkit-scrollbar-thumb{background:var(--color-border);border-radius:3px}
+.tbl-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--color-border);background:var(--color-surface-raised)}
+.tbl-info{font-size:12px;color:var(--color-text-secondary);white-space:nowrap}
+.tbl-error{padding:12px 14px;margin:0}
+.tbl-empty{padding:20px 14px;margin:0}
+
 .tabs{display:flex;gap:0;border-bottom:1px solid var(--color-border)}
 .tab{padding:10px 18px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--color-text-secondary);font-size:var(--text-h4);font-weight:500;cursor:pointer;transition:color .15s ease,border-color .15s ease}
 .tab:hover{color:var(--color-text)}
@@ -794,7 +926,7 @@ onMounted(() => {
 .table--wide{min-width:1150px}
 .table--compact{min-width:0}
 .table th,.table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--color-border);vertical-align:top}
-.table th{background:var(--color-surface-raised);font-weight:600;white-space:nowrap}
+.table th{background:var(--color-surface-raised);font-weight:600;white-space:nowrap;position:sticky;top:0;z-index:1}
 .mono{font-family:ui-monospace,monospace;font-size:12px}
 .break{word-break:break-all}
 .muted{color:var(--color-text-secondary);font-size:11px}
@@ -831,4 +963,16 @@ onMounted(() => {
 .modal-body--scroll{max-height:calc(90vh - 120px)}
 .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 16px;border-top:1px solid var(--color-border)}
 .modal textarea{resize:vertical;font-family:inherit}
+.status-popup-info{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--color-surface-raised);border-radius:var(--radius-sm);border:1px solid var(--color-border)}
+.status-popup-actions{display:flex;flex-direction:column;gap:8px}
+.status-action-btn{display:flex;align-items:center;gap:12px;padding:10px 14px;width:100%;text-align:left;border-radius:var(--radius-sm);transition:opacity .15s}
+.status-action-btn:hover{opacity:.85}
+.status-action-btn--danger{background:var(--color-danger);color:#fff;border-color:var(--color-danger)}
+.status-action-btn--warning{background:var(--color-warning);color:#fff;border-color:var(--color-warning)}
+.status-action-btn--success{background:var(--color-success);color:#fff;border-color:var(--color-success)}
+.status-action-btn--adjust{background:var(--color-primary);color:#fff;border-color:var(--color-primary)}
+.status-action-icon{font-size:18px;flex-shrink:0;line-height:1}
+.status-action-text{display:flex;flex-direction:column;gap:1px;line-height:1.3}
+.status-action-text strong{font-size:13px;font-weight:600}
+.status-action-text small{font-size:11px;opacity:.8}
 </style>

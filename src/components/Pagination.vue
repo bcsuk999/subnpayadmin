@@ -55,7 +55,7 @@ const pages = computed(() => {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  margin-top: 14px;
+  margin-top: 0;
   flex-wrap: wrap;
 }
 .page-dots {
