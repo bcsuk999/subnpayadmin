@@ -935,7 +935,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.page{display:flex;flex-direction:column;gap:16px}
+.page{display:flex;flex-direction:column;gap:16px;padding-bottom:100px}
 .card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px;box-shadow:var(--shadow-subtle)}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
 .card-sub{color:var(--color-text-secondary);font-size:var(--text-body-l)}
@@ -947,7 +947,7 @@ onMounted(() => {
 .tbl-scroll::-webkit-scrollbar{height:6px}
 .tbl-scroll::-webkit-scrollbar-track{background:transparent}
 .tbl-scroll::-webkit-scrollbar-thumb{background:var(--color-border);border-radius:3px}
-.tbl-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:12px 14px;border-top:1px solid var(--color-border);background:var(--color-surface-raised)}
+.tbl-footer{position:fixed;left:var(--sidebar-width, 0px);right:0;bottom:0;z-index:25;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:12px 14px;border-top:1px solid var(--color-border);background:var(--color-surface-raised);box-shadow:0 -4px 14px rgba(0,0,0,.08)}
 .tbl-footer__summary{display:flex;flex-direction:column;gap:4px;min-width:0}
 .tbl-info{font-size:12px;color:var(--color-text);font-weight:600;white-space:nowrap}
 .tbl-page-status{font-size:11px;color:var(--color-text-secondary)}
@@ -1036,7 +1036,12 @@ onMounted(() => {
 .status-action-text{display:flex;flex-direction:column;gap:1px;line-height:1.3}
 .status-action-text strong{font-size:13px;font-weight:600}
 .status-action-text small{font-size:11px;opacity:.8}
+@media(max-width:880px){
+  .tbl-footer{left:0}
+}
 @media(max-width:640px){
+  .tbl-footer{padding-bottom:max(12px,env(safe-area-inset-bottom))}
+  .page{padding-bottom:112px}
   .table-card{height:60vh;min-height:240px}
   .filter-card-head{margin-bottom:10px}
   .tbl-footer{align-items:stretch;gap:10px;padding:12px}
