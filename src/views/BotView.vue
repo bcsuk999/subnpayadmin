@@ -40,7 +40,7 @@
       <div class="card table-card">
         <p v-if="groupsError" class="error tbl-error" role="alert">{{ groupsError }}</p>
         <p v-if="!groupsLoading && groups.length === 0 && !groupsError" class="empty tbl-empty">No bot groups found.</p>
-        <div v-if="groups.length || groupsLoading" class="tbl-scroll">
+        <div v-if="groups.length || groupsLoading" ref="groupsScroll" class="tbl-scroll" @scroll="onTableScroll('groups')">
           <table class="table">
             <thead>
               <tr><th>UID</th><th>Group ID</th><th>Title</th><th>Username</th><th>Type</th><th>Status</th><th>Balance</th><th>Deposits</th><th>Last Active</th><th>Actions</th></tr>
@@ -56,9 +56,15 @@
                 <td class="mono">{{ money(g.balance) }}</td>
                 <td class="mono">{{ g.totalDeposits ?? 0 }}</td>
                 <td class="muted">{{ fmt(g.lastActiveAt) }}</td>
-                <td>
+                <td class="cell-actions-end">
                   <div class="row-actions">
-                    <button class="btn btn-sm action-btn" type="button" @click="openGroupStatusPopup(g)">Change Status</button>
+                    <button class="btn btn-sm action-btn action-btn--icon" type="button" aria-label="Actions" title="Actions" @click="openGroupStatusPopup(g)">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+                        <path d="M4 20h4L19.6 8.4a2.1 2.1 0 0 0-3-3L5 17v3z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M14.6 6.4l3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                        <path d="M13 21H5a1 1 0 0 1-1-1v-2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>
+                      </svg>
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -66,45 +72,63 @@
           </table>
         </div>
         <div class="tbl-footer">
-          <span class="tbl-total-pages" aria-live="polite">Total {{ groupTotal.toLocaleString() }}</span>
-          <Pagination class="tbl-pagination" :page="groupPage" :total-pages="groupTotalPages" :page-size="groupPageSize" :disabled="groupsLoading" direct-input show-page-sizes @change="fetchGroups" @size-change="setGroupPageSize" />
+          <div ref="groupsBar" class="tbl-hbar" aria-hidden="true" @scroll="onBarScroll('groups')"><div class="tbl-hbar-inner"></div></div>
+          <div class="tbl-footer-row">
+            <span class="tbl-total-pages" aria-live="polite">Total {{ groupTotal.toLocaleString() }}</span>
+            <Pagination class="tbl-pagination" :page="groupPage" :total-pages="groupTotalPages" :page-size="groupPageSize" :disabled="groupsLoading" direct-input show-page-sizes @change="fetchGroups" @size-change="setGroupPageSize" />
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Group Status Popup -->
     <div v-if="groupStatusPopup.open" class="modal-overlay" @click.self="groupStatusPopup.open = false">
-      <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal modal--actions" role="dialog" aria-modal="true">
         <div class="modal-head">
-          <h3>Change Status — {{ groupStatusPopup.group?.groupId }}</h3>
+          <h3>Actions — {{ groupStatusPopup.group?.groupId }}</h3>
           <button class="btn btn-ghost btn-sm" type="button" aria-label="Close" @click="groupStatusPopup.open = false">✕</button>
         </div>
         <div class="modal-body">
-          <div class="status-popup-info">
-            <span class="detail-label">Current status</span>
-            <span :class="['badge', 'status-badge', statusClass(groupStatusPopup.group?.status)]">{{ groupStatusPopup.group?.status }}</span>
-          </div>
-          <div class="status-popup-actions">
-            <button class="btn btn-primary status-action-btn" type="button" @click="openGroupDetail(groupStatusPopup.group); groupStatusPopup.open = false">
-              <span class="status-action-icon">👁</span>
-              <span class="status-action-text"><strong>View</strong><small>Open group details</small></span>
-            </button>
-            <button class="btn status-action-btn status-action-btn--adjust" type="button" @click="openAdjust(groupStatusPopup.group); groupStatusPopup.open = false">
-              <span class="status-action-icon">💰</span>
-              <span class="status-action-text"><strong>Adjust Balance</strong><small>Credit or debit balance</small></span>
-            </button>
-            <button v-if="groupStatusPopup.group?.status !== 'banned'" class="btn status-action-btn status-action-btn--danger" type="button" @click="openStatus(groupStatusPopup.group, 'ban'); groupStatusPopup.open = false">
-              <span class="status-action-icon">🚫</span>
-              <span class="status-action-text"><strong>Ban</strong><small>Permanently block group</small></span>
-            </button>
-            <button v-if="groupStatusPopup.group?.status !== 'suspended'" class="btn status-action-btn status-action-btn--warning" type="button" @click="openStatus(groupStatusPopup.group, 'suspend'); groupStatusPopup.open = false">
-              <span class="status-action-icon">⏸</span>
-              <span class="status-action-text"><strong>Suspend</strong><small>Temporarily pause group</small></span>
-            </button>
-            <button v-if="groupStatusPopup.group?.status !== 'active'" class="btn status-action-btn status-action-btn--success" type="button" @click="openStatus(groupStatusPopup.group, 'unban'); groupStatusPopup.open = false">
-              <span class="status-action-icon">✅</span>
-              <span class="status-action-text"><strong>Unban / Activate</strong><small>Restore group access</small></span>
-            </button>
+          <div class="form-field-grid">
+            <div class="field">
+              <span class="field-label">Current status</span>
+              <span :class="['badge', 'status-badge', statusClass(groupStatusPopup.group?.status)]">{{ groupStatusPopup.group?.status }}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">View</span>
+              <button class="btn btn-primary status-action-btn" type="button" @click="openGroupDetail(groupStatusPopup.group); groupStatusPopup.open = false">
+                <span class="status-action-icon">👁</span>
+                <span class="status-action-text"><small>Open group details</small></span>
+              </button>
+            </div>
+            <div class="field">
+              <span class="field-label">Adjust balance</span>
+              <button class="btn status-action-btn status-action-btn--adjust" type="button" @click="openAdjust(groupStatusPopup.group); groupStatusPopup.open = false">
+                <span class="status-action-icon">💰</span>
+                <span class="status-action-text"><small>Credit or debit balance</small></span>
+              </button>
+            </div>
+            <div v-if="groupStatusPopup.group?.status !== 'banned'" class="field">
+              <span class="field-label">Ban</span>
+              <button class="btn status-action-btn status-action-btn--danger" type="button" @click="openStatus(groupStatusPopup.group, 'ban'); groupStatusPopup.open = false">
+                <span class="status-action-icon">🚫</span>
+                <span class="status-action-text"><small>Permanently block group</small></span>
+              </button>
+            </div>
+            <div v-if="groupStatusPopup.group?.status !== 'suspended'" class="field">
+              <span class="field-label">Suspend</span>
+              <button class="btn status-action-btn status-action-btn--warning" type="button" @click="openStatus(groupStatusPopup.group, 'suspend'); groupStatusPopup.open = false">
+                <span class="status-action-icon">⏸</span>
+                <span class="status-action-text"><small>Temporarily pause group</small></span>
+              </button>
+            </div>
+            <div v-if="groupStatusPopup.group?.status !== 'active'" class="field">
+              <span class="field-label">Unban / Activate</span>
+              <button class="btn status-action-btn status-action-btn--success" type="button" @click="openStatus(groupStatusPopup.group, 'unban'); groupStatusPopup.open = false">
+                <span class="status-action-icon">✅</span>
+                <span class="status-action-text"><small>Restore group access</small></span>
+              </button>
+            </div>
           </div>
         </div>
         <div class="modal-foot">
@@ -164,7 +188,7 @@
       <div class="card table-card">
         <p v-if="txnsError" class="error tbl-error" role="alert">{{ txnsError }}</p>
         <p v-if="!txnsLoading && transactions.length === 0 && !txnsError" class="empty tbl-empty">No bot transactions found.</p>
-        <div v-if="transactions.length || txnsLoading" class="tbl-scroll">
+        <div v-if="transactions.length || txnsLoading" ref="txnsScroll" class="tbl-scroll" @scroll="onTableScroll('txns')">
           <table class="table">
             <thead>
               <tr><th>Trn ID</th><th>UID</th><th>Group</th><th>Order</th><th>Amount</th><th>Type</th><th>Note</th><th>Balance After</th><th>Status</th><th>Remark</th><th>Created</th></tr>
@@ -187,8 +211,11 @@
           </table>
         </div>
         <div class="tbl-footer">
-          <span class="tbl-total-pages" aria-live="polite">Total {{ txnTotal.toLocaleString() }}</span>
-          <Pagination class="tbl-pagination" :page="txnPage" :total-pages="txnTotalPages" :page-size="txnPageSize" :disabled="txnsLoading" direct-input show-page-sizes @change="fetchTransactions" @size-change="setTxnPageSize" />
+          <div ref="txnsBar" class="tbl-hbar" aria-hidden="true" @scroll="onBarScroll('txns')"><div class="tbl-hbar-inner"></div></div>
+          <div class="tbl-footer-row">
+            <span class="tbl-total-pages" aria-live="polite">Total {{ txnTotal.toLocaleString() }}</span>
+            <Pagination class="tbl-pagination" :page="txnPage" :total-pages="txnTotalPages" :page-size="txnPageSize" :disabled="txnsLoading" direct-input show-page-sizes @change="fetchTransactions" @size-change="setTxnPageSize" />
+          </div>
         </div>
       </div>
     </div>
@@ -229,7 +256,7 @@
       <div class="card table-card">
         <p v-if="ordersError" class="error tbl-error" role="alert">{{ ordersError }}</p>
         <p v-if="!ordersLoading && orders.length === 0 && !ordersError" class="empty tbl-empty">No deposit records found.</p>
-        <div v-if="orders.length || ordersLoading" class="tbl-scroll">
+        <div v-if="orders.length || ordersLoading" ref="ordersScroll" class="tbl-scroll" @scroll="onTableScroll('orders')">
           <table class="table table--wide">
             <thead>
               <tr><th>Order ID</th><th>UID</th><th>Group</th><th>Amount</th><th>Received</th><th>Status</th><th>UPI ID</th><th>SimplyPay No</th><th>Trn ID</th><th>Requested By</th><th>Created</th><th>Actions</th></tr>
@@ -259,8 +286,11 @@
           </table>
         </div>
         <div class="tbl-footer">
-          <span class="tbl-total-pages" aria-live="polite">Total {{ orderTotal.toLocaleString() }}</span>
-          <Pagination class="tbl-pagination" :page="orderPage" :total-pages="orderTotalPages" :page-size="orderPageSize" :disabled="ordersLoading" direct-input show-page-sizes @change="fetchOrders" @size-change="setOrderPageSize" />
+          <div ref="ordersBar" class="tbl-hbar" aria-hidden="true" @scroll="onBarScroll('orders')"><div class="tbl-hbar-inner"></div></div>
+          <div class="tbl-footer-row">
+            <span class="tbl-total-pages" aria-live="polite">Total {{ orderTotal.toLocaleString() }}</span>
+            <Pagination class="tbl-pagination" :page="orderPage" :total-pages="orderTotalPages" :page-size="orderPageSize" :disabled="ordersLoading" direct-input show-page-sizes @change="fetchOrders" @size-change="setOrderPageSize" />
+          </div>
         </div>
       </div>
     </div>
@@ -484,7 +514,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import Pagination from '../components/Pagination.vue'
 import { useToast } from '../composables/useToast.js'
 import { fmtDateTime as fmt } from '../utils/format.js'
@@ -926,12 +956,61 @@ function money(v) {
   return n.toLocaleString('en-IN')
 }
 
+/* The table's horizontal scrollbar lives inside the footer bar (.tbl-hbar) instead of
+   at the bottom of the table / page bottom, so it is always visible with the pagination. */
+const groupsScroll = ref(null)
+const groupsBar = ref(null)
+const txnsScroll = ref(null)
+const txnsBar = ref(null)
+const ordersScroll = ref(null)
+const ordersBar = ref(null)
+
+const scrollPairs = {
+  groups: [groupsScroll, groupsBar],
+  txns: [txnsScroll, txnsBar],
+  orders: [ordersScroll, ordersBar],
+}
+
+function syncFooterBar(key) {
+  const [scRef, barRef] = scrollPairs[key]
+  const sc = scRef.value
+  const bar = barRef.value
+  if (!sc || !bar) return
+  const inner = bar.firstElementChild
+  if (inner) {
+    // Map the table's scroll range onto the bar so both reach the ends together.
+    const width = Math.max(sc.scrollWidth + (bar.clientWidth - sc.clientWidth), bar.clientWidth)
+    inner.style.width = `${width}px`
+  }
+  bar.scrollLeft = sc.scrollLeft
+}
+
+function refreshFooterBars() {
+  Object.keys(scrollPairs).forEach(syncFooterBar)
+}
+
+function onTableScroll(key) {
+  const [scRef, barRef] = scrollPairs[key]
+  if (scRef.value && barRef.value) barRef.value.scrollLeft = scRef.value.scrollLeft
+}
+
+function onBarScroll(key) {
+  const [scRef, barRef] = scrollPairs[key]
+  if (scRef.value && barRef.value) scRef.value.scrollLeft = barRef.value.scrollLeft
+}
+
+watch([groups, transactions, orders], () => nextTick(refreshFooterBars))
+
 onMounted(() => {
   fetchGroups(1)
   fetchTransactions(1)
   fetchOrders(1)
   loadAllGroupUids()
+  window.addEventListener('resize', refreshFooterBars)
+  refreshFooterBars()
 })
+
+onBeforeUnmount(() => window.removeEventListener('resize', refreshFooterBars))
 </script>
 
 <style scoped>
@@ -942,19 +1021,26 @@ onMounted(() => {
 
 /* Table card — no padding so scroll + footer hug the border */
 .table-card{height:min(68vh,720px);min-height:280px;padding:0;display:flex;flex-direction:column;overflow:hidden}
-.tbl-scroll{min-height:0;min-width:0;overflow:auto;flex:1;-webkit-overflow-scrolling:touch}
-/* Keep the horizontal scrollbar right above the footer (not at page bottom) */
-.tbl-scroll::-webkit-scrollbar{height:6px}
+.tbl-scroll{min-height:0;min-width:0;overflow:auto;flex:1;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--color-border) transparent}
+/* Native horizontal scrollbar is hidden — it is rendered inside the footer (.tbl-hbar) */
+.tbl-scroll::-webkit-scrollbar{height:0;width:8px}
 .tbl-scroll::-webkit-scrollbar-track{background:transparent}
 .tbl-scroll::-webkit-scrollbar-thumb{background:var(--color-border);border-radius:3px}
-.tbl-footer{position:fixed;left:var(--sidebar-width, 0px);right:0;bottom:0;z-index:25;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:12px 14px;border-top:1px solid var(--color-border);background:var(--color-surface-raised);box-shadow:0 -4px 14px rgba(0,0,0,.08)}
+.tbl-footer{position:fixed;left:var(--sidebar-width, 0px);right:0;bottom:0;z-index:25;display:flex;flex-direction:column;align-items:stretch;padding:0;border-top:1px solid var(--color-border);background:var(--color-surface-raised);box-shadow:0 -4px 14px rgba(0,0,0,.08)}
+/* Horizontal scrollbar strip, inside the footer, synced with the table above */
+.tbl-hbar{flex:0 0 auto;width:100%;height:12px;padding:2px 4px 0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--color-border) transparent}
+.tbl-hbar::-webkit-scrollbar{height:8px}
+.tbl-hbar::-webkit-scrollbar-track{background:transparent}
+.tbl-hbar::-webkit-scrollbar-thumb{background:var(--color-border);border-radius:4px}
+.tbl-hbar-inner{height:100%}
+.tbl-footer-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:4px 14px 12px}
 .tbl-total-pages{font-size:12px;color:var(--color-text-secondary);white-space:nowrap}
-.tbl-footer :deep(.pagination){justify-content:flex-end;gap:6px;margin-left:auto}
-.tbl-footer :deep(.pagination > .btn){width:30px;height:30px;min-height:30px;padding:0;border:1px solid var(--color-control-border);border-radius:var(--radius-sm);background:var(--color-control-bg);color:var(--color-text)}
-.tbl-footer :deep(.pagination > .btn:hover:not(:disabled)){border-color:var(--color-primary);color:var(--color-primary)}
-.tbl-footer :deep(.pagination > .page-btn){width:30px;min-width:30px;height:28px;min-height:28px}
-.tbl-footer :deep(.pagination > .page-input){height:30px}
-.tbl-footer :deep(.pagination > .page-btn.active){background:var(--color-button-primary-bg);border-color:var(--color-button-primary-bg);color:var(--color-button-primary-text)}
+.tbl-footer-row :deep(.pagination){justify-content:flex-end;gap:6px;margin-left:auto}
+.tbl-footer-row :deep(.pagination > .btn){width:30px;height:30px;min-height:30px;padding:0;border:1px solid var(--color-control-border);border-radius:var(--radius-sm);background:var(--color-control-bg);color:var(--color-text)}
+.tbl-footer-row :deep(.pagination > .btn:hover:not(:disabled)){border-color:var(--color-primary);color:var(--color-primary)}
+.tbl-footer-row :deep(.pagination > .page-btn){width:30px;min-width:30px;height:28px;min-height:28px}
+.tbl-footer-row :deep(.pagination > .page-input){height:30px}
+.tbl-footer-row :deep(.pagination > .page-btn.active){background:var(--color-button-primary-bg);border-color:var(--color-button-primary-bg);color:var(--color-button-primary-text)}
 .tbl-error{padding:12px 14px;margin:0}
 .tbl-empty{padding:20px 14px;margin:0}
 
@@ -1025,8 +1111,17 @@ onMounted(() => {
 .modal-body--scroll{max-height:calc(90vh - 120px)}
 .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 16px;border-top:1px solid var(--color-border)}
 .modal textarea{resize:vertical;font-family:inherit}
-.status-popup-info{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--color-surface-raised);border-radius:var(--radius-sm);border:1px solid var(--color-border)}
-.status-popup-actions{display:flex;flex-direction:column;gap:8px}
+.modal--actions{width:80vw;max-width:80vw;min-width:0}
+.form-field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px 16px;align-items:start}
+.form-field-grid .field{gap:6px;min-width:0}
+.form-field-grid .field-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-secondary)}
+.form-field-grid .badge{align-self:flex-start}
+.form-field-grid .status-action-btn{min-height:44px;justify-content:flex-start;text-align:left}
+.form-field-grid .status-action-text small{font-size:13px;opacity:1;font-weight:500}
+.action-btn--icon{width:32px;min-width:32px;padding:0;gap:0}
+.action-btn--icon svg{flex:0 0 auto}
+.cell-actions-end{text-align:right}
+.cell-actions-end .row-actions{justify-content:flex-end}
 .status-action-btn{display:flex;align-items:center;gap:12px;padding:10px 14px;width:100%;text-align:left;border-radius:var(--radius-sm);transition:opacity .15s}
 .status-action-btn:hover{opacity:.85}
 .status-action-btn--danger{background:var(--color-button-danger-bg);color:var(--color-button-danger-text);border-color:var(--color-button-danger-bg)}
@@ -1041,14 +1136,15 @@ onMounted(() => {
   .tbl-footer{left:0}
 }
 @media(max-width:640px){
-  .tbl-footer{padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom))}
+  .tbl-footer-row{padding:4px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom))}
+  .tbl-hbar{padding:2px 8px 0}
   .tbl-total-pages{font-size:11px}
   .page{padding-bottom:112px}
   .table-card{height:60vh;min-height:240px}
   .filter-card-head{margin-bottom:10px}
-  .tbl-footer{align-items:stretch;gap:10px;padding:12px}
-  .tbl-footer :deep(.pagination){justify-content:flex-start}
-  .tbl-footer :deep(.pagination > .page-btn:not(.active)),
-  .tbl-footer :deep(.pagination > .page-dots){display:none}
+  .tbl-footer-row{align-items:stretch;gap:10px}
+  .tbl-footer-row :deep(.pagination){justify-content:flex-start}
+  .tbl-footer-row :deep(.pagination > .page-btn:not(.active)),
+  .tbl-footer-row :deep(.pagination > .page-dots){display:none}
 }
 </style>
