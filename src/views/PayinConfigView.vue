@@ -356,6 +356,6 @@ onMounted(() => { fetchRates(); fetchAddresses(1); fetchBonus() })
 .row-actions{display:flex;gap:4px;flex-wrap:wrap} .pagination{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px}
 .rate-hero{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;background:var(--color-surface-raised);border:1px solid var(--color-border);border-radius:var(--radius-md)} .rate-value{font-size:20px;font-weight:700}
 .field{display:flex;flex-direction:column;gap:6px} .field-label{font-size:12px;font-weight:600;color:var(--color-text-secondary);margin-bottom:0} .field .input{padding:8px 10px;font-size:13px}
-.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);display:grid;place-items:center;z-index:50;padding:16px} .modal{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;min-width:360px;max-width:480px;width:100%;display:flex;flex-direction:column;gap:12px}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);display:grid;place-items:center;z-index:50;padding:16px} .modal{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px;min-width:0;max-width:80vw;width:100%;display:flex;flex-direction:column;gap:12px}
 .modal h3{font-size:var(--text-h2)} .modal form{display:flex;flex-direction:column;gap:12px} .checkbox label{display:flex;gap:8px;align-items:center;font-size:var(--text-h4)} .modal-actions{display:flex;justify-content:flex-end;gap:8px}
 </style>

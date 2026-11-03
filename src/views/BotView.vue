@@ -1103,8 +1103,8 @@ onBeforeUnmount(() => window.removeEventListener('resize', refreshFooterBars))
 .field-label{font-size:12px;font-weight:600;color:var(--color-text-secondary);margin-bottom:0}
 .required{color:var(--color-danger);margin-left:4px}
 .modal-overlay{position:fixed;inset:0;background:rgba(15,18,24,.5);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
-.modal{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:var(--shadow-dropdown);width:100%;max-width:440px;display:flex;flex-direction:column;max-height:90vh}
-.modal--wide{max-width:860px}
+.modal{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:var(--shadow-dropdown);width:100%;max-width:80vw;min-width:0;display:flex;flex-direction:column;max-height:90vh}
+.modal--wide{max-width:80vw}
 .modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--color-border)}
 .modal-head h3{font-size:var(--text-h3);word-break:break-all}
 .modal-body{padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
