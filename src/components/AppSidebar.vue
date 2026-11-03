@@ -3,21 +3,25 @@
     <div class="sidebar-brand">
       <span class="sidebar-logo">SunPay</span>
       <span class="sidebar-badge">Admin</span>
+      <span class="sidebar-mark" aria-hidden="true">S</span>
     </div>
 
-    <nav class="sidebar-nav">
-      <RouterLink
-        v-for="item in navItems"
-        :key="item.to"
-        :to="item.to"
-        class="nav-item"
-        active-class="active"
-        @click="$emit('close')"
-      >
-        <span class="nav-icon" v-html="item.icon"></span>
-        <span class="nav-label">{{ item.label }}</span>
-      </RouterLink>
-    </nav>
+    <ul class="sidebar-el-menu el-menu" role="menubar">
+      <li v-for="item in navItems" :key="item.to" role="none" class="el-menu-item-wrap">
+        <RouterLink
+          :to="item.to"
+          role="menuitem"
+          class="el-menu-item"
+          :class="{ 'is-active': isActive(item) }"
+          :title="collapsed ? item.label : null"
+          :aria-label="collapsed ? item.label : null"
+          @click="$emit('close')"
+        >
+          <i class="icon" v-html="item.icon"></i>
+          <span class="el-menu-item__label">{{ item.label }}</span>
+        </RouterLink>
+      </li>
+    </ul>
 
     <div class="sidebar-footer">
       <p>SunPay Admin Panel</p>
@@ -27,11 +31,15 @@
 </template>
 
 <script setup>
+import { useRoute } from 'vue-router'
+
 defineProps({
   collapsed: Boolean,
   mobileOpen: Boolean,
 })
 defineEmits(['close', 'toggle-collapse'])
+
+const route = useRoute()
 
 const navItems = [
   { label: 'Dashboard', to: '/', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.6"/><rect x="3" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.6"/></svg>' },
@@ -46,149 +54,213 @@ const navItems = [
   { label: 'Payouts', to: '/payouts', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M2 8h20" stroke="currentColor" stroke-width="1.3"/><path d="M6 12h4M6 15h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>' },
   { label: 'Bot', to: '/bot', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="4" y="8" width="16" height="11" rx="3" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M12 4v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/><circle cx="12" cy="3" r="1.2" fill="currentColor"/><circle cx="9" cy="13.5" r="1.3" fill="currentColor"/><circle cx="15" cy="13.5" r="1.3" fill="currentColor"/><path d="M9.5 16.5h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/></svg>' },
 ]
+
+function isActive(item) {
+  return item.to === '/' ? route.path === '/' : route.path.startsWith(item.to)
+}
 </script>
 
 <style scoped>
+/* Shell */
 .sidebar {
-  width: 220px;
-  flex-shrink: 0;
-  background: var(--color-sidebar-bg);
-  color: var(--color-text);
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  box-shadow: 2px 0 8px rgba(0,0,0,0.1);
-  transition: width var(--motion-normal) ease, padding var(--motion-normal) ease, border var(--motion-normal) ease;
+  flex-shrink: 0;
+  width: var(--layout-sidebar-width, 242px);
+  height: 100%;
+  overflow: hidden;
   z-index: 40;
-  border-right: 1px solid var(--color-sidebar-border);
+  background-color: var(--theme-sidebar, #324157);
+  border-right: 0.8px solid #e6e6e6;
+  transition: width var(--motion-normal) ease;
 }
 
 .sidebar.collapsed {
-  width: 0;
-  padding: 0;
-  border: none;
-  overflow: hidden;
+  width: var(--layout-sidebar-collapsed-width, 64px);
 }
 
+/* Brand */
 .sidebar-brand {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   height: 50px;
-  font-family: var(--font-heading);
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  border-bottom: 1px solid var(--color-sidebar-border);
-  color: var(--color-sidebar-brand);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .sidebar-logo {
   font-family: var(--font-heading);
   font-size: 18px;
   font-weight: 700;
+  letter-spacing: 0.3px;
   white-space: nowrap;
-  color: var(--color-sidebar-brand);
+  color: #ffffff;
 }
 
 .sidebar-badge {
-  background: rgba(32, 143, 255, 0.15);
-  color: var(--color-primary);
+  margin-left: 8px;
+  padding: 3px 8px;
+  border-radius: var(--radius-round);
+  background: rgba(235, 175, 91, 0.15);
+  color: #ebaf5b;
   font-family: var(--font-heading);
   font-size: 11px;
   font-weight: 600;
-  padding: 3px 8px;
-  border-radius: var(--radius-round);
   white-space: nowrap;
-  margin-left: 8px;
 }
 
-.sidebar-nav {
-  padding: 6px 0;
-  flex: 1;
+.sidebar-mark {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(235, 175, 91, 0.15);
+  color: #ebaf5b;
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 700;
 }
 
-.nav-item {
+/* Collapsed / minimized sidebar */
+.sidebar.collapsed .sidebar-logo,
+.sidebar.collapsed .sidebar-badge {
+  display: none;
+}
+
+.sidebar.collapsed .sidebar-mark {
+  display: inline-flex;
+}
+
+.sidebar.collapsed .sidebar-footer {
+  display: none;
+}
+
+.sidebar.collapsed .sidebar-el-menu {
+  width: var(--layout-sidebar-collapsed-width, 64px);
+}
+
+.sidebar.collapsed .el-menu-item {
+  justify-content: center;
+  padding: 0;
+}
+
+.sidebar.collapsed .el-menu-item .icon {
+  margin-right: 0;
+}
+
+.sidebar.collapsed .el-menu-item__label {
+  display: none;
+}
+
+/* Menu — the captured ul spec */
+.sidebar-el-menu {
+  position: relative;
+  width: var(--layout-sidebar-width, 242px);
+  flex: 1 1 auto;
+  min-height: 0;
+  font-family: "PingFang SC", "Helvetica Neue", Helvetica, "microsoft yahei", arial, STHeiTi, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 16.1px;
+  text-align: left;
+  color: #666666;
+  background-color: var(--theme-sidebar, #324157);
+  overflow: hidden auto;
+  cursor: crosshair;
+  transition: all;
+}
+
+.sidebar-el-menu::before,
+.sidebar-el-menu::after {
+  content: "";
+  display: table;
+  position: static;
+  width: 0;
+  height: 0;
+  background-color: rgba(0, 0, 0, 0);
+  color: rgb(102, 102, 102);
+  font-size: 14px;
+  font-weight: 400;
+  border-radius: 0px;
+  border: 0px none rgb(102, 102, 102);
+  opacity: 1;
+}
+
+.el-menu-item-wrap {
+  list-style: none;
+}
+
+/* Rows (reskinned original nav items) */
+.sidebar-el-menu .el-menu-item {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 15px;
-  font-size: 16px;
-  color: var(--color-text);
+  height: 56px;
+  padding: 0 20px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 56px;
+  color: rgb(191, 203, 217);
+  background-color: var(--theme-sidebar, #324157);
   text-decoration: none;
+  white-space: nowrap;
   cursor: pointer;
-  transition: background 200ms, color 200ms;
-  border-left: 3px solid transparent;
-  font-family: var(--font-body);
+  transition: background-color 0.3s, color 0.3s;
 }
 
-.nav-item:hover {
-  background: var(--color-sidebar-hover);
-  color: var(--color-primary);
+.sidebar-el-menu .el-menu-item:hover {
+  background-color: #283441;
 }
 
-.nav-item:focus-visible {
+.sidebar-el-menu .el-menu-item:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: -2px;
 }
 
-.nav-item.active {
-  color: var(--color-primary);
-  background: var(--color-sidebar-active);
-  border-left-color: var(--color-primary);
+.sidebar-el-menu .el-menu-item.is-active {
+  color: rgb(235, 175, 91);
+  background-color: var(--theme-sidebar, #324157);
 }
 
-.nav-icon {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  opacity: 0.8;
+.sidebar-el-menu .icon {
   display: inline-flex;
-}
-
-.nav-item.active .nav-icon {
-  opacity: 1;
-}
-
-.nav-item svg {
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   width: 16px;
   height: 16px;
-  fill: currentColor;
+  margin-right: 8px;
+  font-style: normal;
+  color: inherit;
 }
 
-.nav-label {
+.sidebar-el-menu .icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.el-menu-item__label {
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
+/* Footer */
 .sidebar-footer {
-  padding: 12px 15px;
-  border-top: 1px solid var(--color-sidebar-border);
-  font-size: var(--text-h4);
-  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  padding: 12px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: var(--text-body-l);
+  color: rgb(191, 203, 217);
 }
 
 .sidebar-footer-sub {
-  opacity: 0.6;
   margin-top: 2px;
-  font-size: var(--text-body-l);
-}
-
-@media (min-width: 769px) {
-  .sidebar {
-    width: 0;
-    padding: 0;
-    border: none;
-    overflow: hidden;
-    transition: width var(--motion-normal) ease, padding var(--motion-normal) ease, border var(--motion-normal) ease;
-  }
-  .sidebar:not(.collapsed) {
-    width: 220px;
-    padding: 0;
-    border: none;
-    overflow: visible;
-  }
+  opacity: 0.6;
 }
 
 @media (max-width: 880px) {
@@ -197,9 +269,7 @@ const navItems = [
     top: 0;
     left: 0;
     bottom: 0;
-    width: 220px;
-    min-width: 220px;
-    z-index: 1000;
+    width: var(--layout-sidebar-width, 242px);
     transform: translateX(-100%);
     transition: transform var(--motion-normal) ease;
     box-shadow: var(--shadow-dropdown);
@@ -208,8 +278,7 @@ const navItems = [
     transform: translateX(0);
   }
   .sidebar.collapsed {
-    width: 220px;
-    min-width: 220px;
+    width: var(--layout-sidebar-width, 242px);
   }
 }
 </style>

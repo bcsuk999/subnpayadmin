@@ -1,20 +1,104 @@
 :root {
-  --color-primary: #208fff;
-  --color-secondary: #409eff;
+  /* ── SimplyPay palette ─────────────────────────────────────── */
+  --color-primary-50: #fdf8f2;
+  --color-primary-100: #faf1e5;
+  --color-primary-200: #f4dfc2;
+  --color-primary-300: #f2ca92;
+  --color-primary-400: #ebaf5b;
+  --color-primary-500: #e3901c;
+  --color-primary-600: #bf7917;
+  --color-primary-700: #9b6213;
+  --color-primary-800: #764b0e;
+  --color-primary-900: #553911;
+  --color-primary-950: #37250b;
+
+  --color-secondary-50: #f7f7f8;
+  --color-secondary-100: #eff0f0;
+  --color-secondary-200: #dadbdd;
+  --color-secondary-300: #bfc1c4;
+  --color-secondary-400: #909399;
+  --color-secondary-500: #7a7e85;
+  --color-secondary-600: #676a70;
+  --color-secondary-700: #53555a;
+  --color-secondary-800: #3f4145;
+  --color-secondary-900: #313235;
+  --color-secondary-950: #202122;
+
+  --color-accent-50: #f5f7f9;
+  --color-accent-100: #eceff3;
+  --color-accent-200: #d3dae4;
+  --color-accent-300: #b1bed2;
+  --color-accent-400: #8399ba;
+  --color-accent-500: #5d79a2;
+  --color-accent-600: #4e6588;
+  --color-accent-700: #3f526e;
+  --color-accent-800: #324157;
+  --color-accent-900: #27313f;
+  --color-accent-950: #1a2029;
+
+  --color-neutral-50: #f7f7f8;
+  --color-neutral-100: #eff0f0;
+  --color-neutral-200: #dadbdc;
+  --color-neutral-300: #c0c1c4;
+  --color-neutral-400: #9b9da1;
+  --color-neutral-500: #7c7e83;
+  --color-neutral-600: #606266;
+  --color-neutral-700: #545659;
+  --color-neutral-800: #404244;
+  --color-neutral-900: #323334;
+  --color-neutral-950: #202122;
+
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+
+  --font-family-sans: 'PingFang SC';
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.375rem;
+  --font-size-3xl: 1.5rem;
+  --font-size-4xl: 1.625rem;
+
+  --spacing-0: 0;
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-9: 2.125rem;
+
+  --radius-none: 0;
+  --radius-sm: 0.125rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1.25rem;
+  --radius-full: 9999px;
+
+  --shadow-sm: rgba(0, 0, 0, 0.12) 0px 0px 10px 0px;
+  --shadow-md: rgba(0, 0, 0, 0.06) 0px 1px 3px 0px, rgba(0, 0, 0, 0.08) 0px 4px 12px 0px;
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+
+  --gradient-brand-1: linear-gradient(120deg, rgb(235, 175, 91), rgb(240, 192, 120));
+
+  /* ── Semantic aliases used throughout the app ──────────────── */
+  --color-primary: var(--color-primary-400);
+  --color-secondary: #f0c078;
   --color-bg: #ffffff;
-  --color-bg-secondary: #208fff;
-  --color-text: #000000;
-  --color-text-secondary: #666666;
-  --color-border: #f1f1f1;
-  --color-surface-muted: #eaeaea;
-  --color-surface-raised: #ecf5ff;
+  --color-bg-secondary: var(--color-primary-400);
+  --color-text: var(--color-neutral-900);
+  --color-text-secondary: var(--color-neutral-600);
+  --color-border: #e4e7ed;
+  --color-surface-muted: var(--color-neutral-100);
+  --color-surface-raised: var(--color-neutral-50);
   --color-input-bg: #ffffff;
   --color-row-alt: #ffffff;
-  --color-success: #42b983;
-  --color-danger: #ef4444;
-  --color-warning: #f59e0b;
-  --color-button-primary-bg: var(--color-secondary);
-  --color-button-primary-hover: var(--color-primary);
+  --color-danger: var(--color-error);
+  --color-button-primary-bg: var(--color-primary-400);
+  --color-button-primary-hover: var(--color-primary-300);
   --color-button-primary-text: #ffffff;
   --color-button-success-bg: var(--color-success);
   --color-button-success-text: #ffffff;
@@ -22,36 +106,44 @@
   --color-button-danger-text: #ffffff;
   --color-button-warning-bg: var(--color-warning);
   --color-button-warning-text: #ffffff;
-  --color-button-adjust-bg: var(--color-primary);
+  --color-button-adjust-bg: var(--color-primary-400);
   --color-button-adjust-text: #ffffff;
   --color-control-bg: var(--color-bg);
-  --color-control-hover-bg: var(--color-bg);
-  --color-control-border: var(--color-border);
+  --color-control-hover-bg: var(--color-primary-50);
+  --color-control-border: var(--color-neutral-200);
 
   /* Scrollbars — gray so they stay visible on any surface */
-  --scrollbar-track: #dcdfe4;
-  --scrollbar-thumb: #8a919c;
+  --scrollbar-track: var(--color-neutral-100);
+  --scrollbar-thumb: var(--color-neutral-400);
+
+  --layout-sidebar-width: 242px;
+  --layout-sidebar-collapsed-width: 64px;
+  --theme-sidebar: var(--color-accent-800);
+
+  --theme-card-bg: #ffffff;
+  --theme-text-primary: var(--color-neutral-900);
+  --theme-text-regular: var(--color-neutral-600);
 
   --color-sidebar-bg: #ffffff;
-  --color-sidebar-text: #666666;
-  --color-sidebar-text-active: #208fff;
-  --color-sidebar-hover: rgba(32, 143, 255, 0.08);
-  --color-sidebar-active: rgba(32, 143, 255, 0.1);
-  --color-sidebar-border: #f1f1f1;
-  --color-sidebar-brand: #000000;
+  --color-sidebar-text: var(--color-neutral-600);
+  --color-sidebar-text-active: var(--color-primary-500);
+  --color-sidebar-hover: rgba(235, 175, 91, 0.08);
+  --color-sidebar-active: rgba(235, 175, 91, 0.12);
+  --color-sidebar-border: #e4e7ed;
+  --color-sidebar-brand: var(--color-neutral-950);
 
-  --color-header-bg: rgba(32, 143, 255, 0.9);
+  --color-header-bg: var(--color-accent-800);
   --color-header-border: transparent;
 
-  --font-heading: 'Inter', 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
-  --font-body: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+  --font-heading: var(--font-family-sans), 'Helvetica Neue', Helvetica, 'Microsoft YaHei', Arial, STHeiTi, sans-serif;
+  --font-body: var(--font-family-sans), 'Helvetica Neue', Helvetica, 'Microsoft YaHei', Arial, STHeiTi, sans-serif;
 
-  --text-display: 20px;
-  --text-h1: 18px;
-  --text-h2: 16px;
-  --text-h3: 14px;
-  --text-h4: 13px;
-  --text-body-l: 12px;
+  --text-display: var(--font-size-xl);
+  --text-h1: var(--font-size-lg);
+  --text-h2: var(--font-size-base);
+  --text-h3: var(--font-size-sm);
+  --text-h4: var(--font-size-xs);
+  --text-body-l: var(--font-size-xs);
 
   --space-1: 2px;
   --space-2: 6px;
@@ -65,15 +157,12 @@
   --space-12: 12px;
   --space-20: 20px;
 
-  --radius-sm: 3px;
-  --radius-md: 4px;
-  --radius-lg: 10px;
-  --radius-pill: 10px;
+  --radius-pill: var(--radius-full);
   --radius-round: 50px;
 
-  --shadow-card: rgba(0, 0, 0, 0.32) 0px 1px 1px 0px, rgba(0, 0, 0, 0.2) 0px 0px 1px 0px;
+  --shadow-card: var(--shadow-md);
   --shadow-dropdown: rgba(0, 0, 0, 0.1) 0px 2px 12px 0px;
-  --shadow-subtle: rgba(0, 0, 0, 0.12) 0px 0px 1px 0px, rgba(0, 0, 0, 0.04) 0px 0px 0px 0px;
+  --shadow-subtle: rgba(0, 0, 0, 0.06) 0px 1px 3px 0px;
 
   --motion-instant: 100ms;
   --motion-fast: 200ms;
@@ -84,7 +173,7 @@
   --font-weight-heading: 600;
 
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-body);
   line-height: 1.15;
   color: var(--color-text);

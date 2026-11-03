@@ -1,5 +1,5 @@
 <template>
-  <div class="app-layout" :style="{ '--sidebar-width': collapsed ? '0px' : '220px' }">
+  <div class="app-layout" :style="{ '--sidebar-width': collapsed ? 'var(--layout-sidebar-collapsed-width, 64px)' : 'var(--layout-sidebar-width, 242px)' }">
     <AppSidebar :collapsed="collapsed" :mobile-open="mobileOpen" @close="mobileOpen = false" @toggle-collapse="collapsed = !collapsed" />
     <div class="main-area">
       <AppHeader :collapsed="collapsed" @toggle-sidebar="collapsed = !collapsed" @toggle-mobile="mobileOpen = !mobileOpen" />

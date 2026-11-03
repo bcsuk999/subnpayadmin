@@ -21,15 +21,9 @@
           <div class="field"><label class="field-label">Title</label><input v-model="groupFilters.title" class="input" placeholder="SubnPay" @input="onGroupSearchInput('title')" @keyup.enter="fetchGroups(1)" /></div>
           <div class="field">
             <label class="field-label">Status</label>
-            <select v-model="groupFilters.status" class="input">
-              <option value="">All</option>
-              <option value="active">active</option>
-              <option value="banned">banned</option>
-              <option value="suspended">suspended</option>
-            </select>
+            <SelectDropdown v-model="groupFilters.status" class="status-select" :options="groupStatusOptions" aria-label="Status" />
           </div>
-          <div class="field"><label class="field-label">From</label><input v-model="groupFilters.from" class="input" type="date" /></div>
-          <div class="field"><label class="field-label">To</label><input v-model="groupFilters.to" class="input" type="date" /></div>
+          <div class="field field--range"><label class="field-label">Dates</label><DateRangePicker v-model:from="groupFilters.from" v-model:to="groupFilters.to" /></div>
           <div class="filter-actions">
             <button class="btn btn-primary" type="button" :disabled="groupsLoading" @click="fetchGroups(1)">{{ groupsLoading ? 'Loading…' : 'Search' }}</button>
             <button class="btn btn-ghost" type="button" :disabled="groupsLoading" @click="resetGroupFilters">Reset</button>
@@ -37,10 +31,13 @@
         </div>
       </div>
 
-      <div class="card table-card">
+      <div class="card table-card results">
+        <div class="values-header">
+          <p class="title">Find results</p>
+        </div>
         <p v-if="groupsError" class="error tbl-error" role="alert">{{ groupsError }}</p>
         <p v-if="!groupsLoading && groups.length === 0 && !groupsError" class="empty tbl-empty">No bot groups found.</p>
-        <div v-if="groups.length || groupsLoading" ref="groupsScroll" class="tbl-scroll" @scroll="onTableScroll('groups')">
+        <div v-if="groups.length || groupsLoading" class="tbl-scroll">
           <table class="table">
             <thead>
               <tr><th>UID</th><th>Group ID</th><th>Title</th><th>Username</th><th>Type</th><th>Status</th><th>Balance</th><th>Deposits</th><th>Last Active</th><th>Actions</th></tr>
@@ -72,7 +69,6 @@
           </table>
         </div>
         <div class="tbl-footer">
-          <div ref="groupsBar" class="tbl-hbar" aria-hidden="true" @scroll="onBarScroll('groups')"><div class="tbl-hbar-inner"></div></div>
           <div class="tbl-footer-row">
             <span class="tbl-total-pages" aria-live="polite">Total {{ groupTotal.toLocaleString() }}</span>
             <Pagination class="tbl-pagination" :page="groupPage" :total-pages="groupTotalPages" :page-size="groupPageSize" :disabled="groupsLoading" direct-input show-page-sizes @change="fetchGroups" @size-change="setGroupPageSize" />
@@ -138,31 +134,17 @@
           <div class="field"><label class="field-label">UID</label><input v-model="txnFilters.uid" class="input" placeholder="32045" maxlength="5" inputmode="numeric" @input="onTxnSearchInput('uid')" @keyup.enter="fetchTransactions(1)" /></div>
           <div class="field">
             <label class="field-label">Type</label>
-            <select v-model="txnFilters.type" class="input">
-              <option value="">All</option>
-              <option value="credit">credit</option>
-              <option value="debit">debit</option>
-            </select>
+            <SelectDropdown v-model="txnFilters.type" class="status-select" :options="txnTypeOptions" aria-label="Type" />
           </div>
           <div class="field">
             <label class="field-label">Note</label>
-            <select v-model="txnFilters.note" class="input">
-              <option value="">All</option>
-              <option value="deposit">deposit</option>
-              <option value="adjustment">adjustment</option>
-              <option value="reversal">reversal</option>
-            </select>
+            <SelectDropdown v-model="txnFilters.note" class="status-select" :options="txnNoteOptions" aria-label="Note" />
           </div>
           <div class="field">
             <label class="field-label">Status</label>
-            <select v-model="txnFilters.status" class="input">
-              <option value="">All</option>
-              <option value="success">success</option>
-              <option value="reversed">reversed</option>
-            </select>
+            <SelectDropdown v-model="txnFilters.status" class="status-select" :options="txnStatusOptions" aria-label="Status" />
           </div>
-          <div class="field"><label class="field-label">From</label><input v-model="txnFilters.from" class="input" type="date" /></div>
-          <div class="field"><label class="field-label">To</label><input v-model="txnFilters.to" class="input" type="date" /></div>
+          <div class="field field--range"><label class="field-label">Dates</label><DateRangePicker v-model:from="txnFilters.from" v-model:to="txnFilters.to" /></div>
           <div class="filter-actions">
             <button class="btn btn-primary" type="button" :disabled="txnsLoading" @click="fetchTransactions(1)">{{ txnsLoading ? 'Loading…' : 'Search' }}</button>
             <button class="btn btn-ghost" type="button" :disabled="txnsLoading" @click="resetTxnFilters">Reset</button>
@@ -170,10 +152,13 @@
         </div>
       </div>
 
-      <div class="card table-card">
+      <div class="card table-card results">
+        <div class="values-header">
+          <p class="title">Find results</p>
+        </div>
         <p v-if="txnsError" class="error tbl-error" role="alert">{{ txnsError }}</p>
         <p v-if="!txnsLoading && transactions.length === 0 && !txnsError" class="empty tbl-empty">No bot transactions found.</p>
-        <div v-if="transactions.length || txnsLoading" ref="txnsScroll" class="tbl-scroll" @scroll="onTableScroll('txns')">
+        <div v-if="transactions.length || txnsLoading" class="tbl-scroll">
           <table class="table">
             <thead>
               <tr><th>Trn ID</th><th>UID</th><th>Group</th><th>Order</th><th>Amount</th><th>Type</th><th>Note</th><th>Balance After</th><th>Status</th><th>Remark</th><th>Created</th></tr>
@@ -196,7 +181,6 @@
           </table>
         </div>
         <div class="tbl-footer">
-          <div ref="txnsBar" class="tbl-hbar" aria-hidden="true" @scroll="onBarScroll('txns')"><div class="tbl-hbar-inner"></div></div>
           <div class="tbl-footer-row">
             <span class="tbl-total-pages" aria-live="polite">Total {{ txnTotal.toLocaleString() }}</span>
             <Pagination class="tbl-pagination" :page="txnPage" :total-pages="txnTotalPages" :page-size="txnPageSize" :disabled="txnsLoading" direct-input show-page-sizes @change="fetchTransactions" @size-change="setTxnPageSize" />
@@ -220,17 +204,9 @@
           <div class="field"><label class="field-label">UID</label><input v-model="orderFilters.uid" class="input" placeholder="32045" maxlength="5" inputmode="numeric" @input="onOrderSearchInput('uid')" @keyup.enter="fetchOrders(1)" /></div>
           <div class="field">
             <label class="field-label">Status</label>
-            <select v-model="orderFilters.status" class="input">
-              <option value="">All</option>
-              <option value="pending">pending</option>
-              <option value="success">success</option>
-              <option value="failed">failed</option>
-              <option value="expired">expired</option>
-              <option value="reversed">reversed</option>
-            </select>
+            <SelectDropdown v-model="orderFilters.status" class="status-select" :options="orderStatusOptions" aria-label="Status" />
           </div>
-          <div class="field"><label class="field-label">From</label><input v-model="orderFilters.from" class="input" type="date" /></div>
-          <div class="field"><label class="field-label">To</label><input v-model="orderFilters.to" class="input" type="date" /></div>
+          <div class="field field--range"><label class="field-label">Dates</label><DateRangePicker v-model:from="orderFilters.from" v-model:to="orderFilters.to" /></div>
           <div class="filter-actions">
             <button class="btn btn-primary" type="button" :disabled="ordersLoading" @click="fetchOrders(1)">{{ ordersLoading ? 'Loading…' : 'Search' }}</button>
             <button class="btn btn-ghost" type="button" :disabled="ordersLoading" @click="resetOrderFilters">Reset</button>
@@ -238,10 +214,13 @@
         </div>
       </div>
 
-      <div class="card table-card">
+      <div class="card table-card results">
+        <div class="values-header">
+          <p class="title">Find results</p>
+        </div>
         <p v-if="ordersError" class="error tbl-error" role="alert">{{ ordersError }}</p>
         <p v-if="!ordersLoading && orders.length === 0 && !ordersError" class="empty tbl-empty">No deposit records found.</p>
-        <div v-if="orders.length || ordersLoading" ref="ordersScroll" class="tbl-scroll" @scroll="onTableScroll('orders')">
+        <div v-if="orders.length || ordersLoading" class="tbl-scroll">
           <table class="table table--wide">
             <thead>
               <tr><th>Order ID</th><th>UID</th><th>Group</th><th>Amount</th><th>Received</th><th>Status</th><th>UPI ID</th><th>SimplyPay No</th><th>Trn ID</th><th>Requested By</th><th>Created</th><th>Actions</th></tr>
@@ -271,7 +250,6 @@
           </table>
         </div>
         <div class="tbl-footer">
-          <div ref="ordersBar" class="tbl-hbar" aria-hidden="true" @scroll="onBarScroll('orders')"><div class="tbl-hbar-inner"></div></div>
           <div class="tbl-footer-row">
             <span class="tbl-total-pages" aria-live="polite">Total {{ orderTotal.toLocaleString() }}</span>
             <Pagination class="tbl-pagination" :page="orderPage" :total-pages="orderTotalPages" :page-size="orderPageSize" :disabled="ordersLoading" direct-input show-page-sizes @change="fetchOrders" @size-change="setOrderPageSize" />
@@ -499,8 +477,10 @@
 </template>
 
 <script setup>
-import { nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import Pagination from '../components/Pagination.vue'
+import DateRangePicker from '../components/DateRangePicker.vue'
+import SelectDropdown from '../components/SelectDropdown.vue'
 import { useToast } from '../composables/useToast.js'
 import { fmtDateTime as fmt } from '../utils/format.js'
 import {
@@ -544,6 +524,38 @@ async function loadAllGroupUids() {
     // UID lookup is best-effort; the tables still render without it.
   }
 }
+
+// — Filter dropdown options —
+const groupStatusOptions = [
+  { value: '', label: 'All' },
+  { value: 'active', label: 'active' },
+  { value: 'banned', label: 'banned' },
+  { value: 'suspended', label: 'suspended' },
+]
+const txnTypeOptions = [
+  { value: '', label: 'All' },
+  { value: 'credit', label: 'credit' },
+  { value: 'debit', label: 'debit' },
+]
+const txnNoteOptions = [
+  { value: '', label: 'All' },
+  { value: 'deposit', label: 'deposit' },
+  { value: 'adjustment', label: 'adjustment' },
+  { value: 'reversal', label: 'reversal' },
+]
+const txnStatusOptions = [
+  { value: '', label: 'All' },
+  { value: 'success', label: 'success' },
+  { value: 'reversed', label: 'reversed' },
+]
+const orderStatusOptions = [
+  { value: '', label: 'All' },
+  { value: 'pending', label: 'pending' },
+  { value: 'success', label: 'success' },
+  { value: 'failed', label: 'failed' },
+  { value: 'expired', label: 'expired' },
+  { value: 'reversed', label: 'reversed' },
+]
 
 // — Groups —
 const groups = ref([])
@@ -941,218 +953,247 @@ function money(v) {
   return n.toLocaleString('en-IN')
 }
 
-/* The table's horizontal scrollbar lives inside the footer bar (.tbl-hbar) instead of
-   at the bottom of the table / page bottom, so it is always visible with the pagination. */
-const groupsScroll = ref(null)
-const groupsBar = ref(null)
-const txnsScroll = ref(null)
-const txnsBar = ref(null)
-const ordersScroll = ref(null)
-const ordersBar = ref(null)
-
-const scrollPairs = {
-  groups: [groupsScroll, groupsBar],
-  txns: [txnsScroll, txnsBar],
-  orders: [ordersScroll, ordersBar],
-}
-
-function syncFooterBar(key) {
-  const [scRef, barRef] = scrollPairs[key]
-  const sc = scRef.value
-  const bar = barRef.value
-  if (!sc || !bar) return
-  const inner = bar.firstElementChild
-  if (inner) {
-    // Map the table's scroll range onto the bar so both reach the ends together.
-    const width = Math.max(sc.scrollWidth + (bar.clientWidth - sc.clientWidth), bar.clientWidth)
-    inner.style.width = `${width}px`
-  }
-  bar.scrollLeft = sc.scrollLeft
-}
-
-function refreshFooterBars() {
-  Object.keys(scrollPairs).forEach(syncFooterBar)
-  observeFooterTables()
-}
-
-/* Re-sync whenever a table changes size (data load, column changes, tab switch). */
-let footerObserver = null
-function observeFooterTables() {
-  if (!('ResizeObserver' in window)) return
-  if (!footerObserver) footerObserver = new ResizeObserver(refreshFooterBars)
-  Object.keys(scrollPairs).forEach((key) => {
-    const sc = scrollPairs[key][0].value
-    const table = sc && sc.querySelector('table')
-    if (table && !table.__footerObserved) {
-      table.__footerObserved = true
-      footerObserver.observe(table)
-    }
-  })
-}
-
-function onTableScroll(key) {
-  const [scRef, barRef] = scrollPairs[key]
-  if (scRef.value && barRef.value) barRef.value.scrollLeft = scRef.value.scrollLeft
-}
-
-function onBarScroll(key) {
-  const [scRef, barRef] = scrollPairs[key]
-  if (scRef.value && barRef.value) scRef.value.scrollLeft = barRef.value.scrollLeft
-}
-
-watch([groups, transactions, orders], () => nextTick(refreshFooterBars))
-watch(activeTab, () => nextTick(refreshFooterBars))
-
 onMounted(() => {
   fetchGroups(1)
   fetchTransactions(1)
   fetchOrders(1)
   loadAllGroupUids()
-  window.addEventListener('resize', refreshFooterBars)
-  refreshFooterBars()
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', refreshFooterBars)
-  if (footerObserver) footerObserver.disconnect()
 })
 </script>
 
 <style scoped>
-.page{display:flex;flex-direction:column;gap:16px;padding-bottom:100px}
-.card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px;box-shadow:var(--shadow-subtle)}
+/* ── SimplyPay reference theme (exact palette / fonts / radii) ───────────── */
+.page{
+  display:flex;flex-direction:column;gap:16px;padding-bottom:16px;min-height:100%;
+  --color-primary:#ebaf5b;
+  --color-secondary:#f0c078;
+  --theme-card-bg:#ffffff;
+  --theme-text-primary:#303133;
+  --color-bg:#ffffff;
+  --color-text:#303133;
+  --color-text-secondary:#606266;
+  --color-border:#e4e7ed;
+  --color-surface-muted:#f5f7fa;
+  --color-surface-raised:#fafafa;
+  --color-input-bg:#ffffff;
+  --color-row-alt:#fafafa;
+  --color-success:#67c23a;
+  --color-danger:#f56c6c;
+  --color-warning:#e6a23c;
+  --color-button-primary-bg:#ebaf5b;
+  --color-button-primary-hover:#efbf7c;
+  --color-button-primary-text:#ffffff;
+  --color-button-success-bg:#67c23a;
+  --color-button-success-text:#ffffff;
+  --color-button-danger-bg:#f56c6c;
+  --color-button-danger-text:#ffffff;
+  --color-button-warning-bg:#e6a23c;
+  --color-button-warning-text:#ffffff;
+  --color-control-bg:#ffffff;
+  --color-control-hover-bg:#fdf7ef;
+  --color-control-border:#dcdfe6;
+  --font-body:'PingFang SC','Helvetica Neue',Helvetica,'Microsoft YaHei',Arial,STHeiTi,sans-serif;
+  --font-heading:var(--font-body);
+  --radius-sm:8px;--radius-md:8px;--radius-lg:12px;
+  --shadow-card:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.08);
+  --shadow-subtle:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.08);
+  --shadow-dropdown:0 2px 12px 0 rgba(0,0,0,.1);
+  --motion-fast:200ms;--motion-normal:250ms;
+  --scrollbar-track:transparent;
+  --scrollbar-thumb:rgba(144,147,153,.35);
+  background:#f0f0f0;
+  font-family:var(--font-body);
+  font-size:14px;line-height:1.15;color:#606266;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+.card{background:#fff;border:1px solid #e4e7ed;border-radius:12px;padding:15px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.08);transition:box-shadow .25s ease,transform .25s ease,border-color .25s ease;color:#303133}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
-.card-sub{color:var(--color-text-secondary);font-size:var(--text-body-l)}
+.card-sub{color:#909399;font-size:13px}
 
-/* Table card — no padding so scroll + footer hug the border */
-.table-card{height:min(68vh,720px);min-height:280px;padding:0;display:flex;flex-direction:column;overflow:hidden}
-.tbl-scroll{min-height:0;min-width:0;overflow:auto;flex:1;-webkit-overflow-scrolling:touch}
-/* Native horizontal scrollbar is hidden — it is rendered inside the footer (.tbl-hbar) */
-.tbl-scroll::-webkit-scrollbar{height:0;width:8px}
+/* Table card — same `.results` card as the filter card */
+.table-card{position:relative;display:block;height:auto;min-height:0;padding:15px;margin:10px 0 0;font-family:"PingFang SC","Helvetica Neue",Helvetica,"microsoft yahei",arial,STHeiTi,sans-serif;font-size:14px;line-height:16.1px;text-align:left;color:var(--theme-text-primary,#303133);background-color:var(--theme-card-bg,#fff);border:0.8px solid #e4e7ed;border-radius:12px;box-shadow:rgba(0,0,0,.06) 0 1px 3px 0,rgba(0,0,0,.08) 0 4px 12px 0;overflow:hidden;cursor:crosshair;transition:box-shadow .25s,border-color .25s,background-color .2s}
+.values-header{margin-bottom:20px}
+.values-header .title{display:inline-block;margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em;background:linear-gradient(120deg,#ebaf5b,#f0c078);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.tbl-scroll{min-height:0;min-width:0;overflow:auto;border:1px solid #ebeef5;-webkit-overflow-scrolling:touch}
+.tbl-scroll::-webkit-scrollbar{height:8px;width:8px}
 .tbl-scroll::-webkit-scrollbar-track{background:transparent}
-.tbl-scroll::-webkit-scrollbar-thumb{background:var(--scrollbar-thumb);border-radius:3px}
-/* Firefox has no ::-webkit-scrollbar: hide its horizontal bar only there */
+.tbl-scroll::-webkit-scrollbar-thumb{background:rgba(144,147,153,.35);border-radius:8px}
+.tbl-scroll::-webkit-scrollbar-thumb:hover{background:rgba(144,147,153,.55)}
 @supports not selector(::-webkit-scrollbar){
-  .tbl-scroll{scrollbar-width:none}
+  .tbl-scroll{scrollbar-width:thin;scrollbar-color:rgba(144,147,153,.35) transparent}
 }
-.tbl-footer{position:fixed;left:var(--sidebar-width, 0px);right:0;bottom:0;z-index:25;display:flex;flex-direction:column;align-items:stretch;padding:0;border-top:1px solid var(--color-border);background:var(--color-surface-raised);box-shadow:0 -4px 14px rgba(0,0,0,.08)}
-/* Horizontal scrollbar strip, inside the footer, synced with the table above.
-   Gray lane + gray thumb so it is clearly visible on light and dark themes. */
-.tbl-hbar{flex:0 0 auto;width:100%;height:14px;padding:2px 4px 0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;background:var(--scrollbar-track);border-radius:0 0 var(--radius-md) var(--radius-md)}
-.tbl-hbar::-webkit-scrollbar{height:8px}
-.tbl-hbar::-webkit-scrollbar-track{background:var(--scrollbar-track);border-radius:4px}
-.tbl-hbar::-webkit-scrollbar-thumb{background:var(--scrollbar-thumb);border-radius:4px}
-@supports not selector(::-webkit-scrollbar){
-  .tbl-hbar{scrollbar-width:thin;scrollbar-color:var(--scrollbar-thumb) var(--scrollbar-track)}
-}
-.tbl-hbar-inner{height:100%}
-.tbl-footer-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:4px 14px 12px}
-.tbl-total-pages{font-size:12px;color:var(--color-text-secondary);white-space:nowrap}
-.tbl-footer-row :deep(.pagination){justify-content:flex-end;gap:6px;margin-left:auto}
-.tbl-footer-row :deep(.pagination > .btn){width:30px;height:30px;min-height:30px;padding:0;border:1px solid var(--color-control-border);border-radius:var(--radius-sm);background:var(--color-control-bg);color:var(--color-text)}
-.tbl-footer-row :deep(.pagination > .btn:hover:not(:disabled)){border-color:var(--color-primary);color:var(--color-primary)}
+.tbl-footer{position:static;display:flex;justify-content:center;margin-top:20px;padding:0;border:none;background:transparent;box-shadow:none}
+.tbl-footer-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding:0}
+.tbl-total-pages{font-size:13px;font-weight:400;color:#606266;white-space:nowrap}
+.tbl-footer-row :deep(.pagination){justify-content:center;gap:0;margin-left:0;padding:2px 5px;color:#303133;font-weight:700}
+.tbl-footer-row :deep(.pagination > .btn){width:30px;min-width:30px;height:28px;min-height:28px;margin:0 5px;padding:0;border:none;border-radius:6px;background:#f4f4f5;color:#606266;box-shadow:none;font-size:13px}
+.tbl-footer-row :deep(.pagination > .btn:hover:not(:disabled)){color:#ebaf5b;background:#f4f4f5}
+.tbl-footer-row :deep(.pagination > .btn:disabled){color:#c0c4cc;background:#f4f4f5;opacity:1}
 .tbl-footer-row :deep(.pagination > .page-btn){width:30px;min-width:30px;height:28px;min-height:28px}
-.tbl-footer-row :deep(.pagination > .page-input){height:30px}
-.tbl-footer-row :deep(.pagination > .page-btn.active){background:var(--color-button-primary-bg);border-color:var(--color-button-primary-bg);color:var(--color-button-primary-text)}
+.tbl-footer-row :deep(.pagination > .page-btn.active){background:#ebaf5b;border-color:#ebaf5b;color:#fff}
+.tbl-footer-row :deep(.pagination > .page-btn.active:hover){color:#fff}
+.tbl-footer-row :deep(.pagination > .page-input){width:52px;height:28px;padding:0 3px;border:1px solid #dcdfe6;border-radius:4px;background:#fff;color:#606266;font-size:13px}
+.tbl-footer-row :deep(.pagination > .page-input:focus){border-color:#ebaf5b;outline:none;box-shadow:0 0 0 2px #f0c078}
+.tbl-footer-row :deep(.page-jump){margin-left:24px;color:#606266;font-size:13px;font-weight:400}
+.tbl-footer-row :deep(.page-size){margin-right:10px}
+.tbl-footer-row :deep(.page-size__select){height:28px;padding:0 20px 0 8px;border:1px solid #dcdfe6;border-radius:4px;background:#fff;color:#606266;font-size:12px;font-weight:400}
 .tbl-error{padding:12px 14px;margin:0}
 .tbl-empty{padding:20px 14px;margin:0}
 
-.tabs{display:flex;gap:0;border-bottom:1px solid var(--color-border)}
-.tab{padding:10px 18px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--color-text-secondary);font-size:var(--text-h4);font-weight:500;cursor:pointer;transition:color .15s ease,border-color .15s ease}
-.tab:hover{color:var(--color-text)}
-.tab--active{color:var(--color-primary);border-bottom-color:var(--color-primary)}
+.tabs{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;padding:15px;background:#fff;border:1px solid #e4e7ed;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.08);transition:box-shadow .25s ease,transform .25s ease,border-color .25s ease}
+.tab{height:32px;line-height:30px;padding:0 15px;margin:0;background:#fff;border:1px solid #dcdfe6;border-radius:8px;color:#606266;font-family:var(--font-body);font-size:14px;font-weight:500;cursor:pointer;box-shadow:none;transition:color .2s ease,background-color .2s ease,border-color .2s ease,transform .2s ease}
+.tab:hover:not(.tab--active){color:#ebaf5b;border-color:#ebaf5b;background:#fff;transform:translateY(-1px)}
+.tab:active:not(.tab--active){transform:translateY(0)}
+.tab--active{color:#fff;background:#ebaf5b;border-color:#ebaf5b}
+.tab--active:hover{background:#efbf7c;border-color:#efbf7c;color:#fff;transform:translateY(-1px)}
+.tab--active:active{transform:translateY(0)}
 .tab-panel{display:flex;flex-direction:column;gap:16px}
-.filter-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-.filter-card-head h3{font-size:var(--text-h4);font-weight:600}
-.filter-card-head .filter-toggle{padding:6px 10px;border:1px solid var(--color-control-border);border-radius:var(--radius-sm);background:var(--color-control-bg);color:var(--color-text);font-size:12px}
-.filter-card-head .filter-toggle:hover{background:var(--color-control-hover-bg);border-color:var(--color-primary);color:var(--color-primary)}
-.filter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-bottom:12px}
-.filter-row .field{flex:1;min-width:120px;gap:4px}
-.filter-row .field-label{font-size:11px}
-.filter-row .input{padding:6px 10px;font-size:12px}
-.filter-actions{display:flex;gap:6px}
-.filters .filter-row{margin-bottom:0}
-.error{color:var(--color-danger);font-size:var(--text-h4);margin-bottom:8px}
-.empty{color:var(--color-text-secondary);font-size:var(--text-h4)}
-.table-wrap{overflow:auto;border:1px solid var(--color-border);border-radius:var(--radius-md)}
-.table{width:100%;min-width:760px;border-collapse:separate;border-spacing:0;font-size:var(--text-h4)}
+.filters{position:relative;display:block;padding:15px;margin:10px 0 0;font-family:"PingFang SC","Helvetica Neue",Helvetica,"microsoft yahei",arial,STHeiTi,sans-serif;font-size:14px;line-height:16.1px;text-align:left;color:var(--theme-text-primary,#303133);background-color:var(--theme-card-bg,#fff);border:0.8px solid #e4e7ed;border-radius:12px;box-shadow:rgba(0,0,0,.06) 0 1px 3px 0,rgba(0,0,0,.08) 0 4px 12px 0;overflow:hidden;cursor:crosshair;transition:box-shadow .25s,border-color .25s,background-color .2s}
+.filter-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}
+.filter-card-head h3{font-family:var(--font-body);font-size:16px;font-weight:600;color:var(--theme-text-primary,#303133)}
+.filter-card-head .filter-toggle{padding:9px 15px;border:1px solid #dcdfe6;border-radius:4px;background:#fff;color:#606266;font-size:12px;font-weight:500;line-height:1;box-shadow:none;transition:color .2s ease,background-color .2s ease,border-color .2s ease,transform .2s ease}
+.filter-card-head .filter-toggle:hover{color:#ebaf5b;border-color:#f9e7ce;background:#fdf7ef;transform:translateY(-1px)}
+.filter-card-head .filter-toggle:active{color:#d49e52;border-color:#d49e52;transform:translateY(0)}
+.filter-row{display:flex;flex-wrap:wrap;align-items:center;column-gap:10px;row-gap:18px;margin-bottom:0}
+.filter-row .field{flex:0 0 auto;flex-direction:row;align-items:center;gap:0;min-width:0}
+.filter-row .field-label{font-family:var(--font-body);font-size:14px;font-weight:400;color:#606266;line-height:32px;padding:0 12px 0 0;white-space:nowrap}
+.filter-row .input{width:150px;height:32px;min-height:32px;line-height:30px;padding:0 10px;font-family:var(--font-body);font-size:12px;color:#606266;background:#fff;border:1px solid #dcdfe6;border-radius:4px;box-shadow:none;box-sizing:border-box;transition:border-color .2s ease,box-shadow .2s ease}
+.filter-row .status-select{width:120px}
+.filter-row .input::placeholder{color:#c0c4cc}
+.filter-row .input:hover:not(:disabled):not(:focus){border-color:#c0c4cc}
+.filter-row .input:focus,.filter-row .input:focus-visible{outline:none;border-color:#ebaf5b;box-shadow:0 0 0 2px #f0c078}
+.filter-row .input:disabled{background:#f5f7fa;border-color:#e4e7ed;color:#c0c4cc;cursor:not-allowed}
+.filter-actions{flex:0 0 100%;display:flex;justify-content:flex-end;align-items:center;gap:10px;border-top:1px solid #e4e7ed;margin-top:-3px;padding-top:15px}
+.filter-actions .btn{min-height:32px;padding:9px 15px;font-family:var(--font-body);font-size:12px;font-weight:500;line-height:1;border-radius:4px;box-shadow:none;transition:transform .2s ease,box-shadow .2s ease,background-color .2s ease,border-color .2s ease,color .2s ease}
+.filter-actions .btn:hover:not(:disabled){transform:translateY(-1px)}
+.filter-actions .btn:active:not(:disabled){transform:translateY(0)}
+.filter-actions .btn-primary{background:#ebaf5b;border:1px solid #ebaf5b;color:#fff}
+.filter-actions .btn-primary:hover:not(:disabled){background:#efbf7c;border-color:#efbf7c;color:#fff}
+.filter-actions .btn-primary:active:not(:disabled){background:#d49e52;border-color:#d49e52;color:#fff}
+.filter-actions .btn-primary:disabled{background:#f5d7ad;border-color:#f5d7ad;color:#fff;opacity:1}
+.filter-actions .btn-ghost{background:#fff;border:1px solid #dcdfe6;color:#606266}
+.filter-actions .btn-ghost:hover:not(:disabled){background:#fdf7ef;border-color:#f9e7ce;color:#ebaf5b}
+.filter-actions .btn-ghost:active:not(:disabled){background:#fff;border-color:#d49e52;color:#d49e52}
+.filter-actions .btn-ghost:disabled{background:#fff;border-color:#e4e7ed;color:#c0c4cc;opacity:1}
+.error{color:#f56c6c;font-size:13px;margin-bottom:8px}
+.empty{color:#909399;font-size:13px}
+.table-wrap{overflow:auto;border:1px solid #ebeef5;border-radius:10px}
+.table{width:100%;min-width:760px;border-collapse:separate;border-spacing:0;font-size:12px;color:#606266;background:#fff}
 .table--wide{min-width:1150px}
 .table--compact{min-width:0}
-.table th,.table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--color-border);vertical-align:middle}
+.table th,.table td{text-align:center;padding:8px 10px;border-bottom:1px solid #ebeef5;border-right:1px solid #ebeef5;vertical-align:middle;background:#fff;transition:background-color .25s ease}
+.table th:last-child,.table td:last-child{border-right:none}
+.table tbody tr:last-child td{border-bottom:none}
 .tbl-scroll .table th,.tbl-scroll .table td{white-space:nowrap}
-.table th{background:var(--color-surface-raised);font-weight:600;white-space:nowrap;position:sticky;top:0;z-index:2}
-.mono{font-family:ui-monospace,monospace;font-size:12px}
+.table th{background:#f5f7fa;color:#606266;font-weight:600;white-space:nowrap;line-height:1.35}
+.table tbody tr:nth-child(even) td{background:#fff}
+.table tbody tr:hover td{background:#f5f7fa}
+.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px}
 .break{word-break:break-all}
-.muted{color:var(--color-text-secondary);font-size:11px}
+.muted{color:#909399;font-size:12px}
 .remark{max-width:180px;overflow:hidden;text-overflow:ellipsis}
-.badge{display:inline-flex;padding:4px 9px;font-size:12px;font-weight:600;border-radius:3px;white-space:nowrap}
-.badge--success{background:var(--color-success);color:#fff}
-.badge--danger{background:var(--color-danger);color:#fff}
-.badge--warning{background:var(--color-warning);color:#fff}
-.badge--primary{background:var(--color-primary);color:#fff}
-.uid-badge{background:transparent;color:var(--color-primary);border:1px solid var(--color-border)}
-.status-badge,.type-badge{background:transparent;border:1px solid var(--color-border)}
-.status-badge.badge--success,.type-badge.badge--success{color:var(--color-success)}
-.status-badge.badge--danger,.type-badge.badge--danger{color:var(--color-danger)}
-.status-badge.badge--warning{color:var(--color-warning)}
-.status-badge.badge--primary{color:var(--color-primary)}
-.row-actions{display:flex;align-items:center;gap:4px;flex-wrap:nowrap;white-space:nowrap}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;font-size:12px;font-weight:500;line-height:1.5;border-radius:20px;white-space:nowrap;border:1px solid transparent}
+.badge--success{background:#f0f9eb;border-color:#e1f3d8;color:#67c23a}
+.badge--danger{background:#fef0f0;border-color:#fde2e2;color:#f56c6c}
+.badge--warning{background:#fdf6ec;border-color:#faecd8;color:#e6a23c}
+.badge--primary{background:#fdf7ef;border-color:#f9e7ce;color:#ebaf5b}
+.uid-badge{background:#fdf7ef;border:1px solid #f9e7ce;color:#ebaf5b}
+.status-badge,.type-badge{background:#f4f4f5;border:1px solid #e9e9eb;color:#909399}
+.status-badge.badge--success,.type-badge.badge--success{background:#f0f9eb;border-color:#e1f3d8;color:#67c23a}
+.status-badge.badge--danger,.type-badge.badge--danger{background:#fef0f0;border-color:#fde2e2;color:#f56c6c}
+.status-badge.badge--warning{background:#fdf6ec;border-color:#faecd8;color:#e6a23c}
+.status-badge.badge--primary{background:#fdf7ef;border-color:#f9e7ce;color:#ebaf5b}
+.row-actions{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:nowrap;white-space:nowrap}
 .row-actions>.btn{flex:0 0 auto}
+.row-actions .action-btn{padding:7px 15px;font-size:12px;font-weight:500;line-height:1;border-radius:8px;background:#fff;border:1px solid #dcdfe6;color:#606266;box-shadow:none;transition:color .2s ease,background-color .2s ease,border-color .2s ease,transform .2s ease}
+.row-actions .action-btn:hover:not(:disabled){background:#fdf7ef;border-color:#f9e7ce;color:#ebaf5b;transform:translateY(-1px)}
+.row-actions .action-btn:active:not(:disabled){transform:translateY(0)}
+.row-actions .action-btn--success{background:#67c23a;border-color:#67c23a;color:#fff}
+.row-actions .action-btn--success:hover:not(:disabled){background:#85ce61;border-color:#85ce61;color:#fff}
+.row-actions .action-btn--success:active:not(:disabled){background:#5eb870;border-color:#5eb870}
+.row-actions .action-btn--danger{background:#f56c6c;border-color:#f56c6c;color:#fff}
+.row-actions .action-btn--danger:hover:not(:disabled){background:#f78989;border-color:#f78989;color:#fff}
+.row-actions .action-btn--danger:active:not(:disabled){background:#dd6161;border-color:#dd6161}
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
-.stat{display:flex;flex-direction:column;gap:4px;padding:12px;background:var(--color-surface-raised);border:1px solid var(--color-border);border-radius:var(--radius-md)}
-.stat-label{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-secondary)}
-.stat-value{font-size:20px;font-weight:700}
+.stat{display:flex;flex-direction:column;gap:4px;padding:12px 15px;background:#f5f7fa;border:1px solid #e4e7ed;border-radius:8px}
+.stat-label{font-size:14px;font-weight:400;color:#909399}
+.stat-value{font-size:20px;font-weight:700;color:#303133}
 .stat-value--sm{font-size:13px}
-.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px 18px;font-size:var(--text-h4)}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px 18px;font-size:14px;color:#303133}
 .detail-grid>div{display:flex;flex-direction:column;gap:2px;min-width:0}
 .detail-full{grid-column:1 / -1}
-.detail-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-secondary)}
-.section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:var(--text-h3);font-weight:700;margin-top:6px;padding-bottom:8px;border-bottom:1px solid var(--color-border)}
-.window-toggle{display:inline-flex;gap:4px}
-.history-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:var(--text-h4)}
-.history-list li{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;background:var(--color-surface-raised);border-radius:var(--radius-sm)}
+.detail-label{font-size:12px;font-weight:400;color:#909399}
+.section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14px;font-weight:600;color:#303133;margin-top:6px;padding-bottom:8px;border-bottom:1px solid #e4e7ed}
+.window-toggle{display:inline-flex;gap:8px}
+.window-toggle .btn{height:32px;min-height:32px;padding:0 15px;font-family:var(--font-body);font-size:12px;font-weight:500;line-height:30px;border-radius:8px;box-shadow:none;transition:color .2s ease,background-color .2s ease,border-color .2s ease,transform .2s ease}
+.window-toggle .btn:hover:not(:disabled){transform:translateY(-1px)}
+.window-toggle .btn:active:not(:disabled){transform:translateY(0)}
+.window-toggle .btn-primary{background:#ebaf5b;border:1px solid #ebaf5b;color:#fff}
+.window-toggle .btn-primary:hover:not(:disabled){background:#efbf7c;border-color:#efbf7c;color:#fff}
+.window-toggle .btn-primary:active:not(:disabled){background:#d49e52;border-color:#d49e52;color:#fff}
+.window-toggle .btn-ghost{background:#fff;border:1px solid #dcdfe6;color:#606266}
+.window-toggle .btn-ghost:hover:not(:disabled){background:#fff;border-color:#ebaf5b;color:#ebaf5b}
+.window-toggle .btn-ghost:active:not(:disabled){background:#fff;border-color:#d49e52;color:#d49e52}
+.history-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.history-list li{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;background:#f5f7fa;border-radius:8px}
 .history-remark{flex:1;min-width:120px}
 .field{display:flex;flex-direction:column;gap:6px}
-.field-label{font-size:12px;font-weight:600;color:var(--color-text-secondary);margin-bottom:0}
-.required{color:var(--color-danger);margin-left:4px}
-.modal-overlay{position:fixed;inset:0;background:rgba(15,18,24,.5);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
-.modal{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:var(--shadow-dropdown);width:100%;max-width:80vw;min-width:0;display:flex;flex-direction:column;max-height:90vh}
+.field-label{font-size:14px;font-weight:400;color:#606266;margin-bottom:0;line-height:1.15}
+.required{color:#f56c6c;margin-left:4px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px;animation:modalFadeIn .3s ease}
+.modal{background:#fff;border:none;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.3);width:100%;max-width:80vw;min-width:0;display:flex;flex-direction:column;max-height:90vh;animation:modalSlideIn .3s ease}
 .modal--wide{max-width:80vw}
-.modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--color-border)}
-.modal-head h3{font-size:var(--text-h3);word-break:break-all}
-.modal-body{padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
-.modal-body--scroll{max-height:calc(90vh - 120px)}
-.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 16px;border-top:1px solid var(--color-border)}
-.modal textarea{resize:vertical;font-family:inherit}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 20px 10px;border-bottom:1px solid #e4e7ed}
+.modal-head h3{font-size:18px;line-height:24px;font-weight:400;color:#303133;word-break:break-all}
+.modal-head .btn-ghost{padding:0;width:24px;height:24px;min-height:24px;border:none;background:transparent;color:#909399;font-size:16px;line-height:1;box-shadow:none;transition:color .2s ease}
+.modal-head .btn-ghost:hover{color:#ebaf5b}
+.modal-body{padding:30px 20px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;color:#606266;font-size:14px}
+.modal-body--scroll{max-height:calc(90vh - 130px)}
+.modal-foot{display:flex;justify-content:flex-end;align-items:center;gap:10px;padding:20px;padding-top:10px;border-top:1px solid #e4e7ed}
+.modal .input{width:100%;height:40px;min-height:40px;line-height:38px;padding:0 15px;font-family:var(--font-body);font-size:14px;color:#606266;background:#fff;border:1px solid #dcdfe6;border-radius:8px;box-shadow:none;transition:border-color .2s ease,box-shadow .2s ease}
+.modal textarea.input{height:auto;min-height:auto;line-height:1.5;padding:10px 15px;resize:vertical;font-family:inherit}
+.modal .input::placeholder{color:#c0c4cc}
+.modal .input:focus,.modal .input:focus-visible{outline:none;border-color:#ebaf5b;box-shadow:0 0 0 2px #f0c078}
+.modal-foot .btn{padding:12px 20px;font-family:var(--font-body);font-size:14px;font-weight:500;line-height:1;border-radius:8px;box-shadow:none;transition:transform .2s ease,background-color .2s ease,border-color .2s ease,color .2s ease}
+.modal-foot .btn:hover:not(:disabled){transform:translateY(-1px)}
+.modal-foot .btn:active:not(:disabled){transform:translateY(0)}
+.modal-foot .btn-primary{background:#ebaf5b;border:1px solid #ebaf5b;color:#fff}
+.modal-foot .btn-primary:hover:not(:disabled){background:#efbf7c;border-color:#efbf7c;color:#fff}
+.modal-foot .btn-primary:active:not(:disabled){background:#d49e52;border-color:#d49e52;color:#fff}
+.modal-foot .btn-primary:disabled{background:#f5d7ad;border-color:#f5d7ad;color:#fff;opacity:1}
+.modal-foot .btn-ghost{background:#fff;border:1px solid #dcdfe6;color:#606266}
+.modal-foot .btn-ghost:hover:not(:disabled){background:#fdf7ef;border-color:#f9e7ce;color:#ebaf5b}
+.modal-foot .btn-ghost:active:not(:disabled){background:#fff;border-color:#d49e52;color:#d49e52}
 .modal--actions{width:80vw;max-width:80vw;min-width:0}
 .form-field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px 16px;align-items:start}
 .form-field-grid .field{gap:6px;min-width:0}
-.form-field-grid .field-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-secondary)}
+.form-field-grid .field-label{font-size:14px;font-weight:400;text-transform:none;letter-spacing:0;color:#606266}
 .form-field-grid .badge{align-self:flex-start}
-.cell-actions-end{text-align:right}
-.cell-actions-end .row-actions{justify-content:flex-end}
-.status-action-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:38px;padding:8px 14px;font-size:13px;font-weight:500;line-height:1.2;text-align:center;background:transparent;border:1px solid var(--color-control-border);border-radius:var(--radius-sm);color:var(--color-text);box-shadow:none;transition:border-color .15s ease,color .15s ease,background-color .15s ease}
-.status-action-btn:hover{background:var(--color-control-hover-bg);border-color:var(--color-primary);color:var(--color-primary)}
-.status-action-btn--danger{border-color:color-mix(in srgb,var(--color-danger) 45%,transparent);color:var(--color-danger)}
-.status-action-btn--danger:hover{background:color-mix(in srgb,var(--color-danger) 12%,transparent);border-color:var(--color-danger);color:var(--color-danger)}
-.status-action-btn--warning{border-color:color-mix(in srgb,var(--color-warning) 45%,transparent);color:var(--color-warning)}
-.status-action-btn--warning:hover{background:color-mix(in srgb,var(--color-warning) 12%,transparent);border-color:var(--color-warning);color:var(--color-warning)}
-.status-action-btn--success{border-color:color-mix(in srgb,var(--color-success) 45%,transparent);color:var(--color-success)}
-.status-action-btn--success:hover{background:color-mix(in srgb,var(--color-success) 12%,transparent);border-color:var(--color-success);color:var(--color-success)}
-.status-action-btn--adjust{border-color:color-mix(in srgb,var(--color-primary) 45%,transparent);color:var(--color-primary)}
-.status-action-btn--adjust:hover{background:color-mix(in srgb,var(--color-primary) 12%,transparent);border-color:var(--color-primary);color:var(--color-primary)}
-@media(max-width:880px){
-  .tbl-footer{left:0}
-}
+@keyframes modalFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes modalSlideIn{from{transform:translate3d(0,-20px,0);opacity:0}to{transform:translateZ(0);opacity:1}}
+.cell-actions-end{text-align:center}
+.cell-actions-end .row-actions{justify-content:center}
+.status-action-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:40px;padding:9px 15px;font-family:var(--font-body);font-size:12px;font-weight:500;line-height:1;text-align:center;background:#fff;border:1px solid #dcdfe6;border-radius:8px;color:#606266;box-shadow:none;transition:color .2s ease,background-color .2s ease,border-color .2s ease,transform .2s ease}
+.status-action-btn:hover:not(:disabled){background:#fff;border-color:#ebaf5b;color:#ebaf5b;transform:translateY(-1px)}
+.status-action-btn:active:not(:disabled){transform:translateY(0)}
+.status-action-btn--danger{background:#fef0f0;border-color:#fbc4c4;color:#f56c6c}
+.status-action-btn--danger:hover:not(:disabled){background:#f56c6c;border-color:#f56c6c;color:#fff}
+.status-action-btn--danger:active:not(:disabled){background:#dd6161;border-color:#dd6161;color:#fff}
+.status-action-btn--warning{background:#fdf6ec;border-color:#f5dab1;color:#e6a23c}
+.status-action-btn--warning:hover:not(:disabled){background:#e6a23c;border-color:#e6a23c;color:#fff}
+.status-action-btn--warning:active:not(:disabled){background:#cf9236;border-color:#cf9236;color:#fff}
+.status-action-btn--success{background:#f0f9eb;border-color:#c2e7b0;color:#67c23a}
+.status-action-btn--success:hover:not(:disabled){background:#67c23a;border-color:#67c23a;color:#fff}
+.status-action-btn--success:active:not(:disabled){background:#5daf34;border-color:#5daf34;color:#fff}
+.status-action-btn--adjust{background:#fdf7ef;border-color:#f7dfbd;color:#ebaf5b}
+.status-action-btn--adjust:hover:not(:disabled){background:#ebaf5b;border-color:#ebaf5b;color:#fff}
+.status-action-btn--adjust:active:not(:disabled){background:#d49e52;border-color:#d49e52;color:#fff}
 @media(max-width:640px){
-  .tbl-footer-row{padding:4px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom))}
-  .tbl-hbar{padding:2px 8px 0}
   .tbl-total-pages{font-size:11px}
-  .page{padding-bottom:112px}
-  .table-card{height:60vh;min-height:240px}
   .filter-card-head{margin-bottom:10px}
-  .tbl-footer-row{align-items:stretch;gap:10px}
-  .tbl-footer-row :deep(.pagination){justify-content:flex-start}
+  .tbl-footer-row{align-items:center;gap:8px}
+  .tbl-footer-row :deep(.pagination){justify-content:center}
   .tbl-footer-row :deep(.pagination > .page-btn:not(.active)),
   .tbl-footer-row :deep(.pagination > .page-dots){display:none}
 }
