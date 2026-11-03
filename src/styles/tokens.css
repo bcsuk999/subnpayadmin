@@ -28,6 +28,10 @@
   --color-control-hover-bg: var(--color-bg);
   --color-control-border: var(--color-border);
 
+  /* Scrollbars — gray so they stay visible on any surface */
+  --scrollbar-track: #dcdfe4;
+  --scrollbar-thumb: #8a919c;
+
   --color-sidebar-bg: #ffffff;
   --color-sidebar-text: #666666;
   --color-sidebar-text-active: #208fff;
@@ -100,6 +104,9 @@ html.dark {
   --color-surface-strong: #101018;
   --color-input-bg: #12151c;
   --color-row-alt: #1a1f29;
+
+  --scrollbar-track: #2c3140;
+  --scrollbar-thumb: #7f8798;
 
   --color-primary: #60a5fa;
   --color-secondary: #3b82f6;

@@ -58,12 +58,12 @@
                 <td class="muted">{{ fmt(g.lastActiveAt) }}</td>
                 <td class="cell-actions-end">
                   <div class="row-actions">
-                    <button class="btn btn-sm action-btn action-btn--icon" type="button" aria-label="Actions" title="Actions" @click="openGroupStatusPopup(g)">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+                    <button class="btn btn-sm action-btn" type="button" title="Edit group" @click="openGroupStatusPopup(g)">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
                         <path d="M4 20h4L19.6 8.4a2.1 2.1 0 0 0-3-3L5 17v3z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
                         <path d="M14.6 6.4l3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-                        <path d="M13 21H5a1 1 0 0 1-1-1v-2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>
                       </svg>
+                      Edit
                     </button>
                   </div>
                 </td>
@@ -85,7 +85,7 @@
     <div v-if="groupStatusPopup.open" class="modal-overlay" @click.self="groupStatusPopup.open = false">
       <div class="modal modal--actions" role="dialog" aria-modal="true">
         <div class="modal-head">
-          <h3>Actions — {{ groupStatusPopup.group?.groupId }}</h3>
+          <h3>Edit — {{ groupStatusPopup.group?.groupId }}</h3>
           <button class="btn btn-ghost btn-sm" type="button" aria-label="Close" @click="groupStatusPopup.open = false">✕</button>
         </div>
         <div class="modal-body">
@@ -95,39 +95,24 @@
               <span :class="['badge', 'status-badge', statusClass(groupStatusPopup.group?.status)]">{{ groupStatusPopup.group?.status }}</span>
             </div>
             <div class="field">
-              <span class="field-label">View</span>
-              <button class="btn btn-primary status-action-btn" type="button" @click="openGroupDetail(groupStatusPopup.group); groupStatusPopup.open = false">
-                <span class="status-action-icon">👁</span>
-                <span class="status-action-text"><small>Open group details</small></span>
-              </button>
+              <span class="field-label">Details</span>
+              <button class="btn status-action-btn" type="button" title="Open group details" @click="openGroupDetail(groupStatusPopup.group); groupStatusPopup.open = false">View</button>
             </div>
             <div class="field">
-              <span class="field-label">Adjust balance</span>
-              <button class="btn status-action-btn status-action-btn--adjust" type="button" @click="openAdjust(groupStatusPopup.group); groupStatusPopup.open = false">
-                <span class="status-action-icon">💰</span>
-                <span class="status-action-text"><small>Credit or debit balance</small></span>
-              </button>
+              <span class="field-label">Balance</span>
+              <button class="btn status-action-btn status-action-btn--adjust" type="button" title="Credit or debit balance" @click="openAdjust(groupStatusPopup.group); groupStatusPopup.open = false">Adjust balance</button>
             </div>
             <div v-if="groupStatusPopup.group?.status !== 'banned'" class="field">
-              <span class="field-label">Ban</span>
-              <button class="btn status-action-btn status-action-btn--danger" type="button" @click="openStatus(groupStatusPopup.group, 'ban'); groupStatusPopup.open = false">
-                <span class="status-action-icon">🚫</span>
-                <span class="status-action-text"><small>Permanently block group</small></span>
-              </button>
+              <span class="field-label">Block</span>
+              <button class="btn status-action-btn status-action-btn--danger" type="button" title="Permanently block group" @click="openStatus(groupStatusPopup.group, 'ban'); groupStatusPopup.open = false">Ban</button>
             </div>
             <div v-if="groupStatusPopup.group?.status !== 'suspended'" class="field">
-              <span class="field-label">Suspend</span>
-              <button class="btn status-action-btn status-action-btn--warning" type="button" @click="openStatus(groupStatusPopup.group, 'suspend'); groupStatusPopup.open = false">
-                <span class="status-action-icon">⏸</span>
-                <span class="status-action-text"><small>Temporarily pause group</small></span>
-              </button>
+              <span class="field-label">Pause</span>
+              <button class="btn status-action-btn status-action-btn--warning" type="button" title="Temporarily pause group" @click="openStatus(groupStatusPopup.group, 'suspend'); groupStatusPopup.open = false">Suspend</button>
             </div>
             <div v-if="groupStatusPopup.group?.status !== 'active'" class="field">
-              <span class="field-label">Unban / Activate</span>
-              <button class="btn status-action-btn status-action-btn--success" type="button" @click="openStatus(groupStatusPopup.group, 'unban'); groupStatusPopup.open = false">
-                <span class="status-action-icon">✅</span>
-                <span class="status-action-text"><small>Restore group access</small></span>
-              </button>
+              <span class="field-label">Restore</span>
+              <button class="btn status-action-btn status-action-btn--success" type="button" title="Restore group access" @click="openStatus(groupStatusPopup.group, 'unban'); groupStatusPopup.open = false">Unban / Activate</button>
             </div>
           </div>
         </div>
@@ -987,6 +972,22 @@ function syncFooterBar(key) {
 
 function refreshFooterBars() {
   Object.keys(scrollPairs).forEach(syncFooterBar)
+  observeFooterTables()
+}
+
+/* Re-sync whenever a table changes size (data load, column changes, tab switch). */
+let footerObserver = null
+function observeFooterTables() {
+  if (!('ResizeObserver' in window)) return
+  if (!footerObserver) footerObserver = new ResizeObserver(refreshFooterBars)
+  Object.keys(scrollPairs).forEach((key) => {
+    const sc = scrollPairs[key][0].value
+    const table = sc && sc.querySelector('table')
+    if (table && !table.__footerObserved) {
+      table.__footerObserved = true
+      footerObserver.observe(table)
+    }
+  })
 }
 
 function onTableScroll(key) {
@@ -1000,6 +1001,7 @@ function onBarScroll(key) {
 }
 
 watch([groups, transactions, orders], () => nextTick(refreshFooterBars))
+watch(activeTab, () => nextTick(refreshFooterBars))
 
 onMounted(() => {
   fetchGroups(1)
@@ -1010,7 +1012,10 @@ onMounted(() => {
   refreshFooterBars()
 })
 
-onBeforeUnmount(() => window.removeEventListener('resize', refreshFooterBars))
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', refreshFooterBars)
+  if (footerObserver) footerObserver.disconnect()
+})
 </script>
 
 <style scoped>
@@ -1021,17 +1026,25 @@ onBeforeUnmount(() => window.removeEventListener('resize', refreshFooterBars))
 
 /* Table card — no padding so scroll + footer hug the border */
 .table-card{height:min(68vh,720px);min-height:280px;padding:0;display:flex;flex-direction:column;overflow:hidden}
-.tbl-scroll{min-height:0;min-width:0;overflow:auto;flex:1;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--color-border) transparent}
+.tbl-scroll{min-height:0;min-width:0;overflow:auto;flex:1;-webkit-overflow-scrolling:touch}
 /* Native horizontal scrollbar is hidden — it is rendered inside the footer (.tbl-hbar) */
 .tbl-scroll::-webkit-scrollbar{height:0;width:8px}
 .tbl-scroll::-webkit-scrollbar-track{background:transparent}
-.tbl-scroll::-webkit-scrollbar-thumb{background:var(--color-border);border-radius:3px}
+.tbl-scroll::-webkit-scrollbar-thumb{background:var(--scrollbar-thumb);border-radius:3px}
+/* Firefox has no ::-webkit-scrollbar: hide its horizontal bar only there */
+@supports not selector(::-webkit-scrollbar){
+  .tbl-scroll{scrollbar-width:none}
+}
 .tbl-footer{position:fixed;left:var(--sidebar-width, 0px);right:0;bottom:0;z-index:25;display:flex;flex-direction:column;align-items:stretch;padding:0;border-top:1px solid var(--color-border);background:var(--color-surface-raised);box-shadow:0 -4px 14px rgba(0,0,0,.08)}
-/* Horizontal scrollbar strip, inside the footer, synced with the table above */
-.tbl-hbar{flex:0 0 auto;width:100%;height:12px;padding:2px 4px 0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--color-border) transparent}
+/* Horizontal scrollbar strip, inside the footer, synced with the table above.
+   Gray lane + gray thumb so it is clearly visible on light and dark themes. */
+.tbl-hbar{flex:0 0 auto;width:100%;height:14px;padding:2px 4px 0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;background:var(--scrollbar-track);border-radius:0 0 var(--radius-md) var(--radius-md)}
 .tbl-hbar::-webkit-scrollbar{height:8px}
-.tbl-hbar::-webkit-scrollbar-track{background:transparent}
-.tbl-hbar::-webkit-scrollbar-thumb{background:var(--color-border);border-radius:4px}
+.tbl-hbar::-webkit-scrollbar-track{background:var(--scrollbar-track);border-radius:4px}
+.tbl-hbar::-webkit-scrollbar-thumb{background:var(--scrollbar-thumb);border-radius:4px}
+@supports not selector(::-webkit-scrollbar){
+  .tbl-hbar{scrollbar-width:thin;scrollbar-color:var(--scrollbar-thumb) var(--scrollbar-track)}
+}
 .tbl-hbar-inner{height:100%}
 .tbl-footer-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:4px 14px 12px}
 .tbl-total-pages{font-size:12px;color:var(--color-text-secondary);white-space:nowrap}
@@ -1116,22 +1129,18 @@ onBeforeUnmount(() => window.removeEventListener('resize', refreshFooterBars))
 .form-field-grid .field{gap:6px;min-width:0}
 .form-field-grid .field-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-secondary)}
 .form-field-grid .badge{align-self:flex-start}
-.form-field-grid .status-action-btn{min-height:44px;justify-content:flex-start;text-align:left}
-.form-field-grid .status-action-text small{font-size:13px;opacity:1;font-weight:500}
-.action-btn--icon{width:32px;min-width:32px;padding:0;gap:0}
-.action-btn--icon svg{flex:0 0 auto}
 .cell-actions-end{text-align:right}
 .cell-actions-end .row-actions{justify-content:flex-end}
-.status-action-btn{display:flex;align-items:center;gap:12px;padding:10px 14px;width:100%;text-align:left;border-radius:var(--radius-sm);transition:opacity .15s}
-.status-action-btn:hover{opacity:.85}
-.status-action-btn--danger{background:var(--color-button-danger-bg);color:var(--color-button-danger-text);border-color:var(--color-button-danger-bg)}
-.status-action-btn--warning{background:var(--color-button-warning-bg);color:var(--color-button-warning-text);border-color:var(--color-button-warning-bg)}
-.status-action-btn--success{background:var(--color-button-success-bg);color:var(--color-button-success-text);border-color:var(--color-button-success-bg)}
-.status-action-btn--adjust{background:var(--color-button-adjust-bg);color:var(--color-button-adjust-text);border-color:var(--color-button-adjust-bg)}
-.status-action-icon{font-size:18px;flex-shrink:0;line-height:1}
-.status-action-text{display:flex;flex-direction:column;gap:1px;line-height:1.3}
-.status-action-text strong{font-size:13px;font-weight:600}
-.status-action-text small{font-size:11px;opacity:.8}
+.status-action-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:38px;padding:8px 14px;font-size:13px;font-weight:500;line-height:1.2;text-align:center;background:transparent;border:1px solid var(--color-control-border);border-radius:var(--radius-sm);color:var(--color-text);box-shadow:none;transition:border-color .15s ease,color .15s ease,background-color .15s ease}
+.status-action-btn:hover{background:var(--color-control-hover-bg);border-color:var(--color-primary);color:var(--color-primary)}
+.status-action-btn--danger{border-color:color-mix(in srgb,var(--color-danger) 45%,transparent);color:var(--color-danger)}
+.status-action-btn--danger:hover{background:color-mix(in srgb,var(--color-danger) 12%,transparent);border-color:var(--color-danger);color:var(--color-danger)}
+.status-action-btn--warning{border-color:color-mix(in srgb,var(--color-warning) 45%,transparent);color:var(--color-warning)}
+.status-action-btn--warning:hover{background:color-mix(in srgb,var(--color-warning) 12%,transparent);border-color:var(--color-warning);color:var(--color-warning)}
+.status-action-btn--success{border-color:color-mix(in srgb,var(--color-success) 45%,transparent);color:var(--color-success)}
+.status-action-btn--success:hover{background:color-mix(in srgb,var(--color-success) 12%,transparent);border-color:var(--color-success);color:var(--color-success)}
+.status-action-btn--adjust{border-color:color-mix(in srgb,var(--color-primary) 45%,transparent);color:var(--color-primary)}
+.status-action-btn--adjust:hover{background:color-mix(in srgb,var(--color-primary) 12%,transparent);border-color:var(--color-primary);color:var(--color-primary)}
 @media(max-width:880px){
   .tbl-footer{left:0}
 }
