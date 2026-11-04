@@ -1,11 +1,14 @@
 <template>
-  <div ref="rootRef" class="el-select el-select--small" :class="{ 'is-open': open }">
+  <div ref="rootRef" class="el-select el-select--small" :class="{ 'is-open': open, 'is-disabled': disabled }">
     <div
       ref="triggerRef"
       class="el-input el-input--small el-input--suffix"
+      :id="id || undefined"
       role="combobox"
-      tabindex="0"
+      :tabindex="disabled ? -1 : 0"
+      :aria-label="ariaLabel || undefined"
       :aria-expanded="open ? 'true' : 'false'"
+      :aria-disabled="disabled ? 'true' : 'false'"
       aria-haspopup="listbox"
       :aria-controls="listboxId"
       :aria-activedescendant="open && activeIndex >= 0 ? optionId(activeIndex) : undefined"
@@ -62,8 +65,11 @@
 import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
 
 const props = defineProps({
+  disabled: { type: Boolean, default: false },
+  id: { type: String, default: '' },
   modelValue: { type: [String, Number], default: '' },
   options: { type: Array, default: () => [] },
+  placement: { type: String, default: 'bottom', validator: (value) => ['top', 'bottom'].includes(value) },
   placeholder: { type: String, default: 'All' },
   ariaLabel: { type: String, default: '' },
 })
@@ -106,6 +112,7 @@ function toggle() {
 }
 
 function openPanel() {
+  if (props.disabled) return
   const selectedIndex = normalizedOptions.value.findIndex((opt) => opt.value === props.modelValue)
   activeIndex.value = selectedIndex >= 0 ? selectedIndex : 0
   open.value = true
@@ -120,12 +127,21 @@ function openPanel() {
 
 function positionPanel() {
   const el = triggerRef.value
-  if (!el) return
+  const panel = panelRef.value
+  if (!el || !panel) return
   const rect = el.getBoundingClientRect()
+  const openAbove = props.placement === 'top'
+  const availableHeight = openAbove
+    ? rect.top - 8
+    : window.innerHeight - rect.bottom - 8
+  const panelHeight = Math.min(panel.scrollHeight, Math.max(0, availableHeight))
+  const left = Math.max(8, Math.min(rect.left, window.innerWidth - panel.offsetWidth - 8))
   panelStyle.value = {
-    top: `${rect.bottom + 5}px`,
-    left: `${rect.left}px`,
+    top: `${openAbove ? Math.max(8, rect.top - panelHeight - 5) : rect.bottom + 5}px`,
+    left: `${left}px`,
     minWidth: `${rect.width}px`,
+    maxHeight: `${Math.max(0, availableHeight)}px`,
+    '--dropdown-max-height': `${Math.max(0, availableHeight - 2)}px`,
   }
 }
 
@@ -148,6 +164,10 @@ function onDocKeydown(event) {
 }
 
 function onKeydown(event) {
+  if (props.disabled) {
+    event.preventDefault()
+    return
+  }
   const last = normalizedOptions.value.length - 1
   switch (event.key) {
     case 'Enter':
@@ -189,7 +209,7 @@ function onKeydown(event) {
 }
 
 function choose(opt) {
-  if (!opt || opt.disabled) return
+  if (!opt || opt.disabled || props.disabled) return
   emit('update:modelValue', opt.value)
   emit('change', opt.value)
   close()
@@ -225,6 +245,18 @@ onBeforeUnmount(close)
 
 .el-input:hover {
   border-color: #c0c4cc;
+}
+
+.el-select.is-disabled .el-input,
+.el-select.is-disabled .el-input:hover {
+  background-color: #f5f7fa;
+  border-color: #e4e7ed;
+  cursor: not-allowed;
+}
+
+.el-select.is-disabled .el-input__inner {
+  color: #c0c4cc;
+  cursor: not-allowed;
 }
 
 .el-select.is-open .el-input,
@@ -291,6 +323,10 @@ onBeforeUnmount(close)
   cursor: crosshair;
   transition: all;
   animation: selectFade 0.2s ease;
+}
+
+.el-select-dropdown .el-scrollbar__wrap {
+  max-height: min(274px, var(--dropdown-max-height, 274px));
 }
 
 @keyframes selectFade {

@@ -171,7 +171,7 @@ function onLogout() {
   background: transparent;
   color: #fff;
   border: 1px solid #ef4444;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
   font-size: var(--text-body-l);
   cursor: pointer;
   transition: all 200ms;

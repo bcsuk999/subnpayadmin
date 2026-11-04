@@ -6,7 +6,7 @@
       <TagsView />
       <main class="app-content">
         <div class="route-transition">
-          <div class="content">
+          <div class="content admin">
             <RouterView />
           </div>
         </div>
@@ -31,7 +31,7 @@ const mobileOpen = ref(false)
   display: flex;
   height: 100vh;
   overflow: hidden;
-  background: var(--color-bg);
+  background: #dcdfe6;
 }
 
 .main-area {
@@ -58,7 +58,6 @@ const mobileOpen = ref(false)
 }
 
 .content {
-  padding: var(--space-8);
   display: flex;
   flex-direction: column;
   gap: var(--space-7);
@@ -73,9 +72,4 @@ const mobileOpen = ref(false)
   z-index: 999;
 }
 
-@media (max-width: 880px) {
-  .content {
-    padding: 10px;
-  }
-}
 </style>

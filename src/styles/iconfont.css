@@ -1,0 +1,42 @@
+/* SimplyPay sidebar icon font (Alibaba iconfont project 3327235) */
+@font-face {
+  font-family: "icon";
+  src: url("/fonts/iconfont.woff2") format("woff2"),
+    url("/fonts/iconfont.woff") format("woff"),
+    url("/fonts/iconfont.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+.icon {
+  font-family: "icon" !important;
+  font-size: 16px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-analysis::before { content: "\e858"; }
+.icon-api-document::before { content: "\e606"; }
+.icon-application::before { content: "\e69d"; }
+.icon-archive::before { content: "\e60c"; }
+.icon-base::before { content: "\e608"; }
+.icon-content::before { content: "\e627"; }
+.icon-developer::before { content: "\e605"; }
+.icon-finance::before { content: "\e70e"; }
+.icon-fullscreen::before { content: "\e675"; }
+.icon-guide::before { content: "\e60a"; }
+.icon-home::before { content: "\e61e"; }
+.icon-member::before { content: "\e667"; }
+.icon-merchant::before { content: "\e79d"; }
+.icon-operation::before { content: "\e66b"; }
+.icon-order::before { content: "\e634"; }
+.icon-permission::before { content: "\e620"; }
+.icon-project::before { content: "\e641"; }
+.icon-qrcode::before { content: "\e600"; }
+.icon-receipt::before { content: "\e63d"; }
+.icon-report::before { content: "\e612"; }
+.icon-safety::before { content: "\ec4d"; }
+.icon-setting::before { content: "\e781"; }
+.icon-supplier::before { content: "\e63c"; }

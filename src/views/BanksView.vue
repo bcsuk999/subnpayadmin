@@ -1,29 +1,18 @@
 <template>
   <section class="page">
-    <div class="page-actions">
-      <button class="btn btn-ghost btn-sm filter-toggle" type="button" @click="showFilters = !showFilters">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6h18M3 12h10M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="15" cy="12" r="2" stroke="currentColor" stroke-width="1.4"/></svg>
-        {{ showFilters ? 'Hide filters' : 'Show filters' }}
-      </button>
-    </div>
-
-    <div v-show="showFilters" class="card filters">
+    <FilterCard v-model="showFilters" title="Bank filters">
       <div class="filter-row">
         <div class="field">
           <label class="field-label" for="f-userid">User ID</label>
-          <input id="f-userid" v-model="filters.userid" class="input" type="text" placeholder="e.g. 3056579" @keyup.enter="fetchBanks" />
+          <input id="f-userid" v-model="filters.userid" class="input" type="text" placeholder="Please enter UID to search" @keyup.enter="fetchBanks" />
         </div>
         <div class="field">
           <label class="field-label" for="f-bankName">Bank Name</label>
-          <input id="f-bankName" v-model="filters.bankName" class="input" type="text" placeholder="e.g. SBI" @keyup.enter="fetchBanks" />
+          <input id="f-bankName" v-model="filters.bankName" class="input" type="text" placeholder="Please enter bank name to search" @keyup.enter="fetchBanks" />
         </div>
         <div class="field">
           <label class="field-label" for="f-status">Status</label>
-          <select id="f-status" v-model="filters.status" class="input">
-            <option value="">All</option>
-            <option value="enable">Enable</option>
-            <option value="disable">Disable</option>
-          </select>
+          <SelectDropdown id="f-status" v-model="filters.status" class="filter-select" :options="[{ value: '', label: 'All' }, { value: 'enable', label: 'Enable' }, { value: 'disable', label: 'Disable' }]" aria-label="Status" />
         </div>
         <div class="filter-actions">
           <button class="btn btn-primary" type="button" :disabled="loading" @click="fetchBanks">
@@ -33,30 +22,18 @@
           <button class="btn btn-ghost" type="button" :disabled="loading" @click="resetFilters">Reset</button>
         </div>
       </div>
-    </div>
+    </FilterCard>
 
-    <div class="card">
-      <div class="card-head">
-        <h3>Banks ({{ total }})</h3>
-        <span class="card-sub">Page {{ page }} / {{ totalPages || 1 }}</span>
-      </div>
+    <TableCard>
+      <TableCardHeading :title="`Banks (${total})`">
+        <template #subtitle>Page {{ page }} / {{ totalPages || 1 }}</template>
+      </TableCardHeading>
 
       <p v-if="error" class="error" role="alert">{{ error }}</p>
       <p v-if="!loading && banks.length === 0 && !error" class="empty">No banks found. Adjust filters or check backend <code>GET /api/admin/banks</code>.</p>
 
-      <div v-if="banks.length" class="table-wrap">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Bank</th>
-              <th>Holder</th>
-              <th>Account No.</th>
-              <th>IFSC</th>
-              <th>User ID</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
+      <DataTable v-if="banks.length">
+          <thead><tr><th>Bank</th><th>Holder</th><th>Account No.</th><th>IFSC</th><th>User ID</th><th>Status</th><th>Action</th></tr></thead>
           <tbody>
             <tr v-for="b in banks" :key="b._id">
               <td><strong>{{ b.bankName }}</strong><br /><span class="muted">{{ b._id }}</span></td>
@@ -77,11 +54,10 @@
               </td>
             </tr>
           </tbody>
-        </table>
-      </div>
+      </DataTable>
 
-      <Pagination :page="page" :total-pages="totalPages" :disabled="loading" @change="goPage" />
-    </div>
+      <TableFooter :page="page" :total-pages="totalPages" :total="total" :page-size="pageSize" :disabled="loading" @change="goPage" @size-change="setPageSize" />
+    </TableCard>
   </section>
 </template>
 
@@ -89,7 +65,6 @@
 import { onMounted, reactive, ref } from 'vue'
 import { getAdminBanks, updateAdminBankStatus } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
-import Pagination from '../components/Pagination.vue'
 
 const toast = useToast()
 
@@ -98,6 +73,7 @@ const showFilters = ref(true)
 const banks = ref([])
 const total = ref(0)
 const page = ref(1)
+const pageSize = ref(10)
 const totalPages = ref(1)
 const loading = ref(false)
 const error = ref('')
@@ -113,7 +89,7 @@ async function fetchBanks(p = 1) {
       bankName: filters.bankName.trim() || undefined,
       status: filters.status || undefined,
       page: page.value,
-      limit: 20,
+      limit: pageSize.value,
     }
     const data = await getAdminBanks(params)
     banks.value = data.banks || []
@@ -141,6 +117,11 @@ function goPage(p) {
   fetchBanks(p)
 }
 
+function setPageSize(size) {
+  pageSize.value = size
+  fetchBanks(1)
+}
+
 async function toggleStatus(bank) {
   const next = bank.status === 'enable' ? 'disable' : 'enable'
   updatingId.value = bank._id
@@ -160,7 +141,7 @@ onMounted(() => fetchBanks(1))
 
 <style scoped>
 .page { display:flex; flex-direction:column; gap:16px; }
-.card { background: var(--color-bg); border:1px solid var(--color-border); border-radius: var(--radius-md); padding:16px; box-shadow: var(--shadow-subtle); }
+.card { background: var(--color-bg); border:1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--spacing-4); box-shadow: var(--shadow-card); }
 .card.filters { padding:11px; }
 .card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
 .card-sub { color: var(--color-text-secondary); font-size: var(--text-body-l); }

@@ -1,24 +1,18 @@
 <template>
   <section class="page">
-    <div class="tabs">
-      <button :class="['tab', { 'tab--active': activeTab === 'users' }]" type="button" @click="activeTab = 'users'">Payout Users</button>
-      <button :class="['tab', { 'tab--active': activeTab === 'payouts' }]" type="button" @click="activeTab = 'payouts'">All Payouts</button>
-      <button :class="['tab', { 'tab--active': activeTab === 'simplypay' }]" type="button" @click="activeTab = 'simplypay'">SimplyPay Payout</button>
-    </div>
+    <PageTabs v-model="activeTab" :tabs="[{ value: 'users', label: 'Payout Users' }, { value: 'payouts', label: 'All Payouts' }, { value: 'simplypay', label: 'SimplyPay Payout' }]" />
 
     <!-- Payout Users Tab -->
-    <div v-show="activeTab === 'users'" class="card">
-      <div class="card-head">
-        <div>
-          <h3>Payout Users ({{ payoutUsers.length }})</h3>
-          <span class="card-sub">Users with payout enabled</span>
-        </div>
-        <button class="btn btn-ghost btn-sm" type="button" :disabled="usersLoading" @click="fetchPayoutUsers">Refresh</button>
-      </div>
+    <TableCard v-show="activeTab === 'users'">
+      <TableCardHeading :title="`Payout Users (${payoutUsers.length})`">
+        <template #subtitle>Users with payout enabled</template>
+        <template #actions>
+          <button class="btn btn-ghost btn-sm" type="button" :disabled="usersLoading" @click="fetchPayoutUsers">Refresh</button>
+        </template>
+      </TableCardHeading>
       <p v-if="usersError" class="error" role="alert">{{ usersError }}</p>
       <p v-if="!usersLoading && payoutUsers.length===0 && !usersError" class="empty">No payout users found.</p>
-      <div v-if="payoutUsers.length" class="table-wrap">
-        <table class="table">
+      <DataTable v-if="payoutUsers.length">
           <thead><tr><th>UID</th><th>Mobile</th><th>Balance</th><th>Payout Enabled</th><th>Banks</th><th>Actions</th></tr></thead>
           <tbody>
             <tr v-for="u in payoutUsers" :key="u.uid">
@@ -39,12 +33,11 @@
               </td>
             </tr>
           </tbody>
-        </table>
-      </div>
-    </div>
+      </DataTable>
+    </TableCard>
 
     <!-- SimplyPay Payout Tab -->
-    <div v-show="activeTab === 'simplypay'" class="card">
+    <AdminCard v-show="activeTab === 'simplypay'">
       <div class="card-head">
         <h3>Create SimplyPay Payout</h3>
       </div>
@@ -60,10 +53,7 @@
         </div>
         <div class="field">
           <label class="field-label">Payout Type</label>
-          <select v-model="spForm.payoutType" class="input">
-            <option value="IFSC">IFSC</option>
-            <option value="UPI">UPI</option>
-          </select>
+          <SelectDropdown v-model="spForm.payoutType" class="form-select" :options="[{ value: 'IFSC', label: 'IFSC' }, { value: 'UPI', label: 'UPI' }]" aria-label="Payout Type" />
         </div>
         <div class="field" v-if="spForm.payoutType === 'UPI'">
           <label class="field-label">VPA (UPI ID) <span class="required">*</span></label>
@@ -97,24 +87,25 @@
       <div class="modal-foot" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--color-border);">
         <button class="btn btn-primary" type="button" :disabled="spForm.saving" @click="submitSimplyPayPayout">{{ spForm.saving ? 'Creating…' : 'Create SimplyPay Payout' }}</button>
       </div>
-    </div>
+    </AdminCard>
 
     <!-- All Payouts Tab -->
     <div v-show="activeTab === 'payouts'">
-      <div class="card filters">
+      <FilterCard title="Payout filters" :collapsible="false">
         <div class="filter-row">
-          <div class="field"><label class="field-label">User ID</label><input v-model="payoutFilters.userid" class="input" placeholder="3056579" @keyup.enter="fetchPayouts(1)" /></div>
-          <div class="field"><label class="field-label">Status</label><select v-model="payoutFilters.status" class="input"><option value="">All</option><option value="pending">pending</option><option value="success">success</option><option value="failed">failed</option></select></div>
-          <div class="field"><label class="field-label">Payout ID</label><input v-model="payoutFilters.payoutId" class="input" placeholder="PAYOUT..." @keyup.enter="fetchPayouts(1)" /></div>
+          <div class="field"><label class="field-label">User ID</label><input v-model="payoutFilters.userid" class="input" placeholder="Please enter UID to search" @keyup.enter="fetchPayouts(1)" /></div>
+          <div class="field"><label class="field-label">Status</label><SelectDropdown v-model="payoutFilters.status" class="filter-select" :options="[{ value: '', label: 'All' }, { value: 'pending', label: 'pending' }, { value: 'success', label: 'success' }, { value: 'failed', label: 'failed' }]" aria-label="Status" /></div>
+          <div class="field"><label class="field-label">Payout ID</label><input v-model="payoutFilters.payoutId" class="input" placeholder="Please enter payout ID to search" @keyup.enter="fetchPayouts(1)" /></div>
           <div class="filter-actions"><button class="btn btn-primary" type="button" :disabled="payoutsLoading" @click="fetchPayouts(1)">{{ payoutsLoading ? 'Loading…' : 'Search' }}</button><button class="btn btn-ghost" type="button" @click="resetPayoutFilters">Reset</button></div>
         </div>
-      </div>
-      <div class="card" style="margin-top:12px">
-        <div class="card-head"><h3>All Payouts ({{ payoutTotal }})</h3><span class="card-sub">Page {{ payoutPage }} / {{ payoutTotalPages || 1 }}</span></div>
+      </FilterCard>
+      <TableCard style="margin-top:12px">
+        <TableCardHeading :title="`All Payouts (${payoutTotal})`">
+          <template #subtitle>Page {{ payoutPage }} / {{ payoutTotalPages || 1 }}</template>
+        </TableCardHeading>
         <p v-if="payoutsError" class="error" role="alert">{{ payoutsError }}</p>
         <p v-if="!payoutsLoading && payouts.length===0 && !payoutsError" class="empty">No payouts found.</p>
-        <div v-if="payouts.length" class="table-wrap">
-          <table class="table">
+        <DataTable v-if="payouts.length">
             <thead><tr><th>Payout ID</th><th>User</th><th>Amount</th><th>Bank</th><th>Account</th><th>IFSC</th><th>Trn ID</th><th>Status</th><th>Remark</th><th>Created</th><th>Actions</th></tr></thead>
             <tbody>
               <tr v-for="p in payouts" :key="p.payoutId">
@@ -137,10 +128,9 @@
                 </td>
               </tr>
             </tbody>
-          </table>
-        </div>
-        <Pagination :page="payoutPage" :total-pages="payoutTotalPages" :disabled="payoutsLoading" @change="fetchPayouts" />
-      </div>
+        </DataTable>
+        <TableFooter :page="payoutPage" :total-pages="payoutTotalPages" :total="payoutTotal" :page-size="payoutPageSize" :disabled="payoutsLoading" @change="fetchPayouts" @size-change="setPayoutPageSize" />
+      </TableCard>
     </div>
 
     <!-- Create Payout Dialog -->
@@ -161,9 +151,7 @@
           </div>
           <div class="field">
             <label class="field-label">Bank Account</label>
-            <select v-model="createForm.accountNumber" class="input">
-              <option v-for="b in (createForm.user?.banks || [])" :key="b.accountNumber" :value="b.accountNumber">{{ b.bankName }} — {{ b.holderName }} — {{ b.accountNumber }}</option>
-            </select>
+            <SelectDropdown v-model="createForm.accountNumber" class="form-select" :options="bankOptions" aria-label="Bank account" />
           </div>
           <div class="field">
             <label class="field-label">Amount per order (₹)</label>
@@ -233,7 +221,6 @@ import { onMounted, reactive, ref, computed } from 'vue'
 import { getPayoutUsers, createPayout, createSimplyPayPayout, getAdminPayouts, approvePayout, rejectPayout } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
 import { fmtDateTime as fmt } from '../utils/format.js'
-import Pagination from '../components/Pagination.vue'
 
 const toast = useToast()
 
@@ -246,6 +233,7 @@ const usersError = ref('')
 const payouts = ref([])
 const payoutTotal = ref(0)
 const payoutPage = ref(1)
+const payoutPageSize = ref(10)
 const payoutTotalPages = ref(1)
 const payoutsLoading = ref(false)
 const payoutsError = ref('')
@@ -255,6 +243,10 @@ const acting = ref('')
 const showCreateModal = ref(false)
 const createForm = reactive({ user: null, accountNumber: '', amount: '', numberOfOrders: '', saving: false, error: '' })
 const createTotal = computed(() => (Number(createForm.amount) || 0) * (Number(createForm.numberOfOrders) || 0))
+const bankOptions = computed(() => (createForm.user?.banks || []).map((bank) => ({
+  value: bank.accountNumber,
+  label: `${bank.bankName} — ${bank.holderName} — ${bank.accountNumber}`,
+})))
 Object.defineProperty(createForm, 'total', { get() { return createTotal.value } })
 
 const approveDialog = reactive({ open: false, payoutId: '', remark: '', saving: false })
@@ -295,13 +287,14 @@ async function fetchPayouts(p = 1) {
       status: payoutFilters.status || undefined,
       payoutId: payoutFilters.payoutId.trim() || undefined,
       page: payoutPage.value,
-      limit: 20,
+      limit: payoutPageSize.value,
     })
     payouts.value = data.payouts || []
     payoutTotal.value = data.count || 0
     payoutTotalPages.value = data.totalPages || 1
   } catch (e) { payoutsError.value = e.message; toast.error(e.message) } finally { payoutsLoading.value = false }
 }
+function setPayoutPageSize(size) { payoutPageSize.value = size; fetchPayouts(1) }
 
 function resetPayoutFilters() { payoutFilters.userid = ''; payoutFilters.status = ''; payoutFilters.payoutId = ''; fetchPayouts(1) }
 
@@ -428,7 +421,7 @@ onMounted(() => { fetchPayoutUsers(); fetchPayouts(1) })
 .tab{padding:10px 18px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--color-text-secondary);font-size:var(--text-h4);font-weight:500;cursor:pointer;transition:color .15s ease,border-color .15s ease}
 .tab:hover{color:var(--color-text)}
 .tab--active{color:var(--color-primary);border-bottom-color:var(--color-primary)}
-.card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px;box-shadow:var(--shadow-subtle)}
+.card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--spacing-4);box-shadow:var(--shadow-card)}
 .card.filters{padding:11px}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px} .card-sub{color:var(--color-text-secondary);font-size:var(--text-body-l)}
 .filters .filter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:end} .filters .field{flex:1;min-width:130px;gap:4px} .filters .field-label{font-size:11px} .filters .input{padding:6px 10px;font-size:12px} .filters .btn{padding:6px 10px;font-size:12px} .filter-actions{display:flex;gap:6px}

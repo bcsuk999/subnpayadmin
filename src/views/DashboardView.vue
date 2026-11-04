@@ -16,13 +16,13 @@
       </div>
     </div>
 
-    <div class="card" style="margin-top: 12px;">
+    <AdminCard style="margin-top: 12px;">
       <h3>Quick actions</h3>
       <div class="placeholder-actions">
         <button class="btn btn-outline" type="button" :disabled="updating" @click="onDemoSuccess">Demo success toast</button>
         <button class="btn btn-outline" type="button" :disabled="updating" @click="onDemoError">Demo error toast</button>
       </div>
-    </div>
+    </AdminCard>
   </div>
 </template>
 
@@ -119,7 +119,7 @@ async function onUpdateStatusDemo(userid, status) {
   gap: 2px;
   background: var(--color-bg);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   padding: 14px 18px;
   box-shadow: var(--shadow-card);
 }
@@ -147,8 +147,9 @@ async function onUpdateStatusDemo(userid, status) {
 .card {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: 16px;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-4);
+  box-shadow: var(--shadow-card);
 }
 
 .card h3 {

@@ -1,31 +1,24 @@
 <template>
   <section class="page">
-    <div class="page-actions">
-      <button class="btn btn-ghost btn-sm filter-toggle" type="button" @click="showFilters = !showFilters">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6h18M3 12h10M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="15" cy="12" r="2" stroke="currentColor" stroke-width="1.4"/></svg>
-        {{ showFilters ? 'Hide filters' : 'Show filters' }}
-      </button>
-    </div>
-
-    <div v-show="showFilters" class="card filters">
+    <FilterCard v-model="showFilters" title="User filters">
       <div class="filter-row">
-        <div class="field"><label class="field-label">User ID</label><input v-model="filters.uid" class="input" placeholder="3056579" @keyup.enter="fetchUsers(1)" /></div>
-        <div class="field"><label class="field-label">Mobile</label><input v-model="filters.mobile" class="input" placeholder="9876543210" @keyup.enter="fetchUsers(1)" /></div>
-        <div class="field"><label class="field-label">Balance sort</label><select v-model="filters.sortBalance" class="input"><option value="">None</option><option value="asc">Lowest first</option><option value="desc">Highest first</option></select></div>
+        <div class="field"><label class="field-label">User ID</label><input v-model="filters.uid" class="input" placeholder="Please enter UID to search" @keyup.enter="fetchUsers(1)" /></div>
+        <div class="field"><label class="field-label">Mobile</label><input v-model="filters.mobile" class="input" placeholder="Please enter mobile number to search" @keyup.enter="fetchUsers(1)" /></div>
+        <div class="field"><label class="field-label">Balance sort</label><SelectDropdown v-model="filters.sortBalance" class="filter-select" :options="[{ value: '', label: 'None' }, { value: 'asc', label: 'Lowest first' }, { value: 'desc', label: 'Highest first' }]" aria-label="Balance sort" /></div>
       </div>
-      <div class="filter-row" style="margin-top:6px">
-        <div class="field"><label class="field-label">From (created)</label><input v-model="filters.from" class="input" type="date" /></div>
-        <div class="field"><label class="field-label">To (created)</label><input v-model="filters.to" class="input" type="date" /></div>
+      <div class="filter-row filter-row--secondary">
+        <div class="field field--range"><label class="field-label">Created dates</label><DateRangePicker v-model:from="filters.from" v-model:to="filters.to" /></div>
         <div class="filter-actions"><button class="btn btn-primary" type="button" :disabled="loading" @click="fetchUsers(1)">{{ loading ? 'Loading…' : 'Search' }}</button><button class="btn btn-ghost" type="button" @click="reset">Reset</button></div>
       </div>
-    </div>
+    </FilterCard>
 
-    <div class="card">
-      <div class="card-head"><h3>Users ({{ total }})</h3><span class="card-sub">Page {{ page }} / {{ totalPages || 1 }}</span></div>
+    <TableCard>
+      <TableCardHeading :title="`Users (${total})`">
+        <template #subtitle>Page {{ page }} / {{ totalPages || 1 }}</template>
+      </TableCardHeading>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
       <p v-if="!loading && users.length===0 && !error" class="empty">No users found. Try different filters.</p>
-      <div v-if="users.length" class="table-wrap">
-        <table class="table">
+      <DataTable v-if="users.length">
           <thead><tr><th>UID</th><th>Mobile</th><th>Register Date</th><th>Balance</th><th>Total Deposit</th><th>Status</th><th>Remark</th><th>Actions</th></tr></thead>
           <tbody>
             <tr v-for="u in users" :key="u.uid">
@@ -44,10 +37,9 @@
               </td>
             </tr>
           </tbody>
-        </table>
-      </div>
-      <Pagination :page="page" :total-pages="totalPages" :disabled="loading" @change="fetchUsers" />
-    </div>
+      </DataTable>
+      <TableFooter :page="page" :total-pages="totalPages" :total="total" :page-size="pageSize" :disabled="loading" @change="fetchUsers" @size-change="setPageSize" />
+    </TableCard>
 
     <div v-if="dialog.open" class="modal-overlay" @click.self="closeDialog">
       <div class="modal" role="dialog" aria-modal="true">
@@ -58,11 +50,7 @@
         <div class="modal-body">
           <div class="field">
             <label class="field-label">New Status</label>
-            <select v-model="dialog.status" class="input">
-              <option value="active">active</option>
-              <option value="ban">ban</option>
-              <option value="suspend">suspend</option>
-            </select>
+            <SelectDropdown v-model="dialog.status" class="form-select" :options="[{ value: 'active', label: 'active' }, { value: 'ban', label: 'ban' }, { value: 'suspend', label: 'suspend' }]" aria-label="New Status" />
           </div>
           <div class="field" style="margin-top:10px">
             <label class="field-label">Reason (required)</label>
@@ -102,7 +90,6 @@ import { onMounted, reactive, ref } from 'vue'
 import { getAdminUsers, updateUserStatus, resetUserPassword } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
 import { fmtDateTime as fmt } from '../utils/format.js'
-import Pagination from '../components/Pagination.vue'
 
 const toast = useToast()
 const filters = reactive({ uid:'', mobile:'', sortBalance:'', from:'', to:'' })
@@ -110,6 +97,7 @@ const showFilters = ref(true)
 const users = ref([])
 const total = ref(0)
 const page = ref(1)
+const pageSize = ref(10)
 const totalPages = ref(1)
 const loading = ref(false)
 const error = ref('')
@@ -152,20 +140,21 @@ async function fetchUsers(p=1){
       from: filters.from || undefined,
       to: filters.to || undefined,
       page: page.value,
-      limit: 20,
+      limit: pageSize.value,
     })
     users.value = data.users || []
     total.value = data.count || 0
     totalPages.value = data.totalPages || 1
   } catch(e){ error.value=e.message; toast.error(e.message) } finally{ loading.value=false }
 }
+function setPageSize(size) { pageSize.value = size; fetchUsers(1) }
 function reset(){ filters.uid=''; filters.mobile=''; filters.sortBalance=''; filters.from=''; filters.to=''; fetchUsers(1) }
 onMounted(()=>fetchUsers(1))
 </script>
 
 <style scoped>
 .page{display:flex;flex-direction:column;gap:16px}
-.card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px;box-shadow:var(--shadow-subtle)}
+.card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--spacing-4);box-shadow:var(--shadow-card)}
 .card.filters{padding:11px}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px} .card-sub{color:var(--color-text-secondary);font-size:var(--text-body-l)}
 .filters .filter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:end} .filters .field{flex:1;min-width:130px;gap:4px} .filters .field-label{font-size:11px} .filters .input{padding:6px 10px;font-size:12px} .filters .btn{padding:6px 10px;font-size:12px} .filter-actions{display:flex;gap:6px}

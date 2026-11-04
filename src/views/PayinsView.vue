@@ -1,30 +1,24 @@
 <template>
   <section class="page">
-    <div class="page-actions">
-      <button class="btn btn-ghost btn-sm filter-toggle" type="button" @click="showFilters = !showFilters">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6h18M3 12h10M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="15" cy="12" r="2" stroke="currentColor" stroke-width="1.4"/></svg>
-        {{ showFilters ? 'Hide filters' : 'Show filters' }}
-      </button>
-    </div>
-
-    <div v-show="showFilters" class="card filters">
+    <FilterCard v-model="showFilters" title="Payin filters">
       <div class="filter-row">
-        <div class="field"><label class="field-label">User ID</label><input v-model="filters.userid" class="input" placeholder="3056579" @keyup.enter="fetchPayins(1)" /></div>
-        <div class="field"><label class="field-label">Status</label><select v-model="filters.status" class="input"><option value="">All</option><option value="pending">pending</option><option value="success">success</option><option value="failed">failed</option><option value="reversed">reversed</option></select></div>
-        <div class="field"><label class="field-label">Network</label><select v-model="filters.network" class="input"><option value="">All</option><option value="TRC20">TRC20</option><option value="BEP20">BEP20</option><option value="SPAY">SPAY</option></select></div>
+        <div class="field"><label class="field-label">User ID</label><input v-model="filters.userid" class="input" placeholder="Please enter UID to search" @keyup.enter="fetchPayins(1)" /></div>
+        <div class="field"><label class="field-label">Status</label><SelectDropdown v-model="filters.status" class="filter-select" :options="[{ value: '', label: 'All' }, { value: 'pending', label: 'pending' }, { value: 'success', label: 'success' }, { value: 'failed', label: 'failed' }, { value: 'reversed', label: 'reversed' }]" aria-label="Status" /></div>
+        <div class="field"><label class="field-label">Network</label><SelectDropdown v-model="filters.network" class="filter-select" :options="[{ value: '', label: 'All' }, { value: 'TRC20', label: 'TRC20' }, { value: 'BEP20', label: 'BEP20' }, { value: 'SPAY', label: 'SPAY' }]" aria-label="Network" /></div>
         <div class="filter-actions"><button class="btn btn-primary" type="button" :disabled="loading" @click="fetchPayins(1)">{{ loading ? 'Loading…' : 'Search' }}</button><button class="btn btn-ghost" type="button" @click="reset">Reset</button></div>
       </div>
-      <div class="filter-row" style="margin-top:6px">
-        <div class="field"><label class="field-label">Payin ID</label><input v-model="filters.payinId" class="input" placeholder="P20260908..." @keyup.enter="fetchPayins(1)" /></div>
+      <div class="filter-row filter-row--secondary">
+        <div class="field"><label class="field-label">Payin ID</label><input v-model="filters.payinId" class="input" placeholder="Please enter payin ID to search" @keyup.enter="fetchPayins(1)" /></div>
       </div>
-    </div>
+    </FilterCard>
 
-    <div class="card">
-      <div class="card-head"><h3>Payins ({{ total }})</h3><span class="card-sub">Page {{ page }} / {{ totalPages || 1 }}</span></div>
+    <TableCard>
+      <TableCardHeading :title="`Payins (${total})`">
+        <template #subtitle>Page {{ page }} / {{ totalPages || 1 }}</template>
+      </TableCardHeading>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
       <p v-if="!loading && payins.length===0 && !error" class="empty">No payins. Try different filters.</p>
-      <div v-if="payins.length" class="table-wrap">
-        <table class="table">
+      <DataTable v-if="payins.length">
           <thead><tr><th>User ID</th><th>Payin ID</th><th>Network</th><th>Address / Deep Link</th><th>Amount</th><th>Rate / Bonus</th><th>Recv Amt</th><th>UTR</th><th>Status</th><th>Time</th><th>Remark</th><th>Actions</th></tr></thead>
           <tbody>
             <tr v-for="p in payins" :key="p.payinId || p._id">
@@ -61,10 +55,9 @@
               </td>
             </tr>
           </tbody>
-        </table>
-      </div>
-      <Pagination :page="page" :total-pages="totalPages" :disabled="loading" @change="fetchPayins" />
-    </div>
+      </DataTable>
+      <TableFooter :page="page" :total-pages="totalPages" :total="total" :page-size="pageSize" :disabled="loading" @change="fetchPayins" @size-change="setPageSize" />
+    </TableCard>
   </section>
 </template>
 
@@ -73,7 +66,6 @@ import { onMounted, reactive, ref } from 'vue'
 import { getAdminPayins, approveTransaction, rejectTransaction, reverseTransaction } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
 import { fmtDateTime as fmt } from '../utils/format.js'
-import Pagination from '../components/Pagination.vue'
 
 const toast = useToast()
 const filters = reactive({ userid:'', status:'', network:'', payinId:'' })
@@ -81,6 +73,7 @@ const showFilters = ref(true)
 const payins = ref([])
 const total = ref(0)
 const page = ref(1)
+const pageSize = ref(10)
 const totalPages = ref(1)
 const loading = ref(false)
 const error = ref('')
@@ -130,17 +123,18 @@ async function onReverse(p){
 async function fetchPayins(p=1){
   loading.value=true; error.value=''; page.value=p
   try{
-    const data = await getAdminPayins({ userid: filters.userid.trim() || undefined, status: filters.status || undefined, network: filters.network || undefined, payinId: filters.payinId.trim() || undefined, page: page.value, limit: 20 })
+    const data = await getAdminPayins({ userid: filters.userid.trim() || undefined, status: filters.status || undefined, network: filters.network || undefined, payinId: filters.payinId.trim() || undefined, page: page.value, limit: pageSize.value })
     payins.value = data.payins || []; total.value=data.count||0; totalPages.value=data.totalPages||1
   } catch(e){ error.value=e.message; toast.error(e.message) } finally{ loading.value=false }
 }
+function setPageSize(size) { pageSize.value = size; fetchPayins(1) }
 function reset(){ filters.userid=''; filters.status=''; filters.network=''; filters.payinId=''; fetchPayins(1) }
 onMounted(()=>fetchPayins(1))
 </script>
 
 <style scoped>
 .page{display:flex;flex-direction:column;gap:16px}
-.card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px;box-shadow:var(--shadow-subtle)}
+.card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--spacing-4);box-shadow:var(--shadow-card)}
 .card.filters{padding:11px}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px} .card-sub{color:var(--color-text-secondary);font-size:var(--text-body-l)}
 .filters .filter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:end} .filters .field{flex:1;min-width:112px;gap:4px} .filters .field-label{font-size:11px} .filters .input{padding:6px 10px;font-size:12px} .filters .btn{padding:6px 10px;font-size:12px} .filter-actions{display:flex;gap:6px}

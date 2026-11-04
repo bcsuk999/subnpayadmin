@@ -4,13 +4,10 @@
       <button class="btn btn-ghost btn-sm" type="button" :disabled="statsLoading" @click="fetchStats">Refresh</button>
     </div>
 
-    <div class="tabs">
-      <button :class="['tab', { 'tab--active': subTab === 'config' }]" type="button" @click="subTab = 'config'">Config</button>
-      <button :class="['tab', { 'tab--active': subTab === 'stats' }]" type="button" @click="subTab = 'stats'">Stats</button>
-    </div>
+    <PageTabs v-model="subTab" :tabs="[{ value: 'config', label: 'Config' }, { value: 'stats', label: 'Stats' }]" />
 
     <div v-show="subTab === 'config'" class="tab-panel">
-      <div class="card">
+      <AdminCard>
         <div class="card-head">
           <div>
             <h3>Commission Config</h3>
@@ -28,11 +25,11 @@
           </div>
           <p v-if="commissionMessage" class="muted">{{ commissionMessage }}</p>
         </form>
-      </div>
+      </AdminCard>
     </div>
 
     <div v-show="subTab === 'stats'" class="tab-panel">
-      <div class="card">
+      <AdminCard>
         <div class="card-head">
           <div>
             <h3>Referral Stats</h3>
@@ -47,45 +44,32 @@
           <div class="stat"><span class="stat-label">Total Earned</span><span class="stat-value">₹ {{ stats.totalEarned ?? 0 }}</span></div>
           <div class="stat"><span class="stat-label">Joiners Today</span><span class="stat-value">{{ stats.joinersToday ?? 0 }}</span></div>
         </div>
-      </div>
+      </AdminCard>
 
-      <div class="card">
-        <div class="card-head">
-          <div>
-            <h3>Commissions ({{ commTotal }})</h3>
-          </div>
-        </div>
+      <TableCard>
+        <TableCardHeading :title="`Commissions (${commTotal})`" />
+        <FilterCard title="Commission filters" :collapsible="false">
         <div class="filter-row">
           <div class="field">
             <label class="field-label">Status</label>
-            <select v-model="commFilters.status" class="input">
-              <option value="">All</option>
-              <option value="success">success</option>
-              <option value="failed">failed</option>
-              <option value="reversed">reversed</option>
-              <option value="pending">pending</option>
-            </select>
+            <SelectDropdown v-model="commFilters.status" class="filter-select" :options="[{ value: '', label: 'All' }, { value: 'success', label: 'success' }, { value: 'failed', label: 'failed' }, { value: 'reversed', label: 'reversed' }, { value: 'pending', label: 'pending' }]" aria-label="Status" />
           </div>
           <div class="field">
             <label class="field-label">Currency</label>
-            <select v-model="commFilters.currency" class="input">
-              <option value="">All</option>
-              <option value="USDT">USDT</option>
-              <option value="INR">INR</option>
-            </select>
+            <SelectDropdown v-model="commFilters.currency" class="filter-select" :options="[{ value: '', label: 'All' }, { value: 'USDT', label: 'USDT' }, { value: 'INR', label: 'INR' }]" aria-label="Currency" />
           </div>
           <div class="field">
             <label class="field-label">User ID</label>
-            <input v-model="commFilters.userid" class="input" placeholder="referrer or referee" @keyup.enter="fetchCommissions(1)" />
+            <input v-model="commFilters.userid" class="input" placeholder="Please enter UID to search" @keyup.enter="fetchCommissions(1)" />
           </div>
           <div class="filter-actions">
             <button class="btn btn-primary" type="button" :disabled="commLoading" @click="fetchCommissions(1)">Search</button>
           </div>
         </div>
+        </FilterCard>
         <p v-if="commError" class="error" role="alert">{{ commError }}</p>
         <p v-if="!commLoading && commissions.length === 0 && !commError" class="empty">No commission records.</p>
-        <div v-if="commissions.length" class="table-wrap">
-          <table class="table">
+        <DataTable v-if="commissions.length">
             <thead><tr><th>Commission ID</th><th>Referrer</th><th>Referee</th><th>Payin</th><th>Deposit</th><th>Currency</th><th>%</th><th>Amount</th><th>Status</th><th>Credited</th></tr></thead>
             <tbody>
               <tr v-for="c in commissions" :key="c._id || c.commissionId">
@@ -101,10 +85,9 @@
                 <td class="muted">{{ fmtDate(c.creditedAt || c.createdAt) }}</td>
               </tr>
             </tbody>
-          </table>
-        </div>
-        <Pagination :page="commPage" :total-pages="commTotalPages" :disabled="commLoading" @change="fetchCommissions" />
-      </div>
+        </DataTable>
+        <TableFooter :page="commPage" :total-pages="commTotalPages" :total="commTotal" :page-size="commPageSize" :disabled="commLoading" @change="fetchCommissions" @size-change="setCommissionPageSize" />
+      </TableCard>
     </div>
   </section>
 </template>
@@ -116,7 +99,6 @@ import {
 } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
 import { fmtDateTime as fmtDate } from '../utils/format.js'
-import Pagination from '../components/Pagination.vue'
 
 const toast = useToast()
 const subTab = ref('config')
@@ -138,6 +120,7 @@ const commFilters = reactive({ status: '', currency: '', userid: '' })
 const commissions = ref([])
 const commTotal = ref(0)
 const commPage = ref(1)
+const commPageSize = ref(10)
 const commTotalPages = ref(1)
 const commLoading = ref(false)
 const commError = ref('')
@@ -174,17 +157,18 @@ async function fetchStats() {
 async function fetchCommissions(p = 1) {
   commLoading.value = true; commError.value = ''; commPage.value = p
   try {
-    const data = await getAdminCommissions({ page: commPage.value, limit: 20, status: commFilters.status || undefined, currency: commFilters.currency || undefined, userid: commFilters.userid.trim() || undefined })
+    const data = await getAdminCommissions({ page: commPage.value, limit: commPageSize.value, status: commFilters.status || undefined, currency: commFilters.currency || undefined, userid: commFilters.userid.trim() || undefined })
     commissions.value = data.commissions || []; commTotal.value = data.count || 0; commTotalPages.value = data.totalPages || 1
   } catch (e) { commError.value = e.message; toast.error(e.message) } finally { commLoading.value = false }
 }
+function setCommissionPageSize(size) { commPageSize.value = size; fetchCommissions(1) }
 
 onMounted(() => { fetchCommission(); fetchStats(); fetchCommissions(1) })
 </script>
 
 <style scoped>
 .page{display:flex;flex-direction:column;gap:16px}
-.card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px;box-shadow:var(--shadow-subtle)}
+.card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--spacing-4);box-shadow:var(--shadow-card)}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap} .card-sub{color:var(--color-text-secondary);font-size:var(--text-body-l)}
 .tabs{display:flex;gap:0;border-bottom:1px solid var(--color-border)}
 .tab{padding:10px 18px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--color-text-secondary);font-size:var(--text-h4);font-weight:500;cursor:pointer;transition:color .15s ease,border-color .15s ease} .tab:hover{color:var(--color-text)}

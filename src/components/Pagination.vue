@@ -1,10 +1,5 @@
 <template>
   <nav v-if="directInput || totalPages > 1" class="pagination" aria-label="Pagination">
-    <label v-if="showPageSizes" class="page-size" :for="sizeInputId">
-      <select :id="sizeInputId" v-model.number="selectedPageSize" class="page-size__select" :disabled="disabled" @change="changePageSize">
-        <option v-for="size in pageSizes" :key="size" :value="size">{{ size }} / page</option>
-      </select>
-    </label>
     <button class="btn btn-ghost btn-sm" type="button" aria-label="Previous page" :disabled="page <= 1 || disabled" @click="$emit('change', page - 1)">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
@@ -14,6 +9,18 @@
     <button class="btn btn-ghost btn-sm" type="button" aria-label="Next page" :disabled="page >= normalizedTotalPages || disabled" @click="$emit('change', page + 1)">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
+    <label v-if="showPageSizes" class="page-size" :for="sizeInputId">
+      <SelectDropdown
+        :id="sizeInputId"
+        v-model="selectedPageSize"
+        class="page-size__select"
+        :options="pageSizeOptions"
+        placement="top"
+        :disabled="disabled"
+        aria-label="Rows per page"
+        @change="changePageSize"
+      />
+    </label>
     <label v-if="directInput" class="page-jump" :for="inputId">Go to
       <input :id="inputId" v-model="inputPage" class="page-input" type="number" inputmode="numeric" min="1" :max="normalizedTotalPages" :disabled="disabled" @input="limitPageInput" @change="commitPage" />
     </label>
@@ -30,7 +37,7 @@ const props = defineProps({
   disabled: { type: Boolean, default: false },
   directInput: { type: Boolean, default: false },
   showPageSizes: { type: Boolean, default: false },
-  pageSize: { type: Number, default: 20 },
+  pageSize: { type: Number, default: 10 },
   pageSizes: { type: Array, default: () => [10, 20, 50, 100] },
 })
 const emit = defineEmits(['change', 'size-change'])
@@ -40,6 +47,7 @@ const sizeInputId = `pagination-size-${Math.random().toString(36).slice(2)}`
 const inputPage = ref(String(props.page))
 const selectedPageSize = ref(props.pageSize)
 const normalizedTotalPages = computed(() => Math.max(1, Number(props.totalPages) || 1))
+const pageSizeOptions = computed(() => props.pageSizes.map((size) => ({ value: size, label: `${size}/page` })))
 
 watch(() => props.page, (page) => {
   inputPage.value = String(page)
@@ -91,14 +99,15 @@ function commitPage() {
 .page-btn {
   min-width: 32px;
   min-height: 30px;
-  padding: 0 6px;
+  padding: 0 var(--spacing-2);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--color-bg);
   color: var(--color-text);
-  font-size: 13px;
+  font-size: var(--text-body-l);
   font-weight: 500;
   cursor: pointer;
+  box-shadow: var(--shadow-sm);
   transition: all var(--motion-fast);
 }
 .page-input {
@@ -106,7 +115,7 @@ function commitPage() {
   height: 30px;
   padding: 0 4px;
   border: 1px solid var(--color-control-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--color-control-bg);
   color: var(--color-text);
   appearance: textfield;
@@ -133,7 +142,7 @@ function commitPage() {
   height: 30px;
   padding: 0 20px 0 4px;
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--color-control-bg);
   color: var(--color-text-secondary);
   font: inherit;
@@ -179,9 +188,10 @@ function commitPage() {
   color: var(--color-primary);
 }
 .page-btn.active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: #fff;
+  background: var(--color-button-primary-bg);
+  border-color: var(--color-button-primary-bg);
+  color: var(--color-button-primary-text);
+  box-shadow: var(--shadow-sm);
 }
 .page-btn {
   margin: 0;

@@ -1,12 +1,12 @@
 <template>
   <section class="page">
-    <div class="card">
+    <AdminCard>
       <div class="card-head">
         <h3>Withdrawal queue</h3>
         <button class="btn btn-primary" type="button" @click="toast.info('Fetch withdrawals API coming soon')">Refresh</button>
       </div>
       <p class="empty">No withdrawals to display. Hook to <code>GET /api/admin/withdrawals</code> when ready.</p>
-    </div>
+    </AdminCard>
   </section>
 </template>
 
@@ -17,7 +17,7 @@ const toast = useToast()
 
 <style scoped>
 .page { display:flex; flex-direction:column; gap:16px; }
-.card { background: var(--color-bg); border:1px solid var(--color-border); border-radius: var(--radius-md); padding:16px; box-shadow: var(--shadow-subtle); }
+.card { background: var(--color-bg); border:1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--spacing-4); box-shadow: var(--shadow-card); }
 .card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px;}
 .empty { color: var(--color-text-secondary); font-size: var(--text-h4); line-height:1.5; }
 code { background: var(--color-surface-raised); padding:2px 6px; border-radius:4px; font-size:12px;}

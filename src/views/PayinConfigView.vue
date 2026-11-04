@@ -1,25 +1,19 @@
 <template>
   <section class="page">
-    <div class="tabs">
-      <button :class="['tab', { 'tab--active': activeTab === 'usdt' }]" type="button" @click="activeTab = 'usdt'">USDT</button>
-      <button :class="['tab', { 'tab--active': activeTab === 'inr' }]" type="button" @click="activeTab = 'inr'">INR</button>
-    </div>
+    <PageTabs v-model="activeTab" :tabs="[{ value: 'usdt', label: 'USDT' }, { value: 'inr', label: 'INR' }]" />
 
     <!-- USDT Tab -->
     <div v-show="activeTab === 'usdt'" class="tab-panel">
 
       <!-- Exchange Rate -->
-      <div class="card">
-        <div class="card-head">
-          <div>
-            <h3>USDT Exchange Rate</h3>
-            <span class="card-sub">Single rate shared by all USDT addresses. Credited = amount × rate. Fallback ₹ 1.</span>
-          </div>
-          <div class="row-actions">
+      <TableCard>
+        <TableCardHeading title="USDT Exchange Rate">
+          <template #subtitle>Single rate shared by all USDT addresses. Credited = amount × rate. Fallback ₹ 1.</template>
+          <template #actions>
             <button class="btn btn-ghost btn-sm" type="button" :disabled="rateLoading" @click="fetchRates">Refresh</button>
             <button class="btn btn-primary btn-sm" type="button" @click="openCreateRate">Set Rate</button>
-          </div>
-        </div>
+          </template>
+        </TableCardHeading>
 
         <div class="rate-hero">
           <span class="muted">Current rate</span>
@@ -29,8 +23,7 @@
         <p v-if="rateLoading" class="empty">Loading…</p>
         <p v-if="rateError" class="error" role="alert">{{ rateError }}</p>
 
-        <div v-if="rates.length" class="table-wrap" style="margin-top:12px">
-          <table class="table">
+        <DataTable v-if="rates.length" style="margin-top:12px">
             <thead><tr><th>Currency</th><th>Rate</th><th>Label</th><th>Active</th><th>Updated</th><th>Actions</th></tr></thead>
             <tbody>
               <tr v-for="r in rates" :key="r._id">
@@ -47,50 +40,39 @@
                 </td>
               </tr>
             </tbody>
-          </table>
-        </div>
+        </DataTable>
         <p v-else-if="!rateLoading && !rateError" class="empty" style="margin-top:10px">No rate set yet. Default fallback is ₹ 1. Click Set Rate to create.</p>
-      </div>
+      </TableCard>
 
       <!-- Deposit Addresses -->
-      <div class="card">
-        <div class="card-head">
-          <div>
-            <h3>Deposit Addresses ({{ total }})</h3>
-            <span class="card-sub">Active address per network is used when users deposit.</span>
-          </div>
-          <div class="row-actions">
+      <TableCard>
+        <TableCardHeading :title="`Deposit Addresses (${total})`">
+          <template #subtitle>Active address per network is used when users deposit.</template>
+          <template #actions>
             <button class="btn btn-ghost btn-sm" type="button" :disabled="seeding" @click="seedDefaults">{{ seeding ? 'Seeding…' : 'Seed Defaults' }}</button>
             <button class="btn btn-primary btn-sm" type="button" @click="openCreate">Add Address</button>
-          </div>
-        </div>
+          </template>
+        </TableCardHeading>
 
+        <FilterCard title="Address filters" :collapsible="false">
         <div class="filter-row">
           <div class="field">
             <label class="field-label">Network</label>
-            <select v-model="filters.network" class="input">
-              <option value="">All</option>
-              <option value="TRC20">TRC20</option>
-              <option value="BEP20">BEP20</option>
-            </select>
+            <SelectDropdown v-model="filters.network" class="filter-select" :options="[{ value: '', label: 'All' }, { value: 'TRC20', label: 'TRC20' }, { value: 'BEP20', label: 'BEP20' }]" aria-label="Network" />
           </div>
           <div class="field">
             <label class="field-label">Active</label>
-            <select v-model="filters.isActive" class="input">
-              <option value="">All</option>
-              <option value="true">Active</option>
-              <option value="false">Inactive</option>
-            </select>
+            <SelectDropdown v-model="filters.isActive" class="filter-select" :options="[{ value: '', label: 'All' }, { value: 'true', label: 'Active' }, { value: 'false', label: 'Inactive' }]" aria-label="Active" />
           </div>
           <div class="filter-actions">
             <button class="btn btn-primary" type="button" :disabled="loading" @click="fetchAddresses(1)">Search</button>
           </div>
         </div>
+        </FilterCard>
 
         <p v-if="error" class="error" role="alert">{{ error }}</p>
         <p v-if="!loading && addresses.length === 0 && !error" class="empty">No addresses. Add one or seed defaults.</p>
-        <div v-if="addresses.length" class="table-wrap">
-          <table class="table">
+        <DataTable v-if="addresses.length">
             <thead><tr><th>Network</th><th>Address</th><th>Label</th><th>Active</th><th>Actions</th></tr></thead>
             <tbody>
               <tr v-for="a in addresses" :key="a._id">
@@ -107,15 +89,14 @@
                 </td>
               </tr>
             </tbody>
-          </table>
-        </div>
-        <Pagination :page="page" :total-pages="totalPages" :disabled="loading" @change="fetchAddresses" />
-      </div>
+        </DataTable>
+        <TableFooter :page="page" :total-pages="totalPages" :total="total" :page-size="pageSize" :disabled="loading" @change="fetchAddresses" @size-change="setPageSize" />
+      </TableCard>
     </div>
 
     <!-- INR Tab -->
     <div v-show="activeTab === 'inr'" class="tab-panel">
-      <div class="card">
+      <AdminCard>
         <div class="card-head">
           <div>
             <h3>INR Bonus Config</h3>
@@ -134,7 +115,7 @@
           </div>
           <p v-if="bonusMessage" class="muted">{{ bonusMessage }}</p>
         </form>
-      </div>
+      </AdminCard>
     </div>
 
     <!-- Address Modal -->
@@ -143,7 +124,7 @@
         <h3>{{ editing?._id ? 'Edit Address' : 'Add Address' }}</h3>
         <form @submit.prevent="submit">
           <div class="field"><label class="field-label">Network</label>
-            <select v-model="form.network" class="input"><option value="TRC20">TRC20</option><option value="BEP20">BEP20</option></select>
+            <SelectDropdown v-model="form.network" class="form-select" :options="[{ value: 'TRC20', label: 'TRC20' }, { value: 'BEP20', label: 'BEP20' }]" aria-label="Network" />
           </div>
           <div class="field"><label class="field-label">Address</label><input v-model="form.address" class="input" placeholder="T... or 0x..." /></div>
           <div class="field"><label class="field-label">Label</label><input v-model="form.label" class="input" placeholder="Main TRC20" /></div>
@@ -188,7 +169,6 @@ import {
 } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
 import { fmtDateTime as fmtDate } from '../utils/format.js'
-import Pagination from '../components/Pagination.vue'
 
 const toast = useToast()
 const activeTab = ref('usdt')
@@ -210,6 +190,7 @@ const filters = reactive({ network: '', isActive: '' })
 const addresses = ref([])
 const total = ref(0)
 const page = ref(1)
+const pageSize = ref(10)
 const totalPages = ref(1)
 const loading = ref(false)
 const error = ref('')
@@ -276,10 +257,11 @@ async function removeRate(r) {
 async function fetchAddresses(p = 1) {
   loading.value = true; error.value = ''; page.value = p
   try {
-    const data = await getDepositAddresses({ network: filters.network || undefined, isActive: filters.isActive || undefined, page: page.value, limit: 20 })
+    const data = await getDepositAddresses({ network: filters.network || undefined, isActive: filters.isActive || undefined, page: page.value, limit: pageSize.value })
     addresses.value = data.addresses || []; total.value = data.count || 0; totalPages.value = data.totalPages || 1
   } catch (e) { error.value = e.message; toast.error(e.message) } finally { loading.value = false }
 }
+function setPageSize(size) { pageSize.value = size; fetchAddresses(1) }
 function openCreate() { editing.value = null; Object.assign(form, { network: 'TRC20', address: '', label: '', currency: 'USDT', isActive: true }); modalError.value = ''; showModal.value = true }
 function openEdit(a) { editing.value = a; Object.assign(form, { network: a.network, address: a.address, label: a.label || '', currency: a.currency || 'USDT', isActive: a.isActive }); modalError.value = ''; showModal.value = true }
 function closeModal() { showModal.value = false; editing.value = null }
@@ -341,7 +323,7 @@ onMounted(() => { fetchRates(); fetchAddresses(1); fetchBonus() })
 
 <style scoped>
 .page{display:flex;flex-direction:column;gap:16px}
-.card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px;box-shadow:var(--shadow-subtle)}
+.card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--spacing-4);box-shadow:var(--shadow-card)}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap} .card-sub{color:var(--color-text-secondary);font-size:var(--text-body-l)}
 .tabs{display:flex;gap:0;border-bottom:1px solid var(--color-border)}
 .tab{padding:10px 18px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--color-text-secondary);font-size:var(--text-h4);font-weight:500;cursor:pointer;transition:color .15s ease,border-color .15s ease} .tab:hover{color:var(--color-text)}

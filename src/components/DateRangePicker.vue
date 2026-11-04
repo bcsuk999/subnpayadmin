@@ -174,6 +174,7 @@
           OK
         </button>
       </div>
+      <div x-arrow class="popper__arrow" aria-hidden="true"></div>
     </div>
   </Teleport>
 </template>
@@ -324,7 +325,7 @@ function positionPanel() {
   const rect = el.getBoundingClientRect()
   const width = 646
   const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8))
-  panelStyle.value = { top: `${rect.bottom + 12}px`, left: `${left}px` }
+  panelStyle.value = { top: `${rect.bottom}px`, left: `${left}px` }
 }
 
 function closePanel() {
@@ -519,6 +520,7 @@ onBeforeUnmount(closePanel)
   width: 646px;
   max-width: calc(100vw - 16px);
   margin: 12px 0 5px;
+  font-weight: 400;
   font-family: "PingFang SC", "Helvetica Neue", Helvetica, "microsoft yahei", arial, STHeiTi, sans-serif;
   font-size: 14px;
   line-height: 30px;
@@ -531,6 +533,19 @@ onBeforeUnmount(closePanel)
   cursor: crosshair;
   transition: all;
   animation: pickerFade 0.2s ease;
+}
+
+.popper__arrow {
+  position: absolute;
+  top: -6px;
+  left: 35px;
+  width: 12px;
+  height: 12px;
+  box-sizing: border-box;
+  background: var(--theme-card-bg, #fff);
+  border-top: 0.8px solid #e4e7ed;
+  border-left: 0.8px solid #e4e7ed;
+  transform: rotate(45deg);
 }
 
 @keyframes pickerFade {

@@ -1,46 +1,29 @@
 <template>
   <section class="page">
-    <div class="page-actions">
-      <button class="btn btn-ghost btn-sm filter-toggle" type="button" @click="showFilters = !showFilters">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6h18M3 12h10M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="15" cy="12" r="2" stroke="currentColor" stroke-width="1.4"/></svg>
-        {{ showFilters ? 'Hide filters' : 'Show filters' }}
-      </button>
-    </div>
-
-    <div v-show="showFilters" class="card filters">
+    <FilterCard v-model="showFilters" title="Address filters">
       <div class="filter-row">
         <div class="field">
           <label class="field-label" for="da-network">Network</label>
-          <select id="da-network" v-model="filters.network" class="input">
-            <option value="">All</option>
-            <option value="TRC20">TRC20</option>
-            <option value="BEP20">BEP20</option>
-          </select>
+          <SelectDropdown id="da-network" v-model="filters.network" class="filter-select" :options="[{ value: '', label: 'All' }, { value: 'TRC20', label: 'TRC20' }, { value: 'BEP20', label: 'BEP20' }]" aria-label="Network" />
         </div>
         <div class="field">
           <label class="field-label" for="da-active">Active</label>
-          <select id="da-active" v-model="filters.isActive" class="input">
-            <option value="">All</option>
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-          </select>
+          <SelectDropdown id="da-active" v-model="filters.isActive" class="filter-select" :options="[{ value: '', label: 'All' }, { value: 'true', label: 'Active' }, { value: 'false', label: 'Inactive' }]" aria-label="Active" />
         </div>
         <div class="filter-actions">
           <button class="btn btn-primary" type="button" :disabled="loading" @click="fetchAddresses(1)">Search</button>
           <button class="btn btn-ghost" type="button" @click="openCreate">Add Address</button>
         </div>
       </div>
-    </div>
+    </FilterCard>
 
-    <div class="card">
-      <div class="card-head">
-        <h3>Addresses ({{ total }})</h3>
-        <span class="card-sub">Page {{ page }} / {{ totalPages || 1 }}</span>
-      </div>
+    <TableCard>
+      <TableCardHeading :title="`Addresses (${total})`">
+        <template #subtitle>Page {{ page }} / {{ totalPages || 1 }}</template>
+      </TableCardHeading>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
       <p v-if="!loading && addresses.length === 0 && !error" class="empty">No addresses. Create one.</p>
-      <div v-if="addresses.length" class="table-wrap">
-        <table class="table">
+      <DataTable v-if="addresses.length">
           <thead><tr><th>Network</th><th>Address</th><th>Label</th><th>Active</th><th>Actions</th></tr></thead>
           <tbody>
             <tr v-for="a in addresses" :key="a._id">
@@ -57,17 +40,16 @@
               </td>
             </tr>
           </tbody>
-        </table>
-      </div>
-      <Pagination :page="page" :total-pages="totalPages" :disabled="loading" @change="fetchAddresses" />
-    </div>
+      </DataTable>
+      <TableFooter :page="page" :total-pages="totalPages" :total="total" :page-size="pageSize" :disabled="loading" @change="fetchAddresses" @size-change="setPageSize" />
+    </TableCard>
 
     <div v-if="showModal" class="modal-backdrop" @click.self="closeModal">
       <div class="modal">
         <h3>{{ editing?._id ? 'Edit Address' : 'Add Address' }}</h3>
         <form @submit.prevent="submit">
           <div class="field"><label class="field-label">Network</label>
-            <select v-model="form.network" class="input"><option value="TRC20">TRC20</option><option value="BEP20">BEP20</option></select>
+            <SelectDropdown v-model="form.network" class="form-select" :options="[{ value: 'TRC20', label: 'TRC20' }, { value: 'BEP20', label: 'BEP20' }]" aria-label="Network" />
           </div>
           <div class="field"><label class="field-label">Address</label><input v-model="form.address" class="input" placeholder="T... or 0x..." /></div>
           <div class="field"><label class="field-label">Label</label><input v-model="form.label" class="input" placeholder="Main TRC20" /></div>
@@ -88,7 +70,6 @@
 import { onMounted, reactive, ref } from 'vue'
 import { getDepositAddresses, createDepositAddress, updateDepositAddress, toggleDepositAddress, deleteDepositAddress } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
-import Pagination from '../components/Pagination.vue'
 
 const toast = useToast()
 const filters = reactive({ network: '', isActive: '' })
@@ -96,6 +77,7 @@ const showFilters = ref(true)
 const addresses = ref([])
 const total = ref(0)
 const page = ref(1)
+const pageSize = ref(10)
 const totalPages = ref(1)
 const loading = ref(false)
 const error = ref('')
@@ -111,10 +93,11 @@ const form = reactive({ network: 'TRC20', address: '', label: '', currency: 'USD
 async function fetchAddresses(p = 1) {
   loading.value = true; error.value = ''; page.value = p
   try {
-    const data = await getDepositAddresses({ network: filters.network || undefined, isActive: filters.isActive || undefined, page: page.value, limit: 20 })
+    const data = await getDepositAddresses({ network: filters.network || undefined, isActive: filters.isActive || undefined, page: page.value, limit: pageSize.value })
     addresses.value = data.addresses || []; total.value = data.count || 0; totalPages.value = data.totalPages || 1
   } catch (e) { error.value = e.message; toast.error(e.message) } finally { loading.value = false }
 }
+function setPageSize(size) { pageSize.value = size; fetchAddresses(1) }
 function openCreate() { editing.value = null; Object.assign(form, { network: 'TRC20', address: '', label: '', currency: 'USDT', isActive: true }); modalError.value=''; showModal.value=true }
 function openEdit(a) { editing.value = a; Object.assign(form, { network: a.network, address: a.address, label: a.label || '', currency: a.currency || 'USDT', isActive: a.isActive }); modalError.value=''; showModal.value=true }
 function closeModal() { showModal.value=false; editing.value=null }
@@ -148,7 +131,7 @@ onMounted(() => fetchAddresses(1))
 
 <style scoped>
 .page{display:flex;flex-direction:column;gap:16px}
-.card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px;box-shadow:var(--shadow-subtle)}
+.card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--spacing-4);box-shadow:var(--shadow-card)}
 .card.filters{padding:11px}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px} .card-sub{color:var(--color-text-secondary);font-size:var(--text-body-l)}
 .filters .filter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:end} .filters .field{flex:1;min-width:112px;gap:4px} .filters .field-label{font-size:11px} .filters .input{padding:6px 10px;font-size:12px} .filters .btn{padding:6px 10px;font-size:12px} .filter-actions{display:flex;gap:6px}

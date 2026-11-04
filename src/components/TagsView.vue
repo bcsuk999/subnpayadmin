@@ -1,21 +1,23 @@
 <template>
   <div class="tags-view">
     <div class="tags-view__scroll">
-      <span
+      <button
         v-for="tag in tags"
         :key="tag.path"
-        :class="['tags-view-item', { active: tag.path === currentPath }]"
+        type="button"
+        :class="['btn', 'tags-view-item', tag.path === currentPath ? 'btn-primary is-active' : 'btn-ghost']"
         @click="$router.push(tag.path)"
       >
         {{ tag.title }}
         <span
           v-if="tag.path !== '/'"
           class="tags-view-item-close"
+          aria-hidden="true"
           @click.stop="closeTag(tag.path)"
         >
           ×
         </span>
-      </span>
+      </button>
     </div>
   </div>
 </template>
@@ -38,6 +40,7 @@ const titleMap = {
   '/deposits': 'Deposits',
   '/withdrawals': 'Withdrawals',
   '/payouts': 'Payouts',
+  '/bot': 'Bot',
 }
 
 const tags = ref([{ path: '/', title: 'Dashboard' }])
@@ -69,109 +72,93 @@ watch(() => route.path, () => addTag(), { immediate: true })
 .tags-view {
   display: flex;
   align-items: center;
-  height: 32px;
+  height: 35.2px;
+  padding: 0 8px;
   border-bottom: 1px solid var(--color-border);
-  background: var(--color-bg);
+  background: var(--color-header-bg);
   flex-shrink: 0;
 }
 
 .tags-view__scroll {
   display: flex;
   align-items: center;
+  gap: 8px;
   overflow-x: auto;
   overflow-y: hidden;
   white-space: nowrap;
-  padding: 0 4px;
   height: 100%;
+  padding: 0;
   scrollbar-width: none;
 }
 
 .tags-view__scroll::-webkit-scrollbar { display: none; }
 
-.tags-view-item {
+/* Same button UI as the app buttons (ghost / primary) */
+.tags-view .tags-view-item {
   display: inline-flex;
   align-items: center;
-  height: 24px;
-  padding: 0 10px;
-  margin-left: 4px;
-  font-size: 14px;
-  color: var(--color-text);
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
+  justify-content: center;
   flex-shrink: 0;
+  gap: 6px;
+  height: 27.2px;
+  min-height: 27.2px;
+  margin: 0;
+  padding: 0 14px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: #606266;
+  background: #ffffff;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  box-shadow: none;
+  cursor: pointer;
   user-select: none;
-  transition: all 200ms;
+  transition: color .2s ease, background-color .2s ease, border-color .2s ease, transform .2s ease;
 }
 
-.tags-view-item:first-child { margin-left: 0; }
-
-.tags-view-item:hover {
-  color: var(--color-success);
-  border-color: var(--color-success);
+.tags-view .tags-view-item:hover {
+  color: #ebaf5b;
+  background: #fdf7ef;
+  border-color: #f9e7ce;
 }
 
-.tags-view-item.active {
-  background: var(--color-success);
-  color: #fff;
-  border-color: var(--color-success);
-  position: relative;
-  padding-left: 18px;
+.tags-view .tags-view-item.is-active {
+  color: #ffffff;
+  background: #ebaf5b;
+  border-color: #ebaf5b;
 }
 
-.tags-view-item.active::before {
-  content: '';
-  position: absolute;
-  left: 7px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #fff;
+.tags-view .tags-view-item.is-active:hover {
+  color: #ffffff;
+  background: #efbf7c;
+  border-color: #efbf7c;
 }
 
 .tags-view-item-close {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 14px;
-  height: 14px;
-  margin-left: 4px;
-  font-size: 12px;
+  width: 16px;
+  height: 16px;
+  margin-left: 2px;
+  font-size: 14px;
+  line-height: 1;
   border-radius: 50%;
   transition: background 200ms;
 }
 
 .tags-view-item-close:hover {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.12);
 }
 
-.tags-view-item.active .tags-view-item-close:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-html[data-theme='dark'] .tags-view-item.active,
-html.dark .tags-view-item.active {
-  background: rgba(66, 185, 131, 0.2);
-  border-color: var(--color-success);
-}
-
-html[data-theme='dark'] .tags-view-item.active::before,
-html.dark .tags-view-item.active::before {
-  background: var(--color-success);
-}
-
-html[data-theme='dark'] .tags-view-item.active .tags-view-item-close:hover,
-html.dark .tags-view-item.active .tags-view-item-close:hover {
-  background: rgba(255, 255, 255, 0.15);
+.tags-view .tags-view-item.is-active .tags-view-item-close:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 @media (max-width: 600px) {
-  .tags-view { height: 28px; }
-  .tags-view-item { height: 26px; padding: 0 5px; font-size: 12px; }
-  .tags-view-item.active { padding-left: 14px; }
-  .tags-view-item.active::before { width: 4px; height: 4px; left: 5px; }
+  .tags-view { height: 33.6px; }
+  .tags-view .tags-view-item { height: 25.6px; min-height: 25.6px; padding: 0 10px; font-size: 13px; }
 }
 </style>

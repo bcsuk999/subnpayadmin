@@ -1,24 +1,14 @@
 <template>
   <section class="page">
-    <div class="tabs">
-      <button :class="['tab', { 'tab--active': activeTab === 'groups' }]" type="button" @click="activeTab = 'groups'">Groups</button>
-      <button :class="['tab', { 'tab--active': activeTab === 'transactions' }]" type="button" @click="activeTab = 'transactions'">Transactions</button>
-      <button :class="['tab', { 'tab--active': activeTab === 'orders' }]" type="button" @click="activeTab = 'orders'">Deposit Records</button>
-    </div>
+    <PageTabs v-model="activeTab" :tabs="[{ value: 'groups', label: 'Groups' }, { value: 'transactions', label: 'Transactions' }, { value: 'orders', label: 'Deposit Records' }]" />
 
     <!-- Groups -->
     <div v-show="activeTab === 'groups'" class="tab-panel">
-      <div class="card filters">
-        <div class="filter-card-head">
-          <h3>Group filters</h3>
-          <button class="btn btn-ghost filter-toggle" type="button" :aria-expanded="groupFiltersOpen" aria-controls="group-filters" @click="groupFiltersOpen = !groupFiltersOpen">
-            {{ groupFiltersOpen ? 'Hide filters' : 'Show filters' }}
-          </button>
-        </div>
-        <div v-show="groupFiltersOpen" id="group-filters" class="filter-row">
-          <div class="field"><label class="field-label">Group ID</label><input v-model="groupFilters.groupId" class="input" placeholder="-100..." @input="onGroupSearchInput('groupId')" @keyup.enter="fetchGroups(1)" /></div>
-          <div class="field"><label class="field-label">UID</label><input v-model="groupFilters.uid" class="input" placeholder="32045" maxlength="5" inputmode="numeric" @input="onGroupSearchInput('uid')" @keyup.enter="fetchGroups(1)" /></div>
-          <div class="field"><label class="field-label">Title</label><input v-model="groupFilters.title" class="input" placeholder="SubnPay" @input="onGroupSearchInput('title')" @keyup.enter="fetchGroups(1)" /></div>
+      <FilterCard v-model="groupFiltersOpen" title="Group filters">
+        <div class="filter-row">
+          <div class="field"><label class="field-label">Group ID</label><input v-model="groupFilters.groupId" class="input" placeholder="Please enter group ID to search" @input="onGroupSearchInput('groupId')" @keyup.enter="fetchGroups(1)" /></div>
+          <div class="field"><label class="field-label">UID</label><input v-model="groupFilters.uid" class="input" placeholder="Please enter UID to search" maxlength="5" inputmode="numeric" @input="onGroupSearchInput('uid')" @keyup.enter="fetchGroups(1)" /></div>
+          <div class="field"><label class="field-label">Title</label><input v-model="groupFilters.title" class="input" placeholder="Please enter title to search" @input="onGroupSearchInput('title')" @keyup.enter="fetchGroups(1)" /></div>
           <div class="field">
             <label class="field-label">Status</label>
             <SelectDropdown v-model="groupFilters.status" class="status-select" :options="groupStatusOptions" aria-label="Status" />
@@ -29,12 +19,10 @@
             <button class="btn btn-ghost" type="button" :disabled="groupsLoading" @click="resetGroupFilters">Reset</button>
           </div>
         </div>
-      </div>
+      </FilterCard>
 
-      <div class="card table-card results">
-        <div class="values-header">
-          <p class="title">Find results</p>
-        </div>
+      <TableCard class="results">
+        <TableCardHeading title="Find results" />
         <p v-if="groupsError" class="error tbl-error" role="alert">{{ groupsError }}</p>
         <p v-if="!groupsLoading && groups.length === 0 && !groupsError" class="empty tbl-empty">No bot groups found.</p>
         <div v-if="groups.length || groupsLoading" class="tbl-scroll">
@@ -68,13 +56,8 @@
             </tbody>
           </table>
         </div>
-        <div class="tbl-footer">
-          <div class="tbl-footer-row">
-            <span class="tbl-total-pages" aria-live="polite">Total {{ groupTotal.toLocaleString() }}</span>
-            <Pagination class="tbl-pagination" :page="groupPage" :total-pages="groupTotalPages" :page-size="groupPageSize" :disabled="groupsLoading" direct-input show-page-sizes @change="fetchGroups" @size-change="setGroupPageSize" />
-          </div>
-        </div>
-      </div>
+        <TableFooter :page="groupPage" :total-pages="groupTotalPages" :total="groupTotal" :page-size="groupPageSize" :disabled="groupsLoading" direct-input show-page-sizes @change="fetchGroups" @size-change="setGroupPageSize" />
+      </TableCard>
     </div>
 
     <!-- Group Status Popup -->
@@ -120,18 +103,12 @@
 
     <!-- Transactions -->
     <div v-show="activeTab === 'transactions'" class="tab-panel">
-      <div class="card filters">
-        <div class="filter-card-head">
-          <h3>Transaction filters</h3>
-          <button class="btn btn-ghost filter-toggle" type="button" :aria-expanded="txnFiltersOpen" aria-controls="transaction-filters" @click="txnFiltersOpen = !txnFiltersOpen">
-            {{ txnFiltersOpen ? 'Hide filters' : 'Show filters' }}
-          </button>
-        </div>
-        <div v-show="txnFiltersOpen" id="transaction-filters" class="filter-row">
-          <div class="field"><label class="field-label">Trn ID</label><input v-model="txnFilters.trnId" class="input" placeholder="BTXN..." @input="onTxnSearchInput('trnId')" @keyup.enter="fetchTransactions(1)" /></div>
-          <div class="field"><label class="field-label">Order ID</label><input v-model="txnFilters.orderId" class="input" placeholder="B2026..." @input="onTxnSearchInput('orderId')" @keyup.enter="fetchTransactions(1)" /></div>
-          <div class="field"><label class="field-label">Group ID</label><input v-model="txnFilters.groupId" class="input" placeholder="-100..." @input="onTxnSearchInput('groupId')" @keyup.enter="fetchTransactions(1)" /></div>
-          <div class="field"><label class="field-label">UID</label><input v-model="txnFilters.uid" class="input" placeholder="32045" maxlength="5" inputmode="numeric" @input="onTxnSearchInput('uid')" @keyup.enter="fetchTransactions(1)" /></div>
+      <FilterCard v-model="txnFiltersOpen" title="Transaction filters">
+        <div class="filter-row">
+          <div class="field"><label class="field-label">Trn ID</label><input v-model="txnFilters.trnId" class="input" placeholder="Please enter transaction ID to search" @input="onTxnSearchInput('trnId')" @keyup.enter="fetchTransactions(1)" /></div>
+          <div class="field"><label class="field-label">Order ID</label><input v-model="txnFilters.orderId" class="input" placeholder="Please enter order ID to search" @input="onTxnSearchInput('orderId')" @keyup.enter="fetchTransactions(1)" /></div>
+          <div class="field"><label class="field-label">Group ID</label><input v-model="txnFilters.groupId" class="input" placeholder="Please enter group ID to search" @input="onTxnSearchInput('groupId')" @keyup.enter="fetchTransactions(1)" /></div>
+          <div class="field"><label class="field-label">UID</label><input v-model="txnFilters.uid" class="input" placeholder="Please enter UID to search" maxlength="5" inputmode="numeric" @input="onTxnSearchInput('uid')" @keyup.enter="fetchTransactions(1)" /></div>
           <div class="field">
             <label class="field-label">Type</label>
             <SelectDropdown v-model="txnFilters.type" class="status-select" :options="txnTypeOptions" aria-label="Type" />
@@ -150,12 +127,10 @@
             <button class="btn btn-ghost" type="button" :disabled="txnsLoading" @click="resetTxnFilters">Reset</button>
           </div>
         </div>
-      </div>
+      </FilterCard>
 
-      <div class="card table-card results">
-        <div class="values-header">
-          <p class="title">Find results</p>
-        </div>
+      <TableCard class="results">
+        <TableCardHeading title="Find results" />
         <p v-if="txnsError" class="error tbl-error" role="alert">{{ txnsError }}</p>
         <p v-if="!txnsLoading && transactions.length === 0 && !txnsError" class="empty tbl-empty">No bot transactions found.</p>
         <div v-if="transactions.length || txnsLoading" class="tbl-scroll">
@@ -180,28 +155,17 @@
             </tbody>
           </table>
         </div>
-        <div class="tbl-footer">
-          <div class="tbl-footer-row">
-            <span class="tbl-total-pages" aria-live="polite">Total {{ txnTotal.toLocaleString() }}</span>
-            <Pagination class="tbl-pagination" :page="txnPage" :total-pages="txnTotalPages" :page-size="txnPageSize" :disabled="txnsLoading" direct-input show-page-sizes @change="fetchTransactions" @size-change="setTxnPageSize" />
-          </div>
-        </div>
-      </div>
+        <TableFooter :page="txnPage" :total-pages="txnTotalPages" :total="txnTotal" :page-size="txnPageSize" :disabled="txnsLoading" direct-input show-page-sizes @change="fetchTransactions" @size-change="setTxnPageSize" />
+      </TableCard>
     </div>
 
     <!-- Deposit Records (orders) -->
     <div v-show="activeTab === 'orders'" class="tab-panel">
-      <div class="card filters">
-        <div class="filter-card-head">
-          <h3>Deposit record filters</h3>
-          <button class="btn btn-ghost filter-toggle" type="button" :aria-expanded="orderFiltersOpen" aria-controls="deposit-record-filters" @click="orderFiltersOpen = !orderFiltersOpen">
-            {{ orderFiltersOpen ? 'Hide filters' : 'Show filters' }}
-          </button>
-        </div>
-        <div v-show="orderFiltersOpen" id="deposit-record-filters" class="filter-row">
-          <div class="field"><label class="field-label">Order ID</label><input v-model="orderFilters.orderId" class="input" placeholder="B2026..." @input="onOrderSearchInput('orderId')" @keyup.enter="fetchOrders(1)" /></div>
-          <div class="field"><label class="field-label">Group ID</label><input v-model="orderFilters.groupId" class="input" placeholder="-100..." @input="onOrderSearchInput('groupId')" @keyup.enter="fetchOrders(1)" /></div>
-          <div class="field"><label class="field-label">UID</label><input v-model="orderFilters.uid" class="input" placeholder="32045" maxlength="5" inputmode="numeric" @input="onOrderSearchInput('uid')" @keyup.enter="fetchOrders(1)" /></div>
+      <FilterCard v-model="orderFiltersOpen" title="Deposit record filters">
+        <div class="filter-row">
+          <div class="field"><label class="field-label">Order ID</label><input v-model="orderFilters.orderId" class="input" placeholder="Please enter order ID to search" @input="onOrderSearchInput('orderId')" @keyup.enter="fetchOrders(1)" /></div>
+          <div class="field"><label class="field-label">Group ID</label><input v-model="orderFilters.groupId" class="input" placeholder="Please enter group ID to search" @input="onOrderSearchInput('groupId')" @keyup.enter="fetchOrders(1)" /></div>
+          <div class="field"><label class="field-label">UID</label><input v-model="orderFilters.uid" class="input" placeholder="Please enter UID to search" maxlength="5" inputmode="numeric" @input="onOrderSearchInput('uid')" @keyup.enter="fetchOrders(1)" /></div>
           <div class="field">
             <label class="field-label">Status</label>
             <SelectDropdown v-model="orderFilters.status" class="status-select" :options="orderStatusOptions" aria-label="Status" />
@@ -212,12 +176,10 @@
             <button class="btn btn-ghost" type="button" :disabled="ordersLoading" @click="resetOrderFilters">Reset</button>
           </div>
         </div>
-      </div>
+      </FilterCard>
 
-      <div class="card table-card results">
-        <div class="values-header">
-          <p class="title">Find results</p>
-        </div>
+      <TableCard class="results">
+        <TableCardHeading title="Find results" />
         <p v-if="ordersError" class="error tbl-error" role="alert">{{ ordersError }}</p>
         <p v-if="!ordersLoading && orders.length === 0 && !ordersError" class="empty tbl-empty">No deposit records found.</p>
         <div v-if="orders.length || ordersLoading" class="tbl-scroll">
@@ -249,13 +211,8 @@
             </tbody>
           </table>
         </div>
-        <div class="tbl-footer">
-          <div class="tbl-footer-row">
-            <span class="tbl-total-pages" aria-live="polite">Total {{ orderTotal.toLocaleString() }}</span>
-            <Pagination class="tbl-pagination" :page="orderPage" :total-pages="orderTotalPages" :page-size="orderPageSize" :disabled="ordersLoading" direct-input show-page-sizes @change="fetchOrders" @size-change="setOrderPageSize" />
-          </div>
-        </div>
-      </div>
+        <TableFooter :page="orderPage" :total-pages="orderTotalPages" :total="orderTotal" :page-size="orderPageSize" :disabled="ordersLoading" direct-input show-page-sizes @change="fetchOrders" @size-change="setOrderPageSize" />
+      </TableCard>
     </div>
 
     <!-- Group detail modal -->
@@ -387,10 +344,7 @@
           </div>
           <div class="field">
             <label class="field-label">Type <span class="required">*</span></label>
-            <select v-model="adjustDialog.type" class="input">
-              <option value="credit">credit</option>
-              <option value="debit">debit</option>
-            </select>
+            <SelectDropdown v-model="adjustDialog.type" class="form-select" :options="[{ value: 'credit', label: 'credit' }, { value: 'debit', label: 'debit' }]" aria-label="Adjustment type" />
           </div>
           <div class="field">
             <label class="field-label">Remark <span class="required">*</span></label>
@@ -477,10 +431,8 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
-import Pagination from '../components/Pagination.vue'
-import DateRangePicker from '../components/DateRangePicker.vue'
-import SelectDropdown from '../components/SelectDropdown.vue'
+import { onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '../composables/useToast.js'
 import { fmtDateTime as fmt } from '../utils/format.js'
 import {
@@ -490,11 +442,25 @@ import {
 } from '../api/client.js'
 
 const toast = useToast()
-const activeTab = ref('groups')
+const route = useRoute()
+const router = useRouter()
+const BOT_TABS = ['groups', 'transactions', 'orders']
+const activeTab = ref(BOT_TABS.includes(route.query.tab) ? route.query.tab : 'groups')
+
+// Keep the sidebar flyout submenu and the in-page tabs in sync.
+watch(
+  () => route.query.tab,
+  (tab) => {
+    if (BOT_TABS.includes(tab) && tab !== activeTab.value) activeTab.value = tab
+  },
+)
+watch(activeTab, (tab) => {
+  if (route.query.tab !== tab) router.replace({ query: { ...route.query, tab } })
+})
 const groupFiltersOpen = ref(true)
 const txnFiltersOpen = ref(true)
 const orderFiltersOpen = ref(true)
-const BOT_PAGE_SIZE = 20
+const BOT_PAGE_SIZE = 10
 
 // The orders endpoint does not return uid, so keep a groupId → uid cache
 // built from every group payload we receive.
@@ -994,9 +960,9 @@ onMounted(() => {
   --color-control-border:#dcdfe6;
   --font-body:'PingFang SC','Helvetica Neue',Helvetica,'Microsoft YaHei',Arial,STHeiTi,sans-serif;
   --font-heading:var(--font-body);
-  --radius-sm:8px;--radius-md:8px;--radius-lg:12px;
-  --shadow-card:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.08);
-  --shadow-subtle:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.08);
+  --radius-sm:var(--radius-sm);--radius-md:var(--radius-md);--radius-lg:var(--radius-lg);
+  --shadow-card:var(--shadow-card);
+  --shadow-subtle:var(--shadow-sm);
   --shadow-dropdown:0 2px 12px 0 rgba(0,0,0,.1);
   --motion-fast:200ms;--motion-normal:250ms;
   --scrollbar-track:transparent;
@@ -1007,15 +973,11 @@ onMounted(() => {
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
 }
-.card{background:#fff;border:1px solid #e4e7ed;border-radius:12px;padding:15px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.08);transition:box-shadow .25s ease,transform .25s ease,border-color .25s ease;color:#303133}
+.card{background:var(--theme-card-bg,#fff);border:1px solid var(--color-border,#e4e7ed);border-radius:var(--radius-lg);padding:var(--spacing-4);box-shadow:var(--shadow-card);transition:box-shadow var(--motion-normal) ease,transform var(--motion-normal) ease,border-color var(--motion-normal) ease;color:var(--color-text)}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
 .card-sub{color:#909399;font-size:13px}
 
-/* Table card — same `.results` card as the filter card */
-.table-card{position:relative;display:block;height:auto;min-height:0;padding:15px;margin:10px 0 0;font-family:"PingFang SC","Helvetica Neue",Helvetica,"microsoft yahei",arial,STHeiTi,sans-serif;font-size:14px;line-height:16.1px;text-align:left;color:var(--theme-text-primary,#303133);background-color:var(--theme-card-bg,#fff);border:0.8px solid #e4e7ed;border-radius:12px;box-shadow:rgba(0,0,0,.06) 0 1px 3px 0,rgba(0,0,0,.08) 0 4px 12px 0;overflow:hidden;cursor:crosshair;transition:box-shadow .25s,border-color .25s,background-color .2s}
-.values-header{margin-bottom:20px}
-.values-header .title{display:inline-block;margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em;background:linear-gradient(120deg,#ebaf5b,#f0c078);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.tbl-scroll{min-height:0;min-width:0;overflow:auto;border:1px solid #ebeef5;-webkit-overflow-scrolling:touch}
+.tbl-scroll{min-height:0;min-width:0;overflow:auto;border:1px solid #ebeef5;border-radius:10px;-webkit-overflow-scrolling:touch}
 .tbl-scroll::-webkit-scrollbar{height:8px;width:8px}
 .tbl-scroll::-webkit-scrollbar-track{background:transparent}
 .tbl-scroll::-webkit-scrollbar-thumb{background:rgba(144,147,153,.35);border-radius:8px}
@@ -1023,25 +985,10 @@ onMounted(() => {
 @supports not selector(::-webkit-scrollbar){
   .tbl-scroll{scrollbar-width:thin;scrollbar-color:rgba(144,147,153,.35) transparent}
 }
-.tbl-footer{position:static;display:flex;justify-content:center;margin-top:20px;padding:0;border:none;background:transparent;box-shadow:none}
-.tbl-footer-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding:0}
-.tbl-total-pages{font-size:13px;font-weight:400;color:#606266;white-space:nowrap}
-.tbl-footer-row :deep(.pagination){justify-content:center;gap:0;margin-left:0;padding:2px 5px;color:#303133;font-weight:700}
-.tbl-footer-row :deep(.pagination > .btn){width:30px;min-width:30px;height:28px;min-height:28px;margin:0 5px;padding:0;border:none;border-radius:6px;background:#f4f4f5;color:#606266;box-shadow:none;font-size:13px}
-.tbl-footer-row :deep(.pagination > .btn:hover:not(:disabled)){color:#ebaf5b;background:#f4f4f5}
-.tbl-footer-row :deep(.pagination > .btn:disabled){color:#c0c4cc;background:#f4f4f5;opacity:1}
-.tbl-footer-row :deep(.pagination > .page-btn){width:30px;min-width:30px;height:28px;min-height:28px}
-.tbl-footer-row :deep(.pagination > .page-btn.active){background:#ebaf5b;border-color:#ebaf5b;color:#fff}
-.tbl-footer-row :deep(.pagination > .page-btn.active:hover){color:#fff}
-.tbl-footer-row :deep(.pagination > .page-input){width:52px;height:28px;padding:0 3px;border:1px solid #dcdfe6;border-radius:4px;background:#fff;color:#606266;font-size:13px}
-.tbl-footer-row :deep(.pagination > .page-input:focus){border-color:#ebaf5b;outline:none;box-shadow:0 0 0 2px #f0c078}
-.tbl-footer-row :deep(.page-jump){margin-left:24px;color:#606266;font-size:13px;font-weight:400}
-.tbl-footer-row :deep(.page-size){margin-right:10px}
-.tbl-footer-row :deep(.page-size__select){height:28px;padding:0 20px 0 8px;border:1px solid #dcdfe6;border-radius:4px;background:#fff;color:#606266;font-size:12px;font-weight:400}
 .tbl-error{padding:12px 14px;margin:0}
 .tbl-empty{padding:20px 14px;margin:0}
 
-.tabs{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;padding:15px;background:#fff;border:1px solid #e4e7ed;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.08);transition:box-shadow .25s ease,transform .25s ease,border-color .25s ease}
+.tabs{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;padding:15px;background:var(--theme-card-bg,#fff);border:1px solid #e4e7ed;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.08);transition:box-shadow .25s ease,transform .25s ease,border-color .25s ease}
 .tab{height:32px;line-height:30px;padding:0 15px;margin:0;background:#fff;border:1px solid #dcdfe6;border-radius:8px;color:#606266;font-family:var(--font-body);font-size:14px;font-weight:500;cursor:pointer;box-shadow:none;transition:color .2s ease,background-color .2s ease,border-color .2s ease,transform .2s ease}
 .tab:hover:not(.tab--active){color:#ebaf5b;border-color:#ebaf5b;background:#fff;transform:translateY(-1px)}
 .tab:active:not(.tab--active){transform:translateY(0)}
@@ -1049,46 +996,17 @@ onMounted(() => {
 .tab--active:hover{background:#efbf7c;border-color:#efbf7c;color:#fff;transform:translateY(-1px)}
 .tab--active:active{transform:translateY(0)}
 .tab-panel{display:flex;flex-direction:column;gap:16px}
-.filters{position:relative;display:block;padding:15px;margin:10px 0 0;font-family:"PingFang SC","Helvetica Neue",Helvetica,"microsoft yahei",arial,STHeiTi,sans-serif;font-size:14px;line-height:16.1px;text-align:left;color:var(--theme-text-primary,#303133);background-color:var(--theme-card-bg,#fff);border:0.8px solid #e4e7ed;border-radius:12px;box-shadow:rgba(0,0,0,.06) 0 1px 3px 0,rgba(0,0,0,.08) 0 4px 12px 0;overflow:hidden;cursor:crosshair;transition:box-shadow .25s,border-color .25s,background-color .2s}
-.filter-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}
-.filter-card-head h3{font-family:var(--font-body);font-size:16px;font-weight:600;color:var(--theme-text-primary,#303133)}
-.filter-card-head .filter-toggle{padding:9px 15px;border:1px solid #dcdfe6;border-radius:4px;background:#fff;color:#606266;font-size:12px;font-weight:500;line-height:1;box-shadow:none;transition:color .2s ease,background-color .2s ease,border-color .2s ease,transform .2s ease}
-.filter-card-head .filter-toggle:hover{color:#ebaf5b;border-color:#f9e7ce;background:#fdf7ef;transform:translateY(-1px)}
-.filter-card-head .filter-toggle:active{color:#d49e52;border-color:#d49e52;transform:translateY(0)}
-.filter-row{display:flex;flex-wrap:wrap;align-items:center;column-gap:10px;row-gap:18px;margin-bottom:0}
-.filter-row .field{flex:0 0 auto;flex-direction:row;align-items:center;gap:0;min-width:0}
-.filter-row .field-label{font-family:var(--font-body);font-size:14px;font-weight:400;color:#606266;line-height:32px;padding:0 12px 0 0;white-space:nowrap}
-.filter-row .input{width:150px;height:32px;min-height:32px;line-height:30px;padding:0 10px;font-family:var(--font-body);font-size:12px;color:#606266;background:#fff;border:1px solid #dcdfe6;border-radius:4px;box-shadow:none;box-sizing:border-box;transition:border-color .2s ease,box-shadow .2s ease}
-.filter-row .status-select{width:120px}
-.filter-row .input::placeholder{color:#c0c4cc}
-.filter-row .input:hover:not(:disabled):not(:focus){border-color:#c0c4cc}
-.filter-row .input:focus,.filter-row .input:focus-visible{outline:none;border-color:#ebaf5b;box-shadow:0 0 0 2px #f0c078}
-.filter-row .input:disabled{background:#f5f7fa;border-color:#e4e7ed;color:#c0c4cc;cursor:not-allowed}
-.filter-actions{flex:0 0 100%;display:flex;justify-content:flex-end;align-items:center;gap:10px;border-top:1px solid #e4e7ed;margin-top:-3px;padding-top:15px}
-.filter-actions .btn{min-height:32px;padding:9px 15px;font-family:var(--font-body);font-size:12px;font-weight:500;line-height:1;border-radius:4px;box-shadow:none;transition:transform .2s ease,box-shadow .2s ease,background-color .2s ease,border-color .2s ease,color .2s ease}
-.filter-actions .btn:hover:not(:disabled){transform:translateY(-1px)}
-.filter-actions .btn:active:not(:disabled){transform:translateY(0)}
-.filter-actions .btn-primary{background:#ebaf5b;border:1px solid #ebaf5b;color:#fff}
-.filter-actions .btn-primary:hover:not(:disabled){background:#efbf7c;border-color:#efbf7c;color:#fff}
-.filter-actions .btn-primary:active:not(:disabled){background:#d49e52;border-color:#d49e52;color:#fff}
-.filter-actions .btn-primary:disabled{background:#f5d7ad;border-color:#f5d7ad;color:#fff;opacity:1}
-.filter-actions .btn-ghost{background:#fff;border:1px solid #dcdfe6;color:#606266}
-.filter-actions .btn-ghost:hover:not(:disabled){background:#fdf7ef;border-color:#f9e7ce;color:#ebaf5b}
-.filter-actions .btn-ghost:active:not(:disabled){background:#fff;border-color:#d49e52;color:#d49e52}
-.filter-actions .btn-ghost:disabled{background:#fff;border-color:#e4e7ed;color:#c0c4cc;opacity:1}
 .error{color:#f56c6c;font-size:13px;margin-bottom:8px}
 .empty{color:#909399;font-size:13px}
 .table-wrap{overflow:auto;border:1px solid #ebeef5;border-radius:10px}
-.table{width:100%;min-width:760px;border-collapse:separate;border-spacing:0;font-size:12px;color:#606266;background:#fff}
+.table{width:100%;min-width:760px;border-collapse:separate;border-spacing:0;font-size:13px;color:#606266;background:var(--theme-card-bg,#fff)}
 .table--wide{min-width:1150px}
 .table--compact{min-width:0}
-.table th,.table td{text-align:center;padding:8px 10px;border-bottom:1px solid #ebeef5;border-right:1px solid #ebeef5;vertical-align:middle;background:#fff;transition:background-color .25s ease}
+.table th,.table td{text-align:center;padding:8px 10px;border-bottom:1px solid #ebeef5;border-right:1px solid #ebeef5;vertical-align:middle;background:var(--theme-card-bg,#fff);transition:background-color .25s ease}
 .table th:last-child,.table td:last-child{border-right:none}
 .table tbody tr:last-child td{border-bottom:none}
 .tbl-scroll .table th,.tbl-scroll .table td{white-space:nowrap}
-.table th{background:#f5f7fa;color:#606266;font-weight:600;white-space:nowrap;line-height:1.35}
-.table tbody tr:nth-child(even) td{background:#fff}
-.table tbody tr:hover td{background:#f5f7fa}
+.table tbody tr:nth-child(even) td{background:var(--theme-card-bg,#fff)}
 .mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px}
 .break{word-break:break-all}
 .muted{color:#909399;font-size:12px}
@@ -1106,7 +1024,7 @@ onMounted(() => {
 .status-badge.badge--primary{background:#fdf7ef;border-color:#f9e7ce;color:#ebaf5b}
 .row-actions{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:nowrap;white-space:nowrap}
 .row-actions>.btn{flex:0 0 auto}
-.row-actions .action-btn{padding:7px 15px;font-size:12px;font-weight:500;line-height:1;border-radius:8px;background:#fff;border:1px solid #dcdfe6;color:#606266;box-shadow:none;transition:color .2s ease,background-color .2s ease,border-color .2s ease,transform .2s ease}
+.row-actions .action-btn{padding:var(--spacing-1) var(--spacing-3);font-size:var(--text-body-l);font-weight:500;line-height:1;border-radius:var(--radius-md);background:var(--color-control-bg);border:1px solid var(--color-control-border);color:var(--color-text);box-shadow:var(--shadow-sm);transition:color var(--motion-fast) ease,background-color var(--motion-fast) ease,border-color var(--motion-fast) ease,box-shadow var(--motion-fast) ease}
 .row-actions .action-btn:hover:not(:disabled){background:#fdf7ef;border-color:#f9e7ce;color:#ebaf5b;transform:translateY(-1px)}
 .row-actions .action-btn:active:not(:disabled){transform:translateY(0)}
 .row-actions .action-btn--success{background:#67c23a;border-color:#67c23a;color:#fff}
@@ -1142,7 +1060,7 @@ onMounted(() => {
 .field-label{font-size:14px;font-weight:400;color:#606266;margin-bottom:0;line-height:1.15}
 .required{color:#f56c6c;margin-left:4px}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px;animation:modalFadeIn .3s ease}
-.modal{background:#fff;border:none;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.3);width:100%;max-width:80vw;min-width:0;display:flex;flex-direction:column;max-height:90vh;animation:modalSlideIn .3s ease}
+.modal{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-xl);width:100%;max-width:80vw;min-width:0;display:flex;flex-direction:column;max-height:90vh;animation:modalSlideIn var(--motion-slow) ease}
 .modal--wide{max-width:80vw}
 .modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 20px 10px;border-bottom:1px solid #e4e7ed}
 .modal-head h3{font-size:18px;line-height:24px;font-weight:400;color:#303133;word-break:break-all}
@@ -1155,7 +1073,7 @@ onMounted(() => {
 .modal textarea.input{height:auto;min-height:auto;line-height:1.5;padding:10px 15px;resize:vertical;font-family:inherit}
 .modal .input::placeholder{color:#c0c4cc}
 .modal .input:focus,.modal .input:focus-visible{outline:none;border-color:#ebaf5b;box-shadow:0 0 0 2px #f0c078}
-.modal-foot .btn{padding:12px 20px;font-family:var(--font-body);font-size:14px;font-weight:500;line-height:1;border-radius:8px;box-shadow:none;transition:transform .2s ease,background-color .2s ease,border-color .2s ease,color .2s ease}
+.modal-foot .btn{padding:var(--spacing-2) var(--spacing-4);font-family:var(--font-body);font-size:var(--text-body-l);font-weight:500;line-height:1;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);transition:transform var(--motion-fast) ease,box-shadow var(--motion-fast) ease,background-color var(--motion-fast) ease,border-color var(--motion-fast) ease,color var(--motion-fast) ease}
 .modal-foot .btn:hover:not(:disabled){transform:translateY(-1px)}
 .modal-foot .btn:active:not(:disabled){transform:translateY(0)}
 .modal-foot .btn-primary{background:#ebaf5b;border:1px solid #ebaf5b;color:#fff}
@@ -1190,11 +1108,5 @@ onMounted(() => {
 .status-action-btn--adjust:hover:not(:disabled){background:#ebaf5b;border-color:#ebaf5b;color:#fff}
 .status-action-btn--adjust:active:not(:disabled){background:#d49e52;border-color:#d49e52;color:#fff}
 @media(max-width:640px){
-  .tbl-total-pages{font-size:11px}
-  .filter-card-head{margin-bottom:10px}
-  .tbl-footer-row{align-items:center;gap:8px}
-  .tbl-footer-row :deep(.pagination){justify-content:center}
-  .tbl-footer-row :deep(.pagination > .page-btn:not(.active)),
-  .tbl-footer-row :deep(.pagination > .page-dots){display:none}
 }
 </style>
