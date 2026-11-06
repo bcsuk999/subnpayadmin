@@ -187,7 +187,7 @@
         <div v-if="orders.length || ordersLoading" class="tbl-scroll">
           <table class="table table--wide">
             <thead>
-              <tr><th>Order ID</th><th>UID</th><th>Group</th><th>Amount</th><th>Received</th><th>Status</th><th>UPI ID</th><th>SimplyPay No</th><th>Trn ID</th><th>Requested By</th><th>Created</th><th>Updated</th><th>Actions</th></tr>
+              <tr><th>Order ID</th><th>UID</th><th>Group</th><th>Amount</th><th>Received</th><th>Status</th><th>UPI ID</th><th>SimplyPay No</th><th>Trn ID</th><th>Requested By</th><th>Created</th><th>Paid At</th><th>Actions</th></tr>
             </thead>
             <tbody>
               <tr v-for="o in orders" :key="o.orderId">
@@ -202,7 +202,7 @@
                 <td class="mono">{{ o.trnId || '—' }}</td>
                 <td class="mono">{{ o.requestedBy || '—' }}</td>
                 <td class="muted">{{ fmt(o.createdAt) }}</td>
-                <td class="muted">{{ fmt(o.updatedAt) }}</td>
+                <td class="muted">{{ fmt(o.paidAt) }}</td>
                 <td>
                   <div class="row-actions">
                     <button class="btn btn-sm action-btn" type="button" @click="openOrderDetail(o)">View</button>
@@ -220,62 +220,6 @@
 
     <!-- Payout -->
     <div v-show="activeTab === 'payout'" class="tab-panel">
-      <AdminCard>
-        <div class="card-head">
-          <h3>Create SimplyPay Payout</h3>
-          <span class="card-sub">Leave User ID blank for a merchant-level payout (wallet not debited)</span>
-        </div>
-        <p v-if="payoutForm.error" class="error" role="alert">{{ payoutForm.error }}</p>
-        <div class="form-grid">
-          <div class="field">
-            <label class="field-label">Amount (INR) <span class="required">*</span></label>
-            <input v-model="payoutForm.amount" class="input" type="number" min="0.01" step="0.01" placeholder="500" />
-          </div>
-          <div class="field">
-            <label class="field-label">Payout Password <span class="required">*</span></label>
-            <input v-model="payoutForm.password" class="input" type="password" placeholder="123123" autocomplete="off" />
-          </div>
-          <div class="field">
-            <label class="field-label">User ID <span class="muted">(optional)</span></label>
-            <input v-model="payoutForm.userid" class="input" type="number" min="1" placeholder="Blank = merchant payout" />
-          </div>
-          <div class="field">
-            <label class="field-label">Payout Type</label>
-            <SelectDropdown v-model="payoutForm.payoutType" class="form-select" :options="[{ value: 'IFSC', label: 'Bank (IFSC)' }, { value: 'UPI', label: 'UPI / VPA' }]" aria-label="Payout type" />
-          </div>
-          <div v-if="payoutForm.payoutType === 'UPI'" class="field">
-            <label class="field-label">VPA (UPI ID) <span class="required">*</span></label>
-            <input v-model="payoutForm.vpa" class="input" type="text" placeholder="user@upi" />
-          </div>
-          <template v-else>
-            <div class="field">
-              <label class="field-label">IFSC <span v-if="!payoutForm.userid" class="required">*</span></label>
-              <input v-model="payoutForm.ifsc" class="input" type="text" placeholder="SBIN0001234" />
-            </div>
-            <div class="field">
-              <label class="field-label">Account Number <span v-if="!payoutForm.userid" class="required">*</span></label>
-              <input v-model="payoutForm.account" class="input" type="text" placeholder="1234567890" />
-            </div>
-            <div class="field">
-              <label class="field-label">Holder Name <span v-if="!payoutForm.userid" class="required">*</span></label>
-              <input v-model="payoutForm.holderName" class="input" type="text" placeholder="John Doe" />
-            </div>
-            <div class="field">
-              <label class="field-label">Bank Name <span class="muted">(optional)</span></label>
-              <input v-model="payoutForm.bankName" class="input" type="text" placeholder="State Bank of India" />
-            </div>
-            <div class="field">
-              <label class="field-label">Bank ID <span class="muted">(optional, requires User ID)</span></label>
-              <input v-model="payoutForm.bankId" class="input" type="text" placeholder="Saved bank account ID" />
-            </div>
-          </template>
-        </div>
-        <div class="form-actions">
-          <button class="btn btn-primary" type="button" :disabled="payoutForm.saving" @click="submitPayout">{{ payoutForm.saving ? 'Creating…' : 'Create Payout' }}</button>
-          <button class="btn btn-ghost" type="button" :disabled="payoutForm.saving" @click="resetPayoutForm">Reset</button>
-        </div>
-      </AdminCard>
-
       <FilterCard v-model="payoutFiltersOpen" title="Payout filters">
         <div class="filter-row">
           <div class="field"><label class="field-label">User ID</label><input v-model="payoutFilters.userid" class="input" placeholder="Please enter user ID to search" @input="onPayoutSearchInput('userid')" @keyup.enter="fetchPayouts(1)" /></div>
@@ -285,6 +229,7 @@
           </div>
           <div class="field"><label class="field-label">Payout ID</label><input v-model="payoutFilters.payoutId" class="input" placeholder="Please enter payout ID to search" @input="onPayoutSearchInput('payoutId')" @keyup.enter="fetchPayouts(1)" /></div>
           <div class="filter-actions">
+            <button class="btn btn-primary" type="button" @click="openPayoutCreate">Create Payout</button>
             <button class="btn btn-primary" type="button" :disabled="payoutsLoading" @click="fetchPayouts(1)">{{ payoutsLoading ? 'Loading…' : 'Search' }}</button>
             <button class="btn btn-ghost" type="button" :disabled="payoutsLoading" @click="resetPayoutFilters">Reset</button>
           </div>
@@ -320,6 +265,68 @@
         </div>
         <TableFooter :page="payoutPage" :total-pages="payoutTotalPages" :total="payoutTotal" :page-size="payoutPageSize" :disabled="payoutsLoading" direct-input show-page-sizes @change="fetchPayouts" @size-change="setPayoutPageSize" />
       </TableCard>
+    </div>
+
+    <!-- Create Payout modal -->
+    <div v-if="payoutCreateOpen" class="modal-overlay" @click.self="closePayoutCreate">
+      <div class="modal modal--actions" role="dialog" aria-modal="true">
+        <div class="modal-head">
+          <h3>Create SimplyPay Payout</h3>
+          <button class="btn btn-ghost btn-sm" type="button" aria-label="Close" @click="closePayoutCreate">✕</button>
+        </div>
+        <div class="modal-body modal-body--scroll">
+          <p class="muted">Leave User ID blank for a merchant-level payout (wallet not debited).</p>
+          <p v-if="payoutForm.error" class="error" role="alert">{{ payoutForm.error }}</p>
+          <div class="form-field-grid">
+            <div class="field">
+              <label class="field-label">Amount (INR) <span class="required">*</span></label>
+              <input v-model="payoutForm.amount" class="input" type="number" min="0.01" step="0.01" placeholder="Please enter amount" />
+            </div>
+            <div class="field">
+              <label class="field-label">Payout Password <span class="required">*</span></label>
+              <input v-model="payoutForm.password" class="input" type="password" placeholder="Please enter payout password" autocomplete="off" />
+            </div>
+            <div class="field">
+              <label class="field-label">User ID <span class="muted">(optional)</span></label>
+              <input v-model="payoutForm.userid" class="input" type="number" min="1" placeholder="Please enter user ID" />
+            </div>
+            <div class="field">
+              <label class="field-label">Payout Type</label>
+              <SelectDropdown v-model="payoutForm.payoutType" class="form-select" :options="[{ value: 'IFSC', label: 'Bank (IFSC)' }, { value: 'UPI', label: 'UPI / VPA' }]" aria-label="Payout type" />
+            </div>
+            <div v-if="payoutForm.payoutType === 'UPI'" class="field">
+              <label class="field-label">VPA (UPI ID) <span class="required">*</span></label>
+              <input v-model="payoutForm.vpa" class="input" type="text" placeholder="Please enter UPI ID" />
+            </div>
+            <template v-else>
+              <div class="field">
+                <label class="field-label">IFSC Code <span v-if="!payoutForm.userid" class="required">*</span></label>
+                <input v-model="payoutForm.ifsc" class="input" type="text" placeholder="Please enter IFSC code" />
+              </div>
+              <div class="field">
+                <label class="field-label">Account No. <span v-if="!payoutForm.userid" class="required">*</span></label>
+                <input v-model="payoutForm.account" class="input" type="text" placeholder="Please enter account number" />
+              </div>
+              <div class="field">
+                <label class="field-label">Account Holder Name <span v-if="!payoutForm.userid" class="required">*</span></label>
+                <input v-model="payoutForm.holderName" class="input" type="text" placeholder="Please enter account holder name" />
+              </div>
+              <div class="field">
+                <label class="field-label">Bank Name <span class="muted">(optional)</span></label>
+                <input v-model="payoutForm.bankName" class="input" type="text" placeholder="Please enter bank name" />
+              </div>
+              <div class="field">
+                <label class="field-label">Bank ID <span class="muted">(optional, requires User ID)</span></label>
+                <input v-model="payoutForm.bankId" class="input" type="text" placeholder="Please enter bank ID" />
+              </div>
+            </template>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" type="button" :disabled="payoutForm.saving" @click="closePayoutCreate">Cancel</button>
+          <button class="btn btn-primary" type="button" :disabled="payoutForm.saving" @click="submitPayout">{{ payoutForm.saving ? 'Creating…' : 'Create Payout' }}</button>
+        </div>
+      </div>
     </div>
 
     <!-- Group detail modal -->
@@ -386,7 +393,7 @@
             <p v-if="detail.recentOrders.length === 0" class="empty">No recent orders.</p>
             <div v-else class="table-wrap">
               <table class="table table--compact">
-                <thead><tr><th>Order ID</th><th>UID</th><th>Amount</th><th>Status</th><th>Created</th><th>Updated</th></tr></thead>
+                <thead><tr><th>Order ID</th><th>UID</th><th>Amount</th><th>Status</th><th>Created</th><th>Paid At</th></tr></thead>
                 <tbody>
                   <tr v-for="o in detail.recentOrders" :key="o.orderId">
                     <td class="mono">{{ o.orderId }}</td>
@@ -394,7 +401,7 @@
                     <td class="mono">{{ money(o.amount) }}</td>
                     <td><span :class="['badge', 'status-badge', statusClass(o.status)]">{{ o.status }}</span></td>
                     <td class="muted">{{ fmt(o.createdAt) }}</td>
-                    <td class="muted">{{ fmt(o.updatedAt) }}</td>
+                    <td class="muted">{{ fmt(o.paidAt) }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -1035,6 +1042,7 @@ const payoutForm = reactive({
   saving: false,
   error: '',
 })
+const payoutCreateOpen = ref(false)
 
 function onPayoutSearchInput(field) {
   if (String(payoutFilters[field]).trim()) {
@@ -1091,6 +1099,17 @@ function resetPayoutForm() {
   })
 }
 
+function openPayoutCreate() {
+  resetPayoutForm()
+  payoutCreateOpen.value = true
+}
+
+function closePayoutCreate() {
+  if (payoutForm.saving) return
+  payoutCreateOpen.value = false
+  payoutForm.error = ''
+}
+
 async function submitPayout() {
   payoutForm.error = ''
   const amount = Number(payoutForm.amount)
@@ -1145,6 +1164,7 @@ async function submitPayout() {
   try {
     const data = await createSimplyPayPayout(payload)
     toast.success(data.msg || `Payout ${data.payoutId || ''} created`.trim())
+    payoutCreateOpen.value = false
     resetPayoutForm()
     fetchPayouts(1)
   } catch (e) {
@@ -1324,8 +1344,6 @@ onMounted(() => {
 .history-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:14px}
 .history-list li{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;background:#f5f7fa;border-radius:8px}
 .history-remark{flex:1;min-width:120px}
-.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
-.form-actions{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:16px;padding-top:16px;border-top:1px solid #e4e7ed}
 .field{display:flex;flex-direction:column;gap:6px}
 .field-label{font-size:14px;font-weight:400;color:#606266;margin-bottom:0;line-height:1.15}
 .required{color:#f56c6c;margin-left:4px}
