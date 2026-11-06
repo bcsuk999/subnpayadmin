@@ -161,7 +161,8 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import {
   getDepositAddresses, createDepositAddress, updateDepositAddress, toggleDepositAddress, deleteDepositAddress, seedDepositAddresses,
   getExchangeRates, getCurrentExchangeRate, upsertExchangeRate, updateExchangeRate, deleteExchangeRate,
@@ -171,7 +172,21 @@ import { useToast } from '../composables/useToast.js'
 import { fmtDateTime as fmtDate } from '../utils/format.js'
 
 const toast = useToast()
-const activeTab = ref('usdt')
+const route = useRoute()
+const router = useRouter()
+const PAYIN_TABS = ['usdt', 'inr']
+const activeTab = ref(PAYIN_TABS.includes(route.query.tab) ? route.query.tab : 'usdt')
+
+watch(
+  () => route.query.tab,
+  (tab) => {
+    if (PAYIN_TABS.includes(tab) && tab !== activeTab.value) activeTab.value = tab
+  },
+)
+
+watch(activeTab, (tab) => {
+  if (route.query.tab !== tab) router.replace({ query: { ...route.query, tab } })
+})
 
 // — USDT Exchange Rate state —
 const rates = ref([])

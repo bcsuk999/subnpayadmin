@@ -93,7 +93,8 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import {
   getCommissionConfig, updateCommissionConfig, getAdminCommissions, getReferralStats,
 } from '../api/client.js'
@@ -101,7 +102,21 @@ import { useToast } from '../composables/useToast.js'
 import { fmtDateTime as fmtDate } from '../utils/format.js'
 
 const toast = useToast()
-const subTab = ref('config')
+const route = useRoute()
+const router = useRouter()
+const AGENT_TABS = ['config', 'stats']
+const subTab = ref(AGENT_TABS.includes(route.query.tab) ? route.query.tab : 'config')
+
+watch(
+  () => route.query.tab,
+  (tab) => {
+    if (AGENT_TABS.includes(tab) && tab !== subTab.value) subTab.value = tab
+  },
+)
+
+watch(subTab, (tab) => {
+  if (route.query.tab !== tab) router.replace({ query: { ...route.query, tab } })
+})
 
 // — Commission Config state —
 const commissionForm = reactive({ commissionPercentage: 0, isActive: true })

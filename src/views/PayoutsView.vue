@@ -217,14 +217,29 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref, computed } from 'vue'
+import { onMounted, reactive, ref, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { getPayoutUsers, createPayout, createSimplyPayPayout, getAdminPayouts, approvePayout, rejectPayout } from '../api/client.js'
 import { useToast } from '../composables/useToast.js'
 import { fmtDateTime as fmt } from '../utils/format.js'
 
 const toast = useToast()
+const route = useRoute()
+const router = useRouter()
 
-const activeTab = ref('users')
+const PAYOUT_TABS = ['users', 'payouts', 'simplypay']
+const activeTab = ref(PAYOUT_TABS.includes(route.query.tab) ? route.query.tab : 'users')
+
+watch(
+  () => route.query.tab,
+  (tab) => {
+    if (PAYOUT_TABS.includes(tab) && tab !== activeTab.value) activeTab.value = tab
+  },
+)
+
+watch(activeTab, (tab) => {
+  if (route.query.tab !== tab) router.replace({ query: { ...route.query, tab } })
+})
 
 const payoutUsers = ref([])
 const usersLoading = ref(false)
