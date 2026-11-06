@@ -23,7 +23,7 @@
           @blur="scheduleClose()"
           @keydown="onTriggerKeydown($event, item)"
         >
-          <div class="el-submenu__title" @click="goTo(item)">
+          <div class="el-submenu__title" @click="onSubmenuTitleClick(item, $event)">
             <i class="icon" :class="item.iconClass" aria-hidden="true"></i>
             <span class="el-menu-item__label">{{ item.label }}</span>
             <svg
@@ -184,6 +184,15 @@ function goToChild(parent, child) {
   router.push({ path: parent.to, query: { ...route.query, tab: child.key } })
 }
 
+function onSubmenuTitleClick(item, event) {
+  // Touch/small screens have no hover: keep the flyout open when the row is tapped.
+  if (window.matchMedia('(max-width: 880px)').matches) {
+    openSubmenu(item, event)
+    return
+  }
+  goTo(item)
+}
+
 /* ── Flyout submenu (captured .el-menu--vertical spec) ───────────────────── */
 const POPUP_ITEM_HEIGHT = 56 // 3 × 56 + 2 × 5 padding = the captured 178px height
 const POPUP_PADDING_Y = 5
@@ -206,7 +215,8 @@ function openSubmenu(item, event) {
   const rect = trigger.getBoundingClientRect()
   const height = item.children.length * POPUP_ITEM_HEIGHT + POPUP_PADDING_Y * 2
   const maxTop = window.innerHeight - height - 8
-  popup.left = Math.round(rect.right)
+  const maxLeft = window.innerWidth - 210 - 8
+  popup.left = Math.round(Math.max(8, Math.min(rect.right, maxLeft)))
   popup.top = Math.round(Math.max(8, Math.min(rect.top, maxTop)))
   openSubmenuKey.value = item.key
 }
@@ -659,12 +669,47 @@ onBeforeUnmount(() => {
     transform: translateX(-100%);
     transition: transform var(--motion-normal) ease;
     box-shadow: var(--shadow-dropdown);
+    z-index: 1000;
   }
   .sidebar.mobile-open {
     transform: translateX(0);
   }
   .sidebar.collapsed {
     width: var(--layout-sidebar-width, 242px);
+  }
+
+  /* The drawer always shows the expanded layout, even when the desktop rail is collapsed */
+  .sidebar.collapsed .sidebar-logo,
+  .sidebar.collapsed .sidebar-badge {
+    display: inline;
+  }
+  .sidebar.collapsed .sidebar-mark {
+    display: none;
+  }
+  .sidebar.collapsed .sidebar-footer {
+    display: block;
+  }
+  .sidebar.collapsed .sidebar-el-menu {
+    width: 100%;
+  }
+  .sidebar.collapsed .el-menu-item,
+  .sidebar.collapsed .el-submenu__title {
+    justify-content: flex-start;
+    padding: 0 20px;
+  }
+  .sidebar.collapsed .el-menu-item .icon,
+  .sidebar.collapsed .el-submenu__title .icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    font-size: 20px;
+  }
+  .sidebar.collapsed .el-menu-item__label,
+  .sidebar.collapsed .el-submenu__title .el-menu-item__label {
+    display: inline;
+  }
+  .sidebar.collapsed .el-menu-item__arrow {
+    display: block;
   }
 }
 </style>
