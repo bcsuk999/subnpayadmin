@@ -28,7 +28,7 @@
         <div v-if="groups.length || groupsLoading" class="tbl-scroll">
           <table class="table">
             <thead>
-              <tr><th>UID</th><th>Group ID</th><th>Title</th><th>Username</th><th>Type</th><th>Status</th><th>Balance</th><th>Deposits</th><th>Last Active</th><th>Actions</th></tr>
+              <tr><th>UID</th><th>Group ID</th><th>Title</th><th>Username</th><th>Type</th><th>Status</th><th>Balance</th><th>Deposits</th><th>Last Active</th><th>Updated</th><th>Actions</th></tr>
             </thead>
             <tbody>
               <tr v-for="g in groups" :key="g.groupId">
@@ -41,6 +41,7 @@
                 <td class="mono">{{ money(g.balance) }}</td>
                 <td class="mono">{{ g.totalDeposits ?? 0 }}</td>
                 <td class="muted">{{ fmt(g.lastActiveAt) }}</td>
+                <td class="muted">{{ fmt(g.updatedAt || g.statusUpdatedAt) }}</td>
                 <td class="cell-actions-end">
                   <div class="row-actions">
                     <button class="btn btn-sm action-btn" type="button" title="Edit group" @click="openGroupStatusPopup(g)">
@@ -136,7 +137,7 @@
         <div v-if="transactions.length || txnsLoading" class="tbl-scroll">
           <table class="table">
             <thead>
-              <tr><th>Trn ID</th><th>UID</th><th>Group</th><th>Order</th><th>Amount</th><th>Type</th><th>Note</th><th>Balance After</th><th>Status</th><th>Remark</th><th>Created</th></tr>
+              <tr><th>Trn ID</th><th>UID</th><th>Group</th><th>Order</th><th>Amount</th><th>Type</th><th>Note</th><th>Balance After</th><th>Status</th><th>Remark</th><th>Created</th><th>Updated</th></tr>
             </thead>
             <tbody>
               <tr v-for="t in transactions" :key="t.trnId">
@@ -151,6 +152,7 @@
                 <td><span :class="['badge', 'status-badge', statusClass(t.status)]">{{ t.status }}</span></td>
                 <td class="muted remark">{{ t.remark || '—' }}</td>
                 <td class="muted">{{ fmt(t.createdAt) }}</td>
+                <td class="muted">{{ fmt(t.updatedAt) }}</td>
               </tr>
             </tbody>
           </table>
@@ -296,7 +298,7 @@
         <div v-if="payouts.length || payoutsLoading" class="tbl-scroll">
           <table class="table table--wide">
             <thead>
-              <tr><th>Payout ID</th><th>User</th><th>Amount</th><th>Bank</th><th>Account</th><th>Holder</th><th>IFSC</th><th>Order No</th><th>Status</th><th>Remark</th><th>Created</th></tr>
+              <tr><th>Payout ID</th><th>User</th><th>Amount</th><th>Bank</th><th>Account</th><th>Holder</th><th>IFSC</th><th>Order No</th><th>Status</th><th>Remark</th><th>Created</th><th>Updated</th></tr>
             </thead>
             <tbody>
               <tr v-for="p in payouts" :key="p.payoutId">
@@ -311,6 +313,7 @@
                 <td><span :class="['badge', 'status-badge', statusClass(p.status)]">{{ p.status }}</span></td>
                 <td class="muted remark">{{ p.remark || '—' }}</td>
                 <td class="muted">{{ fmt(p.createdAt) }}</td>
+                <td class="muted">{{ fmt(p.updatedAt) }}</td>
               </tr>
             </tbody>
           </table>
@@ -346,6 +349,7 @@
               <div><span class="detail-label">Registered By</span><span class="mono">{{ detail.group.registeredBy || '—' }}</span></div>
               <div><span class="detail-label">Created</span><span>{{ fmt(detail.group.createdAt) }}</span></div>
               <div><span class="detail-label">Last Active</span><span>{{ fmt(detail.group.lastActiveAt) }}</span></div>
+              <div><span class="detail-label">Updated</span><span>{{ fmt(detail.group.updatedAt || detail.group.statusUpdatedAt) }}</span></div>
               <div><span class="detail-label">Status Remark</span><span>{{ detail.group.statusRemark || '—' }}</span></div>
               <div><span class="detail-label">Status Updated By</span><span class="mono">{{ detail.group.statusUpdatedBy || '—' }}</span></div>
             </div>
@@ -382,7 +386,7 @@
             <p v-if="detail.recentOrders.length === 0" class="empty">No recent orders.</p>
             <div v-else class="table-wrap">
               <table class="table table--compact">
-                <thead><tr><th>Order ID</th><th>UID</th><th>Amount</th><th>Status</th><th>Created</th></tr></thead>
+                <thead><tr><th>Order ID</th><th>UID</th><th>Amount</th><th>Status</th><th>Created</th><th>Updated</th></tr></thead>
                 <tbody>
                   <tr v-for="o in detail.recentOrders" :key="o.orderId">
                     <td class="mono">{{ o.orderId }}</td>
@@ -390,6 +394,7 @@
                     <td class="mono">{{ money(o.amount) }}</td>
                     <td><span :class="['badge', 'status-badge', statusClass(o.status)]">{{ o.status }}</span></td>
                     <td class="muted">{{ fmt(o.createdAt) }}</td>
+                    <td class="muted">{{ fmt(o.updatedAt) }}</td>
                   </tr>
                 </tbody>
               </table>
