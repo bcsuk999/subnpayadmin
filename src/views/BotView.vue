@@ -240,18 +240,19 @@
       </FilterCard>
 
       <TableCard class="results">
-        <TableCardHeading title="SimplyPay payouts" />
+        <TableCardHeading :title="`Payout records (${payoutTotal})`" />
         <p v-if="payoutsError" class="error tbl-error" role="alert">{{ payoutsError }}</p>
-        <p v-if="!payoutsLoading && payouts.length === 0 && !payoutsError" class="empty tbl-empty">No payouts found.</p>
+        <p v-if="!payoutsLoading && payouts.length === 0 && !payoutsError" class="empty tbl-empty">No payout records found.</p>
         <div v-if="payouts.length || payoutsLoading" class="tbl-scroll">
           <table class="table table--wide">
             <thead>
-              <tr><th>Payout ID</th><th>User</th><th>Amount</th><th>Bank</th><th>Account</th><th>Holder</th><th>IFSC</th><th>Order No</th><th>Status</th><th>Remark</th><th>Created</th><th>Updated</th></tr>
+              <tr><th>Source</th><th>Payout / Trn ID</th><th>User</th><th>Amount</th><th>Bank</th><th>Account</th><th>Holder</th><th>IFSC</th><th>Order No</th><th>Status</th><th>Remark</th><th>Created</th><th>Updated</th></tr>
             </thead>
             <tbody>
-              <tr v-for="p in payouts" :key="p.payoutId">
+              <tr v-for="p in payouts" :key="p.key || p.payoutId">
+                <td><span :class="['badge', p.source === 'bot' ? 'badge--warning' : 'badge--primary']">{{ p.source === 'bot' ? 'Bot Debit' : 'SimplyPay' }}</span></td>
                 <td class="mono">{{ p.payoutId }}</td>
-                <td class="mono">{{ p.userid ?? 'Merchant' }}</td>
+                <td class="mono">{{ p.source === 'bot' ? (p.userid ? 'UID ' + p.userid : '—') : (p.userid ?? 'Merchant') }}</td>
                 <td class="mono">{{ money(p.amount) }}</td>
                 <td>{{ p.bankName || p.bank?.bankName || '—' }}</td>
                 <td class="mono">{{ p.accountNumber || p.account || p.bank?.accountNumber || '—' }}</td>
@@ -1090,21 +1091,78 @@ async function fetchPayouts(p = 1) {
   payoutsLoading.value = true
   payoutsError.value = ''
   try {
-    const res = await getSimplyPayPayouts({
-      userid,
-      status: payoutFilters.status,
-      payoutId: payoutFilters.payoutId.trim(),
-      page: p,
-      limit: payoutPageSize.value,
+    let spRows = []
+    let spTotal = 0
+    let spTotalPages = 1
+    let spPage = p
+    let spError = ''
+
+    try {
+      const res = await getSimplyPayPayouts({
+        userid,
+        status: payoutFilters.status,
+        payoutId: payoutFilters.payoutId.trim(),
+        page: p,
+        limit: payoutPageSize.value,
+      })
+      const list = res.payouts || res.data || []
+      spRows = list.map((row) => ({ ...row, key: `sp-${row.payoutId}`, source: 'simplypay' }))
+      spTotal = res.count ?? res.total ?? list.length
+      spTotalPages = res.totalPages || 1
+      spPage = res.page || p
+    } catch (e) {
+      spError = e.message
+    }
+
+    // Bot debit transactions are shown as payout records too.
+    let botRows = []
+    let botTotal = 0
+    let botTotalPages = 1
+    const uidFilter = /^\d{5}$/.test(userid) ? userid : ''
+    if (!userid || uidFilter) {
+      try {
+        const res = await getBotTransactions({
+          type: 'debit',
+          status: payoutFilters.status,
+          uid: uidFilter,
+          trnId: payoutFilters.payoutId.trim(),
+          page: p,
+          limit: payoutPageSize.value,
+        })
+        const list = res.data || []
+        botRows = list.map((t) => ({
+          key: `bot-${t.trnId}`,
+          source: 'bot',
+          payoutId: t.trnId,
+          userid: t.uid,
+          amount: t.amount,
+          orderNo: t.orderId,
+          status: t.status,
+          remark: t.remark || t.note,
+          createdAt: t.createdAt,
+          updatedAt: t.updatedAt,
+        }))
+        botTotal = res.meta?.total || 0
+        botTotalPages = res.meta?.totalPages || 1
+      } catch {
+        // Bot debits are supplementary; the SimplyPay list still renders.
+      }
+    }
+
+    payouts.value = [...spRows, ...botRows].sort((a, b) => {
+      const at = new Date(a.createdAt || 0).getTime()
+      const bt = new Date(b.createdAt || 0).getTime()
+      return bt - at
     })
-    payouts.value = res.payouts || res.data || []
-    payoutPage.value = res.page || p
-    payoutTotal.value = res.count ?? res.total ?? payouts.value.length
-    payoutTotalPages.value = res.totalPages || 1
+    payoutPage.value = spPage
+    payoutTotal.value = spTotal + botTotal
+    payoutTotalPages.value = Math.max(spTotalPages, botTotalPages) || 1
     payoutsLoaded.value = true
-  } catch (e) {
-    payoutsError.value = e.message
-    toast.error(e.message)
+
+    if (spError) {
+      payoutsError.value = spError
+      toast.error(spError)
+    }
   } finally {
     payoutsLoading.value = false
   }
