@@ -14,6 +14,9 @@ import SelectDropdown from './components/SelectDropdown.vue'
 import TableCard from './components/TableCard.vue'
 import TableCardHeading from './components/TableCardHeading.vue'
 import TableFooter from './components/TableFooter.vue'
+import { installTableTooltips } from './utils/tableTooltips.js'
+
+installTableTooltips()
 
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {

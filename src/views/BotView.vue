@@ -185,7 +185,7 @@
         <div v-if="orders.length || ordersLoading" class="tbl-scroll">
           <table class="table table--wide">
             <thead>
-              <tr><th>Order ID</th><th>UID</th><th>Group</th><th>Amount</th><th>Received</th><th>Status</th><th>UPI ID</th><th>SimplyPay No</th><th>Trn ID</th><th>Requested By</th><th>Created</th><th>Actions</th></tr>
+              <tr><th>Order ID</th><th>UID</th><th>Group</th><th>Amount</th><th>Received</th><th>Status</th><th>UPI ID</th><th>SimplyPay No</th><th>Trn ID</th><th>Requested By</th><th>Created</th><th>Updated</th><th>Actions</th></tr>
             </thead>
             <tbody>
               <tr v-for="o in orders" :key="o.orderId">
@@ -200,6 +200,7 @@
                 <td class="mono">{{ o.trnId || '—' }}</td>
                 <td class="mono">{{ o.requestedBy || '—' }}</td>
                 <td class="muted">{{ fmt(o.createdAt) }}</td>
+                <td class="muted">{{ fmt(o.updatedAt) }}</td>
                 <td>
                   <div class="row-actions">
                     <button class="btn btn-sm action-btn" type="button" @click="openOrderDetail(o)">View</button>
@@ -484,6 +485,7 @@
               <div><span class="detail-label">Requested By</span><span class="mono">{{ orderDetail.order.requestedBy || '—' }}</span></div>
               <div><span class="detail-label">Created</span><span>{{ fmt(orderDetail.order.createdAt) }}</span></div>
               <div><span class="detail-label">Paid At</span><span>{{ fmt(orderDetail.order.paidAt) }}</span></div>
+              <div><span class="detail-label">Updated</span><span>{{ fmt(orderDetail.order.updatedAt) }}</span></div>
               <div class="detail-full"><span class="detail-label">Remark</span><span>{{ orderDetail.order.remark || '—' }}</span></div>
               <div class="detail-full"><span class="detail-label">Deep Link</span><span class="mono break">{{ orderDetail.order.deepLink || '—' }}</span></div>
               <div class="detail-full"><span class="detail-label">Payment Link</span><span class="mono break">{{ orderDetail.order.paymentLink || '—' }}</span></div>
