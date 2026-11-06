@@ -156,6 +156,7 @@ const navItems = [
       { key: 'groups', label: 'Groups' },
       { key: 'transactions', label: 'Transactions' },
       { key: 'orders', label: 'Deposit Records' },
+      { key: 'payout', label: 'Payout' },
     ],
   },
 ]

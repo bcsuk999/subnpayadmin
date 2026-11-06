@@ -224,6 +224,16 @@ export function createPayout(data) {
 export function createSimplyPayPayout(data) {
   return request('/admin/simplypay/payout', { method: 'POST', body: JSON.stringify(data) })
 }
+export function getSimplyPayPayouts(params = {}) {
+  const qs = new URLSearchParams()
+  if (params.userid) qs.set('userid', String(params.userid))
+  if (params.status) qs.set('status', params.status)
+  if (params.payoutId) qs.set('payoutId', params.payoutId)
+  if (params.page) qs.set('page', String(params.page))
+  if (params.limit) qs.set('limit', String(params.limit))
+  const suffix = qs.toString() ? `?${qs.toString()}` : ''
+  return request(`/admin/simplypay/payouts${suffix}`, { method: 'GET' })
+}
 export function getAdminPayouts(params = {}) {
   const qs = new URLSearchParams()
   if (params.userid) qs.set('userid', String(params.userid))

@@ -1,6 +1,6 @@
 <template>
   <section class="page">
-    <PageTabs v-model="activeTab" :tabs="[{ value: 'groups', label: 'Groups' }, { value: 'transactions', label: 'Transactions' }, { value: 'orders', label: 'Deposit Records' }]" />
+    <PageTabs v-model="activeTab" :tabs="[{ value: 'groups', label: 'Groups' }, { value: 'transactions', label: 'Transactions' }, { value: 'orders', label: 'Deposit Records' }, { value: 'payout', label: 'Payout' }]" />
 
     <!-- Groups -->
     <div v-show="activeTab === 'groups'" class="tab-panel">
@@ -212,6 +212,109 @@
           </table>
         </div>
         <TableFooter :page="orderPage" :total-pages="orderTotalPages" :total="orderTotal" :page-size="orderPageSize" :disabled="ordersLoading" direct-input show-page-sizes @change="fetchOrders" @size-change="setOrderPageSize" />
+      </TableCard>
+    </div>
+
+    <!-- Payout -->
+    <div v-show="activeTab === 'payout'" class="tab-panel">
+      <AdminCard>
+        <div class="card-head">
+          <h3>Create SimplyPay Payout</h3>
+          <span class="card-sub">Leave User ID blank for a merchant-level payout (wallet not debited)</span>
+        </div>
+        <p v-if="payoutForm.error" class="error" role="alert">{{ payoutForm.error }}</p>
+        <div class="form-grid">
+          <div class="field">
+            <label class="field-label">Amount (INR) <span class="required">*</span></label>
+            <input v-model="payoutForm.amount" class="input" type="number" min="0.01" step="0.01" placeholder="500" />
+          </div>
+          <div class="field">
+            <label class="field-label">Payout Password <span class="required">*</span></label>
+            <input v-model="payoutForm.password" class="input" type="password" placeholder="123123" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label class="field-label">User ID <span class="muted">(optional)</span></label>
+            <input v-model="payoutForm.userid" class="input" type="number" min="1" placeholder="Blank = merchant payout" />
+          </div>
+          <div class="field">
+            <label class="field-label">Payout Type</label>
+            <SelectDropdown v-model="payoutForm.payoutType" class="form-select" :options="[{ value: 'IFSC', label: 'Bank (IFSC)' }, { value: 'UPI', label: 'UPI / VPA' }]" aria-label="Payout type" />
+          </div>
+          <div v-if="payoutForm.payoutType === 'UPI'" class="field">
+            <label class="field-label">VPA (UPI ID) <span class="required">*</span></label>
+            <input v-model="payoutForm.vpa" class="input" type="text" placeholder="user@upi" />
+          </div>
+          <template v-else>
+            <div class="field">
+              <label class="field-label">IFSC <span v-if="!payoutForm.userid" class="required">*</span></label>
+              <input v-model="payoutForm.ifsc" class="input" type="text" placeholder="SBIN0001234" />
+            </div>
+            <div class="field">
+              <label class="field-label">Account Number <span v-if="!payoutForm.userid" class="required">*</span></label>
+              <input v-model="payoutForm.account" class="input" type="text" placeholder="1234567890" />
+            </div>
+            <div class="field">
+              <label class="field-label">Holder Name <span v-if="!payoutForm.userid" class="required">*</span></label>
+              <input v-model="payoutForm.holderName" class="input" type="text" placeholder="John Doe" />
+            </div>
+            <div class="field">
+              <label class="field-label">Bank Name <span class="muted">(optional)</span></label>
+              <input v-model="payoutForm.bankName" class="input" type="text" placeholder="State Bank of India" />
+            </div>
+            <div class="field">
+              <label class="field-label">Bank ID <span class="muted">(optional, requires User ID)</span></label>
+              <input v-model="payoutForm.bankId" class="input" type="text" placeholder="Saved bank account ID" />
+            </div>
+          </template>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="button" :disabled="payoutForm.saving" @click="submitPayout">{{ payoutForm.saving ? 'Creating…' : 'Create Payout' }}</button>
+          <button class="btn btn-ghost" type="button" :disabled="payoutForm.saving" @click="resetPayoutForm">Reset</button>
+        </div>
+      </AdminCard>
+
+      <FilterCard v-model="payoutFiltersOpen" title="Payout filters">
+        <div class="filter-row">
+          <div class="field"><label class="field-label">User ID</label><input v-model="payoutFilters.userid" class="input" placeholder="Please enter user ID to search" @input="onPayoutSearchInput('userid')" @keyup.enter="fetchPayouts(1)" /></div>
+          <div class="field">
+            <label class="field-label">Status</label>
+            <SelectDropdown v-model="payoutFilters.status" class="status-select" :options="payoutStatusOptions" aria-label="Status" />
+          </div>
+          <div class="field"><label class="field-label">Payout ID</label><input v-model="payoutFilters.payoutId" class="input" placeholder="Please enter payout ID to search" @input="onPayoutSearchInput('payoutId')" @keyup.enter="fetchPayouts(1)" /></div>
+          <div class="filter-actions">
+            <button class="btn btn-primary" type="button" :disabled="payoutsLoading" @click="fetchPayouts(1)">{{ payoutsLoading ? 'Loading…' : 'Search' }}</button>
+            <button class="btn btn-ghost" type="button" :disabled="payoutsLoading" @click="resetPayoutFilters">Reset</button>
+          </div>
+        </div>
+      </FilterCard>
+
+      <TableCard class="results">
+        <TableCardHeading title="SimplyPay payouts" />
+        <p v-if="payoutsError" class="error tbl-error" role="alert">{{ payoutsError }}</p>
+        <p v-if="!payoutsLoading && payouts.length === 0 && !payoutsError" class="empty tbl-empty">No payouts found.</p>
+        <div v-if="payouts.length || payoutsLoading" class="tbl-scroll">
+          <table class="table table--wide">
+            <thead>
+              <tr><th>Payout ID</th><th>User</th><th>Amount</th><th>Bank</th><th>Account</th><th>Holder</th><th>IFSC</th><th>Order No</th><th>Status</th><th>Remark</th><th>Created</th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="p in payouts" :key="p.payoutId">
+                <td class="mono">{{ p.payoutId }}</td>
+                <td class="mono">{{ p.userid ?? 'Merchant' }}</td>
+                <td class="mono">{{ money(p.amount) }}</td>
+                <td>{{ p.bankName || p.bank?.bankName || '—' }}</td>
+                <td class="mono">{{ p.accountNumber || p.account || p.bank?.accountNumber || '—' }}</td>
+                <td>{{ p.holderName || p.name || p.bank?.holderName || '—' }}</td>
+                <td class="mono">{{ p.ifsc || p.bank?.ifsc || '—' }}</td>
+                <td class="mono">{{ p.orderNo || '—' }}</td>
+                <td><span :class="['badge', 'status-badge', statusClass(p.status)]">{{ p.status }}</span></td>
+                <td class="muted remark">{{ p.remark || '—' }}</td>
+                <td class="muted">{{ fmt(p.createdAt) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <TableFooter :page="payoutPage" :total-pages="payoutTotalPages" :total="payoutTotal" :page-size="payoutPageSize" :disabled="payoutsLoading" direct-input show-page-sizes @change="fetchPayouts" @size-change="setPayoutPageSize" />
       </TableCard>
     </div>
 
@@ -439,12 +542,13 @@ import {
   getBotGroups, getBotGroup, banBotGroup, suspendBotGroup, unbanBotGroup, adjustBotGroupBalance,
   getBotOrders, getBotOrder, approveBotOrder, rejectBotOrder,
   getBotTransactions, getBotGroupStats,
+  createSimplyPayPayout, getSimplyPayPayouts,
 } from '../api/client.js'
 
 const toast = useToast()
 const route = useRoute()
 const router = useRouter()
-const BOT_TABS = ['groups', 'transactions', 'orders']
+const BOT_TABS = ['groups', 'transactions', 'orders', 'payout']
 const activeTab = ref(BOT_TABS.includes(route.query.tab) ? route.query.tab : 'groups')
 
 // Keep the sidebar flyout submenu and the in-page tabs in sync.
@@ -460,6 +564,7 @@ watch(activeTab, (tab) => {
 const groupFiltersOpen = ref(true)
 const txnFiltersOpen = ref(true)
 const orderFiltersOpen = ref(true)
+const payoutFiltersOpen = ref(true)
 const BOT_PAGE_SIZE = 10
 
 // The orders endpoint does not return uid, so keep a groupId → uid cache
@@ -521,6 +626,12 @@ const orderStatusOptions = [
   { value: 'failed', label: 'failed' },
   { value: 'expired', label: 'expired' },
   { value: 'reversed', label: 'reversed' },
+]
+const payoutStatusOptions = [
+  { value: '', label: 'All' },
+  { value: 'pending', label: 'pending' },
+  { value: 'success', label: 'success' },
+  { value: 'failed', label: 'failed' },
 ]
 
 // — Groups —
@@ -892,6 +1003,155 @@ async function submitOrderAction() {
   }
 }
 
+// — SimplyPay Payout —
+const payouts = ref([])
+const payoutFilters = reactive({ userid: '', status: '', payoutId: '' })
+const payoutPage = ref(1)
+const payoutPageSize = ref(BOT_PAGE_SIZE)
+const payoutTotal = ref(0)
+const payoutTotalPages = ref(1)
+const payoutsLoading = ref(false)
+const payoutsError = ref('')
+const payoutsLoaded = ref(false)
+
+const payoutForm = reactive({
+  userid: '',
+  amount: '',
+  password: '123123',
+  payoutType: 'IFSC',
+  vpa: '',
+  bankId: '',
+  bankName: '',
+  ifsc: '',
+  account: '',
+  holderName: '',
+  saving: false,
+  error: '',
+})
+
+function onPayoutSearchInput(field) {
+  if (String(payoutFilters[field]).trim()) {
+    for (const key of ['userid', 'payoutId']) {
+      if (key !== field) payoutFilters[key] = ''
+    }
+  }
+}
+
+async function fetchPayouts(p = 1) {
+  const userid = payoutFilters.userid.trim()
+  if (userid && !/^\d+$/.test(userid)) {
+    payoutsError.value = 'User ID must be a number'
+    toast.error(payoutsError.value)
+    return
+  }
+  payoutsLoading.value = true
+  payoutsError.value = ''
+  try {
+    const res = await getSimplyPayPayouts({
+      userid,
+      status: payoutFilters.status,
+      payoutId: payoutFilters.payoutId.trim(),
+      page: p,
+      limit: payoutPageSize.value,
+    })
+    payouts.value = res.payouts || res.data || []
+    payoutPage.value = res.page || p
+    payoutTotal.value = res.count ?? res.total ?? payouts.value.length
+    payoutTotalPages.value = res.totalPages || 1
+    payoutsLoaded.value = true
+  } catch (e) {
+    payoutsError.value = e.message
+    toast.error(e.message)
+  } finally {
+    payoutsLoading.value = false
+  }
+}
+
+function setPayoutPageSize(size) {
+  payoutPageSize.value = size
+  fetchPayouts(1)
+}
+
+function resetPayoutFilters() {
+  Object.assign(payoutFilters, { userid: '', status: '', payoutId: '' })
+  fetchPayouts(1)
+}
+
+function resetPayoutForm() {
+  Object.assign(payoutForm, {
+    userid: '', amount: '', password: '123123', payoutType: 'IFSC', vpa: '',
+    bankId: '', bankName: '', ifsc: '', account: '', holderName: '', saving: false, error: '',
+  })
+}
+
+async function submitPayout() {
+  payoutForm.error = ''
+  const amount = Number(payoutForm.amount)
+  if (!isFinite(amount) || amount <= 0) {
+    payoutForm.error = 'Enter a valid amount'
+    return
+  }
+  const password = String(payoutForm.password).trim()
+  if (!password) {
+    payoutForm.error = 'Payout password is required'
+    return
+  }
+  const userid = String(payoutForm.userid).trim()
+  if (userid && (!/^\d+$/.test(userid) || Number(userid) <= 0)) {
+    payoutForm.error = 'User ID must be a positive number'
+    return
+  }
+
+  const payload = { amount, password }
+  if (userid) payload.userid = Number(userid)
+
+  if (payoutForm.payoutType === 'UPI') {
+    const vpa = payoutForm.vpa.trim()
+    if (!vpa) {
+      payoutForm.error = 'VPA is required for a UPI payout'
+      return
+    }
+    payload.payoutType = 'UPI'
+    payload.vpa = vpa
+  } else {
+    const ifsc = payoutForm.ifsc.trim()
+    const account = payoutForm.account.trim()
+    const holderName = payoutForm.holderName.trim()
+    const hasAnyBankDetail = !!(ifsc || account || holderName)
+    if (!userid) {
+      if (!ifsc || !account || !holderName) {
+        payoutForm.error = 'IFSC, account and holder name are required when no User ID is provided'
+        return
+      }
+    } else if (hasAnyBankDetail && (!ifsc || !account || !holderName)) {
+      payoutForm.error = 'Provide IFSC, account and holder name together'
+      return
+    }
+    if (ifsc) payload.ifsc = ifsc
+    if (account) payload.account = account
+    if (holderName) payload.holderName = holderName
+    if (payoutForm.bankName.trim()) payload.bankName = payoutForm.bankName.trim()
+    if (userid && payoutForm.bankId.trim()) payload.bankId = payoutForm.bankId.trim()
+  }
+
+  payoutForm.saving = true
+  try {
+    const data = await createSimplyPayPayout(payload)
+    toast.success(data.msg || `Payout ${data.payoutId || ''} created`.trim())
+    resetPayoutForm()
+    fetchPayouts(1)
+  } catch (e) {
+    payoutForm.error = e.message
+    toast.error(e.message)
+  } finally {
+    payoutForm.saving = false
+  }
+}
+
+watch(activeTab, (tab) => {
+  if (tab === 'payout' && !payoutsLoaded.value) fetchPayouts(1)
+})
+
 // — Helpers —
 function statusClass(s) {
   switch (s) {
@@ -924,6 +1184,7 @@ onMounted(() => {
   fetchTransactions(1)
   fetchOrders(1)
   loadAllGroupUids()
+  if (activeTab.value === 'payout') fetchPayouts(1)
 })
 </script>
 
@@ -1056,6 +1317,8 @@ onMounted(() => {
 .history-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:14px}
 .history-list li{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;background:#f5f7fa;border-radius:8px}
 .history-remark{flex:1;min-width:120px}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.form-actions{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:16px;padding-top:16px;border-top:1px solid #e4e7ed}
 .field{display:flex;flex-direction:column;gap:6px}
 .field-label{font-size:14px;font-weight:400;color:#606266;margin-bottom:0;line-height:1.15}
 .required{color:#f56c6c;margin-left:4px}
