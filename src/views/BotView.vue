@@ -62,6 +62,7 @@
     </div>
 
     <!-- Group Status Popup -->
+    <Transition name="modal-pop">
     <div v-if="groupStatusPopup.open" class="modal-overlay" @click.self="groupStatusPopup.open = false">
       <div class="modal modal--actions" role="dialog" aria-modal="true">
         <div class="modal-head">
@@ -101,6 +102,7 @@
         </div>
       </div>
     </div>
+    </Transition>
 
     <!-- Transactions -->
     <div v-show="activeTab === 'transactions'" class="tab-panel">
@@ -229,6 +231,7 @@
           </div>
           <div class="field"><label class="field-label">Payout ID</label><input v-model="payoutFilters.payoutId" class="input" placeholder="Please enter payout ID to search" @input="onPayoutSearchInput('payoutId')" @keyup.enter="fetchPayouts(1)" /></div>
           <div class="filter-actions">
+            <button class="btn btn-ghost" type="button" @click="openAdjustFromPayout">Adjust Balance</button>
             <button class="btn btn-primary" type="button" @click="openPayoutCreate">Create Payout</button>
             <button class="btn btn-primary" type="button" :disabled="payoutsLoading" @click="fetchPayouts(1)">{{ payoutsLoading ? 'Loading…' : 'Search' }}</button>
             <button class="btn btn-ghost" type="button" :disabled="payoutsLoading" @click="resetPayoutFilters">Reset</button>
@@ -268,6 +271,7 @@
     </div>
 
     <!-- Create Payout modal -->
+    <Transition name="modal-pop">
     <div v-if="payoutCreateOpen" class="modal-overlay" @click.self="closePayoutCreate">
       <div class="modal modal--actions" role="dialog" aria-modal="true">
         <div class="modal-head">
@@ -328,8 +332,10 @@
         </div>
       </div>
     </div>
+    </Transition>
 
     <!-- Group detail modal -->
+    <Transition name="modal-pop">
     <div v-if="detail.open" class="modal-overlay" @click.self="detail.open = false">
       <div class="modal modal--wide" role="dialog" aria-modal="true">
         <div class="modal-head">
@@ -423,8 +429,10 @@
         </div>
       </div>
     </div>
+    </Transition>
 
     <!-- Group status modal -->
+    <Transition name="modal-pop">
     <div v-if="statusDialog.open" class="modal-overlay" @click.self="statusDialog.open = false">
       <div class="modal" role="dialog" aria-modal="true">
         <div class="modal-head">
@@ -444,19 +452,25 @@
         </div>
       </div>
     </div>
+    </Transition>
 
     <!-- Adjust balance modal -->
+    <Transition name="modal-pop">
     <div v-if="adjustDialog.open" class="modal-overlay" @click.self="adjustDialog.open = false">
       <div class="modal" role="dialog" aria-modal="true">
         <div class="modal-head">
-          <h3>Adjust balance — {{ adjustDialog.groupId }}</h3>
+          <h3>Adjust balance</h3>
           <button class="btn btn-ghost btn-sm" type="button" aria-label="Close" @click="adjustDialog.open = false">✕</button>
         </div>
         <div class="modal-body">
           <p v-if="adjustDialog.error" class="error" role="alert">{{ adjustDialog.error }}</p>
           <div class="field">
+            <label class="field-label">Group ID <span class="required">*</span></label>
+            <input v-model="adjustDialog.groupId" class="input" type="text" placeholder="Please enter group ID" />
+          </div>
+          <div class="field">
             <label class="field-label">Amount <span class="required">*</span></label>
-            <input v-model="adjustDialog.amount" class="input" type="number" min="0.01" step="0.01" placeholder="500" />
+            <input v-model="adjustDialog.amount" class="input" type="number" min="0.01" step="0.01" placeholder="Please enter amount" />
           </div>
           <div class="field">
             <label class="field-label">Type <span class="required">*</span></label>
@@ -473,8 +487,10 @@
         </div>
       </div>
     </div>
+    </Transition>
 
     <!-- Order detail modal -->
+    <Transition name="modal-pop">
     <div v-if="orderDetail.open" class="modal-overlay" @click.self="orderDetail.open = false">
       <div class="modal modal--wide" role="dialog" aria-modal="true">
         <div class="modal-head">
@@ -522,8 +538,10 @@
         </div>
       </div>
     </div>
+    </Transition>
 
     <!-- Order action modal -->
+    <Transition name="modal-pop">
     <div v-if="orderAction.open" class="modal-overlay" @click.self="orderAction.open = false">
       <div class="modal" role="dialog" aria-modal="true">
         <div class="modal-head">
@@ -544,6 +562,7 @@
         </div>
       </div>
     </div>
+    </Transition>
   </section>
 </template>
 
@@ -801,7 +820,16 @@ function openAdjust(g) {
   Object.assign(adjustDialog, { open: true, groupId: g.groupId, amount: '', type: 'credit', remark: '', loading: false, error: '' })
 }
 
+function openAdjustFromPayout() {
+  Object.assign(adjustDialog, { open: true, groupId: '', amount: '', type: 'credit', remark: '', loading: false, error: '' })
+}
+
 async function submitAdjust() {
+  const groupId = adjustDialog.groupId.trim()
+  if (!groupId) {
+    adjustDialog.error = 'Group ID is required'
+    return
+  }
   const amount = Number(adjustDialog.amount)
   if (!isFinite(amount) || amount <= 0) {
     adjustDialog.error = 'Amount must be greater than 0'
@@ -814,7 +842,7 @@ async function submitAdjust() {
   adjustDialog.loading = true
   adjustDialog.error = ''
   try {
-    const res = await adjustBotGroupBalance(adjustDialog.groupId, {
+    const res = await adjustBotGroupBalance(groupId, {
       amount,
       type: adjustDialog.type,
       remark: adjustDialog.remark.trim(),
@@ -822,7 +850,7 @@ async function submitAdjust() {
     toast.success(res.msg || `Balance ${adjustDialog.type === 'credit' ? 'credited' : 'debited'} (${res.trnId || 'done'})`)
     adjustDialog.open = false
     fetchGroups(groupPage.value)
-    if (detail.open && detail.groupId === adjustDialog.groupId) openGroupDetail({ groupId: detail.groupId })
+    if (detail.open && detail.groupId === groupId) openGroupDetail({ groupId })
   } catch (e) {
     adjustDialog.error = e.message
     toast.error(e.message)
@@ -1347,8 +1375,8 @@ onMounted(() => {
 .field{display:flex;flex-direction:column;gap:6px}
 .field-label{font-size:14px;font-weight:400;color:#606266;margin-bottom:0;line-height:1.15}
 .required{color:#f56c6c;margin-left:4px}
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px;animation:modalFadeIn .3s ease}
-.modal{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-xl);width:100%;max-width:80vw;min-width:0;display:flex;flex-direction:column;max-height:90vh;animation:modalSlideIn var(--motion-slow) ease}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
+.modal{background:var(--color-bg);border:1px solid var(--color-border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-xl);width:100%;max-width:80vw;min-width:0;display:flex;flex-direction:column;max-height:90vh}
 .modal--wide{max-width:80vw}
 .modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 20px 10px;border-bottom:1px solid #e4e7ed}
 .modal-head h3{font-size:18px;line-height:24px;font-weight:400;color:#303133;word-break:break-all}
@@ -1376,8 +1404,14 @@ onMounted(() => {
 .form-field-grid .field{gap:6px;min-width:0}
 .form-field-grid .field-label{font-size:14px;font-weight:400;text-transform:none;letter-spacing:0;color:#606266}
 .form-field-grid .badge{align-self:flex-start}
-@keyframes modalFadeIn{from{opacity:0}to{opacity:1}}
-@keyframes modalSlideIn{from{transform:translate3d(0,-20px,0);opacity:0}to{transform:translateZ(0);opacity:1}}
+.modal-pop-enter-active,
+.modal-pop-leave-active{transition:opacity .22s ease}
+.modal-pop-enter-active .modal,
+.modal-pop-leave-active .modal{transition:transform .24s cubic-bezier(.22,.61,.36,1),opacity .24s ease}
+.modal-pop-enter-from,
+.modal-pop-leave-to{opacity:0}
+.modal-pop-enter-from .modal,
+.modal-pop-leave-to .modal{opacity:0;transform:translate3d(0,-14px,0) scale(.97)}
 .cell-actions-end{text-align:center}
 .cell-actions-end .row-actions{justify-content:center}
 .status-action-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:40px;padding:9px 15px;font-family:var(--font-body);font-size:12px;font-weight:500;line-height:1;text-align:center;background:#fff;border:1px solid #dcdfe6;border-radius:8px;color:#606266;box-shadow:none;transition:color .2s ease,background-color .2s ease,border-color .2s ease,transform .2s ease}
