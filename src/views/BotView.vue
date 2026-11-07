@@ -64,37 +64,60 @@
     <!-- Group Status Popup -->
     <Transition name="modal-pop">
     <div v-if="groupStatusPopup.open" class="modal-overlay" @click.self="groupStatusPopup.open = false">
-      <div class="modal modal--actions" role="dialog" aria-modal="true">
+      <div class="modal modal--confirm" role="dialog" aria-modal="true">
         <div class="modal-head">
-          <h3>Edit — {{ groupStatusPopup.group?.groupId }}</h3>
+          <div class="modal-title-wrap">
+            <span class="modal-icon modal-icon--primary" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M16 19v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 17.5V19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                <circle cx="10" cy="8" r="3" stroke="currentColor" stroke-width="1.7"/>
+                <path d="M20 19v-1.5a3.5 3.5 0 0 0-2.6-3.4M15.5 5.1a3 3 0 0 1 0 5.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <div class="modal-title-text">
+              <h3>Manage group</h3>
+              <p class="modal-subtitle">{{ groupStatusPopup.group?.groupId }}</p>
+            </div>
+          </div>
           <button class="btn btn-ghost btn-sm" type="button" aria-label="Close" @click="groupStatusPopup.open = false">✕</button>
         </div>
         <div class="modal-body">
-          <div class="form-field-grid">
-            <div class="field">
-              <span class="field-label">Current status</span>
+          <div class="summary-bar">
+            <div class="summary-bar__main">
+              <span class="summary-bar__eyebrow">Group</span>
+              <span class="summary-bar__value mono">{{ groupStatusPopup.group?.groupId }}</span>
+              <span class="summary-bar__title">{{ groupStatusPopup.group?.title || 'Untitled group' }}</span>
+            </div>
+            <div class="summary-bar__meta">
               <span :class="['badge', 'status-badge', statusClass(groupStatusPopup.group?.status)]">{{ groupStatusPopup.group?.status }}</span>
+              <div class="summary-balance">
+                <span class="summary-balance__label">Balance</span>
+                <span class="summary-balance__value">{{ money(groupStatusPopup.group?.balance) }}</span>
+              </div>
             </div>
-            <div class="field">
-              <span class="field-label">Details</span>
-              <button class="btn status-action-btn" type="button" title="Open group details" @click="openGroupDetail(groupStatusPopup.group); groupStatusPopup.open = false">View</button>
-            </div>
-            <div class="field">
-              <span class="field-label">Balance</span>
-              <button class="btn status-action-btn status-action-btn--adjust" type="button" title="Credit or debit balance" @click="openAdjust(groupStatusPopup.group); groupStatusPopup.open = false">Adjust balance</button>
-            </div>
-            <div v-if="groupStatusPopup.group?.status !== 'banned'" class="field">
-              <span class="field-label">Block</span>
-              <button class="btn status-action-btn status-action-btn--danger" type="button" title="Permanently block group" @click="openStatus(groupStatusPopup.group, 'ban'); groupStatusPopup.open = false">Ban</button>
-            </div>
-            <div v-if="groupStatusPopup.group?.status !== 'suspended'" class="field">
-              <span class="field-label">Pause</span>
-              <button class="btn status-action-btn status-action-btn--warning" type="button" title="Temporarily pause group" @click="openStatus(groupStatusPopup.group, 'suspend'); groupStatusPopup.open = false">Suspend</button>
-            </div>
-            <div v-if="groupStatusPopup.group?.status !== 'active'" class="field">
-              <span class="field-label">Restore</span>
-              <button class="btn status-action-btn status-action-btn--success" type="button" title="Restore group access" @click="openStatus(groupStatusPopup.group, 'unban'); groupStatusPopup.open = false">Unban / Activate</button>
-            </div>
+          </div>
+
+          <div class="action-grid">
+            <button class="action-tile action-tile--primary" type="button" @click="openGroupDetail(groupStatusPopup.group); groupStatusPopup.open = false">
+              <span class="action-tile__title">View details</span>
+              <span class="action-tile__hint">Orders, stats and status history</span>
+            </button>
+            <button class="action-tile action-tile--primary" type="button" @click="openAdjust(groupStatusPopup.group); groupStatusPopup.open = false">
+              <span class="action-tile__title">Adjust balance</span>
+              <span class="action-tile__hint">Credit or debit this group's balance</span>
+            </button>
+            <button v-if="groupStatusPopup.group?.status !== 'banned'" class="action-tile action-tile--danger" type="button" @click="openStatus(groupStatusPopup.group, 'ban'); groupStatusPopup.open = false">
+              <span class="action-tile__title">Ban group</span>
+              <span class="action-tile__hint">Permanently block access</span>
+            </button>
+            <button v-if="groupStatusPopup.group?.status !== 'suspended'" class="action-tile action-tile--warning" type="button" @click="openStatus(groupStatusPopup.group, 'suspend'); groupStatusPopup.open = false">
+              <span class="action-tile__title">Suspend group</span>
+              <span class="action-tile__hint">Temporarily pause the group</span>
+            </button>
+            <button v-if="groupStatusPopup.group?.status !== 'active'" class="action-tile action-tile--success" type="button" @click="openStatus(groupStatusPopup.group, 'unban'); groupStatusPopup.open = false">
+              <span class="action-tile__title">Unban / Activate</span>
+              <span class="action-tile__hint">Restore full group access</span>
+            </button>
           </div>
         </div>
         <div class="modal-foot">
@@ -274,13 +297,28 @@
     <!-- Create Payout modal -->
     <Transition name="modal-pop">
     <div v-if="payoutCreateOpen" class="modal-overlay" @click.self="closePayoutCreate">
-      <div class="modal modal--actions" role="dialog" aria-modal="true">
+      <div class="modal modal--form" role="dialog" aria-modal="true">
         <div class="modal-head">
-          <h3>Create SimplyPay Payout</h3>
+          <div class="modal-title-wrap">
+            <span class="modal-icon modal-icon--primary" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="5.5" width="18" height="13" rx="2.5" stroke="currentColor" stroke-width="1.7"/>
+                <path d="M3 10h18" stroke="currentColor" stroke-width="1.7"/>
+                <path d="M7 15h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <div class="modal-title-text">
+              <h3>Create SimplyPay Payout</h3>
+              <p class="modal-subtitle">Send a payout through SimplyPay</p>
+            </div>
+          </div>
           <button class="btn btn-ghost btn-sm" type="button" aria-label="Close" @click="closePayoutCreate">✕</button>
         </div>
         <div class="modal-body modal-body--scroll">
-          <p class="muted">Leave User ID blank for a merchant-level payout (wallet not debited).</p>
+          <div class="status-note status-note--info">
+            <strong>Merchant-level payout</strong>
+            <span>Leave User ID blank to send a payout without debiting a user wallet.</span>
+          </div>
           <p v-if="payoutForm.error" class="error" role="alert">{{ payoutForm.error }}</p>
           <div class="form-field-grid">
             <div class="field">
@@ -340,7 +378,19 @@
     <div v-if="detail.open" class="modal-overlay" @click.self="detail.open = false">
       <div class="modal modal--wide" role="dialog" aria-modal="true">
         <div class="modal-head">
-          <h3>Group — {{ detail.groupId }}</h3>
+          <div class="modal-title-wrap">
+            <span class="modal-icon modal-icon--primary" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M16 19v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 17.5V19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                <circle cx="10" cy="8" r="3" stroke="currentColor" stroke-width="1.7"/>
+                <path d="M20 19v-1.5a3.5 3.5 0 0 0-2.6-3.4M15.5 5.1a3 3 0 0 1 0 5.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <div class="modal-title-text">
+              <h3>Group details</h3>
+              <p class="modal-subtitle">{{ detail.groupId }}<template v-if="detail.group?.title"> • {{ detail.group.title }}</template></p>
+            </div>
+          </div>
           <button class="btn btn-ghost btn-sm" type="button" aria-label="Close" @click="detail.open = false">✕</button>
         </div>
         <div class="modal-body modal-body--scroll">
@@ -426,6 +476,7 @@
           </template>
         </div>
         <div class="modal-foot">
+          <button v-if="detail.group" class="btn btn-primary" type="button" @click="openAdjust(detail.group); detail.open = false">Adjust balance</button>
           <button class="btn btn-ghost" type="button" @click="detail.open = false">Close</button>
         </div>
       </div>
@@ -435,13 +486,32 @@
     <!-- Group status modal -->
     <Transition name="modal-pop">
     <div v-if="statusDialog.open" class="modal-overlay" @click.self="statusDialog.open = false">
-      <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal modal--confirm" role="dialog" aria-modal="true">
         <div class="modal-head">
-          <h3>{{ statusMeta[statusDialog.action].label }} group — {{ statusDialog.groupId }}</h3>
+          <div class="modal-title-wrap">
+            <span :class="['modal-icon', `modal-icon--${statusMeta[statusDialog.action].tone}`]" aria-hidden="true">
+              <svg v-if="statusDialog.action === 'unban'" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12.5l4.2 4.2L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M12 8v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="12" cy="16.6" r="1.1" fill="currentColor"/>
+                <path d="M10.3 3.9L2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <div class="modal-title-text">
+              <h3>{{ statusMeta[statusDialog.action].title }}</h3>
+              <p class="modal-subtitle">{{ statusDialog.groupId }}</p>
+            </div>
+          </div>
           <button class="btn btn-ghost btn-sm" type="button" aria-label="Close" @click="statusDialog.open = false">✕</button>
         </div>
         <div class="modal-body">
           <p v-if="statusDialog.error" class="error" role="alert">{{ statusDialog.error }}</p>
+          <div :class="['status-note', `status-note--${statusMeta[statusDialog.action].tone}`]">
+            <strong>{{ statusMeta[statusDialog.action].title }}</strong>
+            <span>{{ statusMeta[statusDialog.action].description }}</span>
+          </div>
           <div class="field">
             <label class="field-label">Remark <span class="required">*</span></label>
             <textarea v-model="statusDialog.remark" class="input" rows="3" :placeholder="statusMeta[statusDialog.action].placeholder"></textarea>
@@ -449,7 +519,7 @@
         </div>
         <div class="modal-foot">
           <button class="btn btn-ghost" type="button" @click="statusDialog.open = false">Cancel</button>
-          <button class="btn btn-primary" type="button" :disabled="statusDialog.loading" @click="submitStatus">{{ statusDialog.loading ? 'Saving…' : statusMeta[statusDialog.action].label }}</button>
+          <button :class="['btn', `btn-${statusMeta[statusDialog.action].tone}-solid`]" type="button" :disabled="statusDialog.loading" @click="submitStatus">{{ statusDialog.loading ? 'Saving…' : statusMeta[statusDialog.action].actionLabel }}</button>
         </div>
       </div>
     </div>
@@ -458,33 +528,49 @@
     <!-- Adjust balance modal -->
     <Transition name="modal-pop">
     <div v-if="adjustDialog.open" class="modal-overlay" @click.self="adjustDialog.open = false">
-      <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal modal--confirm" role="dialog" aria-modal="true">
         <div class="modal-head">
-          <h3>Adjust balance</h3>
+          <div class="modal-title-wrap">
+            <span class="modal-icon modal-icon--primary" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M4 7h16M4 7l3.2-3.2M4 7l3.2 3.2M20 17H4m16 0l-3.2-3.2M20 17l-3.2 3.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <div class="modal-title-text">
+              <h3>Adjust balance</h3>
+              <p class="modal-subtitle">{{ adjustDialog.groupId || 'Manual credit or debit for a group' }}</p>
+            </div>
+          </div>
           <button class="btn btn-ghost btn-sm" type="button" aria-label="Close" @click="adjustDialog.open = false">✕</button>
         </div>
         <div class="modal-body">
           <p v-if="adjustDialog.error" class="error" role="alert">{{ adjustDialog.error }}</p>
-          <div class="field">
-            <label class="field-label">Group ID <span class="required">*</span></label>
-            <input v-model="adjustDialog.groupId" class="input" type="text" placeholder="Please enter group ID" />
+          <div class="form-field-grid">
+            <div class="field">
+              <label class="field-label">Group ID <span class="required">*</span></label>
+              <input v-model="adjustDialog.groupId" class="input" type="text" placeholder="Please enter group ID" />
+            </div>
+            <div class="field">
+              <label class="field-label">Amount <span class="required">*</span></label>
+              <input v-model="adjustDialog.amount" class="input" type="number" min="0.01" step="0.01" placeholder="Please enter amount" />
+            </div>
+            <div class="field">
+              <label class="field-label">Type <span class="required">*</span></label>
+              <SelectDropdown v-model="adjustDialog.type" class="form-select" :options="[{ value: 'credit', label: 'Credit (add balance)' }, { value: 'debit', label: 'Debit (deduct balance)' }]" aria-label="Adjustment type" />
+            </div>
+            <div class="field field--full">
+              <label class="field-label">Remark <span class="required">*</span></label>
+              <textarea v-model="adjustDialog.remark" class="input" rows="3" placeholder="Please enter a reason for this adjustment"></textarea>
+            </div>
           </div>
-          <div class="field">
-            <label class="field-label">Amount <span class="required">*</span></label>
-            <input v-model="adjustDialog.amount" class="input" type="number" min="0.01" step="0.01" placeholder="Please enter amount" />
-          </div>
-          <div class="field">
-            <label class="field-label">Type <span class="required">*</span></label>
-            <SelectDropdown v-model="adjustDialog.type" class="form-select" :options="[{ value: 'credit', label: 'credit' }, { value: 'debit', label: 'debit' }]" aria-label="Adjustment type" />
-          </div>
-          <div class="field">
-            <label class="field-label">Remark <span class="required">*</span></label>
-            <textarea v-model="adjustDialog.remark" class="input" rows="3" placeholder="Manual top-up"></textarea>
+          <div :class="['status-note', adjustDialog.type === 'credit' ? 'status-note--success' : 'status-note--danger']">
+            <strong>{{ adjustDialog.type === 'credit' ? 'Amount will be added' : 'Amount will be deducted' }}</strong>
+            <span>{{ adjustDialog.type === 'credit' ? 'The group balance increases by the amount entered above.' : 'The group balance decreases by the amount entered above. Make sure it has enough balance.' }}</span>
           </div>
         </div>
         <div class="modal-foot">
           <button class="btn btn-ghost" type="button" @click="adjustDialog.open = false">Cancel</button>
-          <button class="btn btn-primary" type="button" :disabled="adjustDialog.loading" @click="submitAdjust">{{ adjustDialog.loading ? 'Saving…' : 'Adjust balance' }}</button>
+          <button :class="['btn', adjustDialog.type === 'credit' ? 'btn-success-solid' : 'btn-danger-solid']" type="button" :disabled="adjustDialog.loading" @click="submitAdjust">{{ adjustDialog.loading ? 'Saving…' : (adjustDialog.type === 'credit' ? 'Credit balance' : 'Debit balance') }}</button>
         </div>
       </div>
     </div>
@@ -495,19 +581,41 @@
     <div v-if="orderDetail.open" class="modal-overlay" @click.self="orderDetail.open = false">
       <div class="modal modal--wide" role="dialog" aria-modal="true">
         <div class="modal-head">
-          <h3>Deposit — {{ orderDetail.orderId }}</h3>
+          <div class="modal-title-wrap">
+            <span class="modal-icon modal-icon--primary" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M7 3.5h7.5L19 8v12a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 6 20V5a1.5 1.5 0 0 1 1-1.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                <path d="M14 3.5V8h4.5M9.5 12.5h5M9.5 16h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <div class="modal-title-text">
+              <h3>Deposit details</h3>
+              <p class="modal-subtitle">Order {{ orderDetail.orderId }}</p>
+            </div>
+          </div>
           <button class="btn btn-ghost btn-sm" type="button" aria-label="Close" @click="orderDetail.open = false">✕</button>
         </div>
         <div class="modal-body modal-body--scroll">
           <p v-if="orderDetail.error" class="error" role="alert">{{ orderDetail.error }}</p>
           <p v-if="orderDetail.loading" class="empty">Loading…</p>
           <template v-else-if="orderDetail.order">
+            <div class="summary-bar">
+              <div class="summary-bar__main">
+                <span class="summary-bar__eyebrow">Deposit amount</span>
+                <span class="summary-bar__value">{{ money(orderDetail.order.amount) }}</span>
+                <span class="summary-bar__title">{{ orderDetail.transaction ? 'Payment credited' : 'Awaiting payment' }}</span>
+              </div>
+              <div class="summary-bar__meta">
+                <span :class="['badge', 'status-badge', statusClass(orderDetail.order.status)]">{{ orderDetail.order.status }}</span>
+                <div class="summary-balance">
+                  <span class="summary-balance__label">Received</span>
+                  <span class="summary-balance__value">{{ money(orderDetail.order.receivedAmount) }}</span>
+                </div>
+              </div>
+            </div>
             <div class="detail-grid">
-              <div><span class="detail-label">Status</span><span><span :class="['badge', 'status-badge', statusClass(orderDetail.order.status)]">{{ orderDetail.order.status }}</span></span></div>
               <div><span class="detail-label">Group</span><span class="mono">{{ orderDetail.order.groupId }}</span></div>
               <div><span class="detail-label">UID</span><span class="mono">{{ uidFor(orderDetail.order.groupId, orderDetail.transaction?.uid) }}</span></div>
-              <div><span class="detail-label">Amount</span><span class="mono">{{ money(orderDetail.order.amount) }}</span></div>
-              <div><span class="detail-label">Received</span><span class="mono">{{ money(orderDetail.order.receivedAmount) }}</span></div>
               <div><span class="detail-label">UPI ID</span><span class="mono">{{ orderDetail.order.upiId || '—' }}</span></div>
               <div><span class="detail-label">SimplyPay No</span><span class="mono">{{ orderDetail.order.simplypayOrderNo || '—' }}</span></div>
               <div><span class="detail-label">Trn ID</span><span class="mono">{{ orderDetail.order.trnId || '—' }}</span></div>
@@ -536,6 +644,10 @@
         </div>
         <div class="modal-foot">
           <button class="btn btn-ghost" type="button" @click="orderDetail.open = false">Close</button>
+          <template v-if="orderDetail.order?.status === 'pending'">
+            <button class="btn btn-danger-solid" type="button" @click="openOrderAction(orderDetail.order, 'reject'); orderDetail.open = false">Reject deposit</button>
+            <button class="btn btn-success-solid" type="button" @click="openOrderAction(orderDetail.order, 'approve'); orderDetail.open = false">Approve deposit</button>
+          </template>
         </div>
       </div>
     </div>
@@ -544,22 +656,56 @@
     <!-- Order action modal -->
     <Transition name="modal-pop">
     <div v-if="orderAction.open" class="modal-overlay" @click.self="orderAction.open = false">
-      <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal modal--confirm" role="dialog" aria-modal="true">
         <div class="modal-head">
-          <h3>{{ orderAction.mode === 'approve' ? 'Approve' : 'Reject' }} order — {{ orderAction.orderId }}</h3>
+          <div class="modal-title-wrap">
+            <span :class="['modal-icon', orderAction.mode === 'approve' ? 'modal-icon--success' : 'modal-icon--danger']" aria-hidden="true">
+              <svg v-if="orderAction.mode === 'approve'" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12.5l4.2 4.2L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M7 7l10 10M17 7L7 17" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <div class="modal-title-text">
+              <h3>{{ orderAction.mode === 'approve' ? 'Approve deposit' : 'Reject deposit' }}</h3>
+              <p class="modal-subtitle">Order {{ orderAction.orderId }}</p>
+            </div>
+          </div>
           <button class="btn btn-ghost btn-sm" type="button" aria-label="Close" @click="orderAction.open = false">✕</button>
         </div>
         <div class="modal-body">
           <p v-if="orderAction.error" class="error" role="alert">{{ orderAction.error }}</p>
-          <p v-if="orderAction.mode === 'approve'" class="muted">This will credit the order amount to the group balance.</p>
+
+          <div class="confirm-amount">
+            <div class="confirm-amount__main">
+              <span class="confirm-amount__label">Deposit amount</span>
+              <span class="confirm-amount__value">₹{{ money(orderAction.order?.amount) }}</span>
+            </div>
+            <span v-if="orderAction.order" :class="['badge', 'status-badge', statusClass(orderAction.order.status)]">{{ orderAction.order.status }}</span>
+          </div>
+
+          <div v-if="orderAction.order" class="detail-grid confirm-grid">
+            <div><span class="detail-label">UID</span><span class="mono">{{ uidFor(orderAction.order.groupId, orderAction.order.uid) }}</span></div>
+            <div><span class="detail-label">Group</span><span class="mono">{{ orderAction.order.groupId }}</span></div>
+            <div><span class="detail-label">Received</span><span class="mono">{{ money(orderAction.order.receivedAmount) }}</span></div>
+            <div><span class="detail-label">UPI ID</span><span class="mono">{{ orderAction.order.upiId || '—' }}</span></div>
+            <div><span class="detail-label">SimplyPay No</span><span class="mono">{{ orderAction.order.simplypayOrderNo || '—' }}</span></div>
+            <div><span class="detail-label">Created</span><span>{{ fmt(orderAction.order.createdAt) }}</span></div>
+          </div>
+
+          <div v-if="orderAction.mode === 'approve'" class="confirm-note confirm-note--success">
+            <strong>₹{{ money(orderAction.order?.amount) }} will be credited to the group balance.</strong>
+            <span>Please confirm the payment was received before approving.</span>
+          </div>
           <div v-else class="field">
             <label class="field-label">Remark (optional)</label>
-            <textarea v-model="orderAction.remark" class="input" rows="3" placeholder="Payment not received"></textarea>
+            <textarea v-model="orderAction.remark" class="input" rows="3" placeholder="Please enter reason for rejection"></textarea>
           </div>
         </div>
         <div class="modal-foot">
           <button class="btn btn-ghost" type="button" @click="orderAction.open = false">Cancel</button>
-          <button class="btn btn-primary" type="button" :disabled="orderAction.loading" @click="submitOrderAction">{{ orderAction.loading ? 'Saving…' : (orderAction.mode === 'approve' ? 'Approve' : 'Reject') }}</button>
+          <button :class="['btn', orderAction.mode === 'approve' ? 'btn-success-solid' : 'btn-danger-solid']" type="button" :disabled="orderAction.loading" @click="submitOrderAction">{{ orderAction.loading ? 'Saving…' : (orderAction.mode === 'approve' ? 'Approve deposit' : 'Reject deposit') }}</button>
         </div>
       </div>
     </div>
@@ -783,9 +929,33 @@ function statsBucket(stats) {
 // — Status change —
 const statusDialog = reactive({ open: false, groupId: '', action: '', remark: '', loading: false, error: '' })
 const statusMeta = {
-  ban: { label: 'Ban', placeholder: 'Chargeback abuse', done: 'Group banned' },
-  suspend: { label: 'Suspend', placeholder: 'Under review', done: 'Group suspended' },
-  unban: { label: 'Unban', placeholder: 'Appeal accepted', done: 'Group unbanned' },
+  ban: {
+    label: 'Ban',
+    tone: 'danger',
+    title: 'Ban group',
+    actionLabel: 'Ban group',
+    description: 'This will permanently block the group from using the bot. Members will not be able to place new orders.',
+    placeholder: 'Chargeback abuse',
+    done: 'Group banned',
+  },
+  suspend: {
+    label: 'Suspend',
+    tone: 'warning',
+    title: 'Suspend group',
+    actionLabel: 'Suspend group',
+    description: 'This will temporarily pause the group. You can restore access later with Unban / Activate.',
+    placeholder: 'Under review',
+    done: 'Group suspended',
+  },
+  unban: {
+    label: 'Unban',
+    tone: 'success',
+    title: 'Unban / Activate group',
+    actionLabel: 'Unban / Activate',
+    description: 'This will restore full access for the group and its members.',
+    placeholder: 'Appeal accepted',
+    done: 'Group unbanned',
+  },
 }
 
 function openStatus(g, action) {
@@ -1016,10 +1186,10 @@ async function openOrderDetail(o) {
 }
 
 // — Order approve / reject —
-const orderAction = reactive({ open: false, mode: '', orderId: '', remark: '', loading: false, error: '' })
+const orderAction = reactive({ open: false, mode: '', orderId: '', order: null, remark: '', loading: false, error: '' })
 
 function openOrderAction(o, mode) {
-  Object.assign(orderAction, { open: true, mode, orderId: o.orderId, remark: '', loading: false, error: '' })
+  Object.assign(orderAction, { open: true, mode, orderId: o.orderId, order: o, remark: '', loading: false, error: '' })
 }
 
 async function submitOrderAction() {
@@ -1458,6 +1628,63 @@ onMounted(() => {
 .modal-foot .btn-ghost:hover:not(:disabled){background:#fdf7ef;border-color:#f9e7ce;color:#ebaf5b}
 .modal-foot .btn-ghost:active:not(:disabled){background:#fff;border-color:#d49e52;color:#d49e52}
 .modal--actions{width:80vw;max-width:80vw;min-width:0}
+.modal--confirm{max-width:680px}
+.modal--form{max-width:860px}
+.modal-title-wrap{display:flex;align-items:center;gap:12px;min-width:0}
+.modal-title-text{min-width:0}
+.modal-subtitle{margin:2px 0 0;font-size:12px;font-weight:400;line-height:1.3;color:#909399;word-break:break-all}
+.modal-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:38px;height:38px;border-radius:12px}
+.modal-icon--primary{background:#fdf7ef;border:1px solid #f9e7ce;color:#ebaf5b}
+.modal-icon--success{background:#f0f9eb;border:1px solid #e1f3d8;color:#67c23a}
+.modal-icon--warning{background:#fdf6ec;border:1px solid #faecd8;color:#e6a23c}
+.modal-icon--danger{background:#fef0f0;border:1px solid #fde2e2;color:#f56c6c}
+.summary-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 18px;background:#fafafa;border:1px solid #ebeef5;border-radius:12px}
+.summary-bar__main{display:flex;flex-direction:column;gap:3px;min-width:0}
+.summary-bar__eyebrow{font-size:12px;color:#909399}
+.summary-bar__value{font-size:17px;font-weight:600;line-height:1.2;color:#303133}
+.summary-bar__title{font-size:13px;color:#606266}
+.summary-bar__meta{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.summary-balance{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.summary-balance__label{font-size:11px;color:#909399}
+.summary-balance__value{font-size:18px;font-weight:700;line-height:1.2;color:#303133}
+.action-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.action-tile{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:58px;padding:12px 14px;font-family:var(--font-body);text-align:left;background:#fff;border:1px solid #dcdfe6;border-radius:10px;cursor:pointer;transition:border-color .2s ease,background-color .2s ease,box-shadow .2s ease,transform .2s ease}
+.action-tile:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.action-tile__title{font-size:13px;font-weight:600;color:#303133}
+.action-tile__hint{font-size:11px;line-height:1.35;color:#909399}
+.action-tile--primary:hover{border-color:#ebaf5b;background:#fdf7ef}
+.action-tile--danger:hover{border-color:#f56c6c;background:#fef0f0}
+.action-tile--warning:hover{border-color:#e6a23c;background:#fdf6ec}
+.action-tile--success:hover{border-color:#67c23a;background:#f0f9eb}
+.status-note{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:10px;font-size:13px;line-height:1.45}
+.status-note strong{font-weight:600}
+.status-note--success{background:#f0f9eb;border:1px solid #e1f3d8;color:#67c23a}
+.status-note--success strong{color:#4a9b2a}
+.status-note--danger{background:#fef0f0;border:1px solid #fde2e2;color:#f56c6c}
+.status-note--danger strong{color:#d94a4a}
+.status-note--warning{background:#fdf6ec;border:1px solid #faecd8;color:#e6a23c}
+.status-note--warning strong{color:#c98a2e}
+.status-note--info{background:#fdf7ef;border:1px solid #f9e7ce;color:#b8843a}
+.status-note--info strong{color:#8a6428}
+.form-field-grid .field--full{grid-column:1/-1}
+.confirm-amount{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;background:#fafafa;border:1px solid #ebeef5;border-radius:12px}
+.confirm-amount__main{display:flex;flex-direction:column;gap:4px;min-width:0}
+.confirm-amount__label{font-size:12px;color:#909399}
+.confirm-amount__value{font-size:26px;font-weight:700;line-height:1.1;color:#303133}
+.confirm-grid{padding:2px 0}
+.confirm-note{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:10px;font-size:13px;line-height:1.45}
+.confirm-note--success{background:#f0f9eb;border:1px solid #e1f3d8;color:#67c23a}
+.confirm-note strong{font-weight:600;color:#4a9b2a}
+.confirm-note span{color:#67c23a;opacity:.9}
+.modal-foot .btn-success-solid{background:#67c23a;border:1px solid #67c23a;color:#fff}
+.modal-foot .btn-success-solid:hover:not(:disabled){background:#85ce61;border-color:#85ce61;color:#fff}
+.modal-foot .btn-success-solid:active:not(:disabled){background:#5eb870;border-color:#5eb870;color:#fff}
+.modal-foot .btn-danger-solid{background:#f56c6c;border:1px solid #f56c6c;color:#fff}
+.modal-foot .btn-danger-solid:hover:not(:disabled){background:#f78989;border-color:#f78989;color:#fff}
+.modal-foot .btn-danger-solid:active:not(:disabled){background:#dd6161;border-color:#dd6161;color:#fff}
+.modal-foot .btn-warning-solid{background:#e6a23c;border:1px solid #e6a23c;color:#fff}
+.modal-foot .btn-warning-solid:hover:not(:disabled){background:#ebb563;border-color:#ebb563;color:#fff}
+.modal-foot .btn-warning-solid:active:not(:disabled){background:#cf9236;border-color:#cf9236;color:#fff}
 .form-field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px 16px;align-items:start}
 .form-field-grid .field{gap:6px;min-width:0}
 .form-field-grid .field-label{font-size:14px;font-weight:400;text-transform:none;letter-spacing:0;color:#606266}
@@ -1472,21 +1699,6 @@ onMounted(() => {
 .modal-pop-leave-to .modal{opacity:0;transform:translate3d(0,-14px,0) scale(.97)}
 .cell-actions-end{text-align:center}
 .cell-actions-end .row-actions{justify-content:center}
-.status-action-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:40px;padding:9px 15px;font-family:var(--font-body);font-size:12px;font-weight:500;line-height:1;text-align:center;background:#fff;border:1px solid #dcdfe6;border-radius:8px;color:#606266;box-shadow:none;transition:color .2s ease,background-color .2s ease,border-color .2s ease,transform .2s ease}
-.status-action-btn:hover:not(:disabled){background:#fff;border-color:#ebaf5b;color:#ebaf5b;transform:translateY(-1px)}
-.status-action-btn:active:not(:disabled){transform:translateY(0)}
-.status-action-btn--danger{background:#fef0f0;border-color:#fbc4c4;color:#f56c6c}
-.status-action-btn--danger:hover:not(:disabled){background:#f56c6c;border-color:#f56c6c;color:#fff}
-.status-action-btn--danger:active:not(:disabled){background:#dd6161;border-color:#dd6161;color:#fff}
-.status-action-btn--warning{background:#fdf6ec;border-color:#f5dab1;color:#e6a23c}
-.status-action-btn--warning:hover:not(:disabled){background:#e6a23c;border-color:#e6a23c;color:#fff}
-.status-action-btn--warning:active:not(:disabled){background:#cf9236;border-color:#cf9236;color:#fff}
-.status-action-btn--success{background:#f0f9eb;border-color:#c2e7b0;color:#67c23a}
-.status-action-btn--success:hover:not(:disabled){background:#67c23a;border-color:#67c23a;color:#fff}
-.status-action-btn--success:active:not(:disabled){background:#5daf34;border-color:#5daf34;color:#fff}
-.status-action-btn--adjust{background:#fdf7ef;border-color:#f7dfbd;color:#ebaf5b}
-.status-action-btn--adjust:hover:not(:disabled){background:#ebaf5b;border-color:#ebaf5b;color:#fff}
-.status-action-btn--adjust:active:not(:disabled){background:#d49e52;border-color:#d49e52;color:#fff}
 @media(max-width:640px){
 }
 </style>
