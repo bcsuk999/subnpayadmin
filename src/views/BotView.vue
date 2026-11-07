@@ -210,7 +210,7 @@
         <p v-if="ordersError" class="error tbl-error" role="alert">{{ ordersError }}</p>
         <p v-if="!ordersLoading && orders.length === 0 && !ordersError" class="empty tbl-empty">No deposit records found.</p>
         <div v-if="orders.length || ordersLoading" class="orders-table-shell" :style="{ '--orders-actions-width': stickyActionsWidth + 'px' }">
-          <div class="tbl-scroll" @scroll="onOrdersScroll">
+          <div class="tbl-scroll">
           <table ref="ordersTable" class="table table--wide">
             <thead>
               <tr><th>Order ID</th><th>UID</th><th>Group</th><th>Amount</th><th>Received</th><th>Status</th><th>UPI ID</th><th>SimplyPay No</th><th>Trn ID</th><th>Requested By</th><th>Created</th><th>Paid At</th><th class="sticky-actions">Actions</th></tr>
@@ -240,7 +240,7 @@
             </tbody>
           </table>
           </div>
-          <span :class="['orders-actions-shadow', { 'orders-actions-shadow--visible': ordersScrolled }]" aria-hidden="true"></span>
+          <span class="orders-actions-shadow" aria-hidden="true"></span>
         </div>
         <TableFooter :page="orderPage" :total-pages="orderTotalPages" :total="orderTotal" :page-size="orderPageSize" :disabled="ordersLoading" direct-input show-page-sizes @change="fetchOrders" @size-change="setOrderPageSize" />
       </TableCard>
@@ -1118,7 +1118,6 @@ const orderTotalPages = ref(1)
 const ordersLoading = ref(false)
 const ordersError = ref('')
 const ordersTable = ref(null)
-const ordersScrolled = ref(false)
 const stickyActionsWidth = ref(190)
 
 function measureStickyActions() {
@@ -1126,12 +1125,7 @@ function measureStickyActions() {
   if (cell) stickyActionsWidth.value = Math.ceil(cell.getBoundingClientRect().width)
 }
 
-function onOrdersScroll(event) {
-  ordersScrolled.value = event.target.scrollLeft > 0
-}
-
 watch(orders, async () => {
-  ordersScrolled.value = false
   await nextTick()
   measureStickyActions()
 })
@@ -1732,8 +1726,7 @@ onBeforeUnmount(() => {
 .orders-table-shell{position:relative;min-width:0}
 .table .sticky-actions{position:sticky;right:0;z-index:2;background:#fff}
 .table thead .sticky-actions{z-index:3;background:#f5f7fa}
-.orders-actions-shadow{position:absolute;top:1px;bottom:9px;right:calc(var(--orders-actions-width,190px) + 1px);width:14px;pointer-events:none;z-index:4;background:linear-gradient(90deg,rgba(0,0,0,0),rgba(0,0,0,.14));opacity:0;transition:opacity .2s ease}
-.orders-actions-shadow--visible{opacity:1}
+.orders-actions-shadow{position:absolute;top:1px;bottom:9px;right:calc(var(--orders-actions-width,190px) + 1px);width:14px;pointer-events:none;z-index:4;background:linear-gradient(90deg,rgba(0,0,0,0),rgba(0,0,0,.14))}
 @media(max-width:640px){
 }
 </style>
