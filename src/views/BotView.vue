@@ -212,7 +212,7 @@
         <div v-if="orders.length || ordersLoading" class="tbl-scroll">
           <table class="table table--wide">
             <thead>
-              <tr><th>Order ID</th><th>UID</th><th>Group</th><th>Amount</th><th>Received</th><th>Status</th><th>UPI ID</th><th>SimplyPay No</th><th>Trn ID</th><th>Requested By</th><th>Created</th><th>Paid At</th><th>Actions</th></tr>
+              <tr><th>Order ID</th><th>UID</th><th>Group</th><th>Amount</th><th>Received</th><th>Status</th><th>UPI ID</th><th>SimplyPay No</th><th>Trn ID</th><th>Requested By</th><th>Created</th><th>Paid At</th><th class="sticky-actions">Actions</th></tr>
             </thead>
             <tbody>
               <tr v-for="o in orders" :key="o.orderId">
@@ -228,7 +228,7 @@
                 <td class="mono">{{ o.requestedBy || '—' }}</td>
                 <td class="muted">{{ fmt(o.createdAt) }}</td>
                 <td class="muted">{{ fmt(o.paidAt) }}</td>
-                <td>
+                <td class="sticky-actions">
                   <div class="row-actions">
                     <button class="btn btn-sm action-btn" type="button" @click="openOrderDetail(o)">View</button>
                     <button v-if="o.status === 'pending'" class="btn btn-sm action-btn action-btn--success" type="button" @click="openOrderAction(o, 'approve')">Approve</button>
@@ -1703,6 +1703,8 @@ onMounted(() => {
 .modal-pop-leave-to .modal{opacity:0;transform:translate3d(0,-14px,0) scale(.97)}
 .cell-actions-end{text-align:center}
 .cell-actions-end .row-actions{justify-content:center}
+.table .sticky-actions{position:sticky;right:0;z-index:2;background:#fff;box-shadow:-8px 0 12px -8px rgba(0,0,0,.22)}
+.table thead .sticky-actions{z-index:3;background:#f5f7fa}
 @media(max-width:640px){
 }
 </style>
