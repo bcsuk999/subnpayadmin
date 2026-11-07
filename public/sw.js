@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'sunpay-admin-pwa-'
-const CACHE_NAME = `${CACHE_PREFIX}v1`
+const CACHE_NAME = `${CACHE_PREFIX}v2`
 const APP_SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/icon-512-maskable.png']
 
 self.addEventListener('install', (event) => {
