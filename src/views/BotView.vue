@@ -209,8 +209,9 @@
         <TableCardHeading title="Find results" />
         <p v-if="ordersError" class="error tbl-error" role="alert">{{ ordersError }}</p>
         <p v-if="!ordersLoading && orders.length === 0 && !ordersError" class="empty tbl-empty">No deposit records found.</p>
-        <div v-if="orders.length || ordersLoading" class="tbl-scroll">
-          <table class="table table--wide">
+        <div v-if="orders.length || ordersLoading" class="orders-table-shell" :style="{ '--orders-actions-width': stickyActionsWidth + 'px' }">
+          <div class="tbl-scroll" @scroll="onOrdersScroll">
+          <table ref="ordersTable" class="table table--wide">
             <thead>
               <tr><th>Order ID</th><th>UID</th><th>Group</th><th>Amount</th><th>Received</th><th>Status</th><th>UPI ID</th><th>SimplyPay No</th><th>Trn ID</th><th>Requested By</th><th>Created</th><th>Paid At</th><th class="sticky-actions">Actions</th></tr>
             </thead>
@@ -238,6 +239,8 @@
               </tr>
             </tbody>
           </table>
+          </div>
+          <span :class="['orders-actions-shadow', { 'orders-actions-shadow--visible': ordersScrolled }]" aria-hidden="true"></span>
         </div>
         <TableFooter :page="orderPage" :total-pages="orderTotalPages" :total="orderTotal" :page-size="orderPageSize" :disabled="ordersLoading" direct-input show-page-sizes @change="fetchOrders" @size-change="setOrderPageSize" />
       </TableCard>
@@ -718,7 +721,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref, watch } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '../composables/useToast.js'
 import { fmtDateTime as fmt } from '../utils/format.js'
@@ -1114,6 +1117,24 @@ const orderTotal = ref(0)
 const orderTotalPages = ref(1)
 const ordersLoading = ref(false)
 const ordersError = ref('')
+const ordersTable = ref(null)
+const ordersScrolled = ref(false)
+const stickyActionsWidth = ref(190)
+
+function measureStickyActions() {
+  const cell = ordersTable.value?.querySelector('th.sticky-actions')
+  if (cell) stickyActionsWidth.value = Math.ceil(cell.getBoundingClientRect().width)
+}
+
+function onOrdersScroll(event) {
+  ordersScrolled.value = event.target.scrollLeft > 0
+}
+
+watch(orders, async () => {
+  ordersScrolled.value = false
+  await nextTick()
+  measureStickyActions()
+})
 
 async function fetchOrders(p = 1) {
   const uid = orderFilters.uid.trim()
@@ -1472,6 +1493,11 @@ onMounted(() => {
   fetchOrders(1)
   loadAllGroupUids()
   if (activeTab.value === 'payout') fetchPayouts(1)
+  window.addEventListener('resize', measureStickyActions)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', measureStickyActions)
 })
 </script>
 
@@ -1703,8 +1729,11 @@ onMounted(() => {
 .modal-pop-leave-to .modal{opacity:0;transform:translate3d(0,-14px,0) scale(.97)}
 .cell-actions-end{text-align:center}
 .cell-actions-end .row-actions{justify-content:center}
-.table .sticky-actions{position:sticky;right:0;z-index:2;background:#fff;box-shadow:-8px 0 12px -8px rgba(0,0,0,.22)}
+.orders-table-shell{position:relative;min-width:0}
+.table .sticky-actions{position:sticky;right:0;z-index:2;background:#fff}
 .table thead .sticky-actions{z-index:3;background:#f5f7fa}
+.orders-actions-shadow{position:absolute;top:1px;bottom:9px;right:calc(var(--orders-actions-width,190px) + 1px);width:14px;pointer-events:none;z-index:4;background:linear-gradient(90deg,rgba(0,0,0,0),rgba(0,0,0,.14));opacity:0;transition:opacity .2s ease}
+.orders-actions-shadow--visible{opacity:1}
 @media(max-width:640px){
 }
 </style>
