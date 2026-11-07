@@ -405,7 +405,7 @@
               <div class="stat"><span class="stat-label">Total Failed</span><span class="stat-value">{{ detail.group.totalFailed ?? 0 }}</span></div>
             </div>
 
-            <div class="detail-grid">
+            <div class="detail-grid form-field-grid">
               <div><span class="detail-label">UID</span><span><span class="badge uid-badge">{{ uidFor(detail.group.groupId, detail.group.uid) }}</span></span></div>
               <div><span class="detail-label">Title</span><span>{{ detail.group.title || '—' }}</span></div>
               <div><span class="detail-label">Username</span><span class="mono">{{ detail.group.username ? '@' + detail.group.username : '—' }}</span></div>
@@ -512,9 +512,11 @@
             <strong>{{ statusMeta[statusDialog.action].title }}</strong>
             <span>{{ statusMeta[statusDialog.action].description }}</span>
           </div>
-          <div class="field">
-            <label class="field-label">Remark <span class="required">*</span></label>
-            <textarea v-model="statusDialog.remark" class="input" rows="3" :placeholder="statusMeta[statusDialog.action].placeholder"></textarea>
+          <div class="form-field-grid">
+            <div class="field field--full">
+              <label class="field-label">Remark <span class="required">*</span></label>
+              <textarea v-model="statusDialog.remark" class="input" rows="3" :placeholder="statusMeta[statusDialog.action].placeholder"></textarea>
+            </div>
           </div>
         </div>
         <div class="modal-foot">
@@ -613,7 +615,7 @@
                 </div>
               </div>
             </div>
-            <div class="detail-grid">
+            <div class="detail-grid form-field-grid">
               <div><span class="detail-label">Group</span><span class="mono">{{ orderDetail.order.groupId }}</span></div>
               <div><span class="detail-label">UID</span><span class="mono">{{ uidFor(orderDetail.order.groupId, orderDetail.transaction?.uid) }}</span></div>
               <div><span class="detail-label">UPI ID</span><span class="mono">{{ orderDetail.order.upiId || '—' }}</span></div>
@@ -630,7 +632,7 @@
 
             <h4 class="section-heading">Transaction</h4>
             <p v-if="!orderDetail.transaction" class="empty">No transaction — this order has not been credited.</p>
-            <div v-else class="detail-grid">
+            <div v-else class="detail-grid form-field-grid">
               <div><span class="detail-label">Trn ID</span><span class="mono">{{ orderDetail.transaction.trnId }}</span></div>
               <div><span class="detail-label">Type</span><span class="badge">{{ orderDetail.transaction.type }}</span></div>
               <div><span class="detail-label">Note</span><span class="badge">{{ orderDetail.transaction.note }}</span></div>
@@ -685,7 +687,7 @@
             <span v-if="orderAction.order" :class="['badge', 'status-badge', statusClass(orderAction.order.status)]">{{ orderAction.order.status }}</span>
           </div>
 
-          <div v-if="orderAction.order" class="detail-grid confirm-grid">
+          <div v-if="orderAction.order" class="detail-grid form-field-grid confirm-grid">
             <div><span class="detail-label">UID</span><span class="mono">{{ uidFor(orderAction.order.groupId, orderAction.order.uid) }}</span></div>
             <div><span class="detail-label">Group</span><span class="mono">{{ orderAction.order.groupId }}</span></div>
             <div><span class="detail-label">Received</span><span class="mono">{{ money(orderAction.order.receivedAmount) }}</span></div>
@@ -698,9 +700,11 @@
             <strong>₹{{ money(orderAction.order?.amount) }} will be credited to the group balance.</strong>
             <span>Please confirm the payment was received before approving.</span>
           </div>
-          <div v-else class="field">
-            <label class="field-label">Remark (optional)</label>
-            <textarea v-model="orderAction.remark" class="input" rows="3" placeholder="Please enter reason for rejection"></textarea>
+          <div v-else class="form-field-grid">
+            <div class="field field--full">
+              <label class="field-label">Remark (optional)</label>
+              <textarea v-model="orderAction.remark" class="input" rows="3" placeholder="Please enter reason for rejection"></textarea>
+            </div>
           </div>
         </div>
         <div class="modal-foot">
@@ -1603,7 +1607,7 @@ onMounted(() => {
 .field{display:flex;flex-direction:column;gap:6px}
 .field-label{font-size:14px;font-weight:400;color:#606266;margin-bottom:0;line-height:1.15}
 .required{color:#f56c6c;margin-left:4px}
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
 .modal{background:var(--color-bg);border:1px solid var(--color-border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-xl);width:100%;max-width:80vw;min-width:0;display:flex;flex-direction:column;max-height:90vh}
 .modal--wide{max-width:80vw}
 .modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 20px 10px;border-bottom:1px solid #e4e7ed}
